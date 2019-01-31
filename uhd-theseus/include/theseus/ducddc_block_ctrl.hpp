@@ -5,15 +5,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 
-#ifndef INCLUDED_LIBUHD_RFNOC_DUCDDC_BLOCK_CTRL_HPP
-#define INCLUDED_LIBUHD_RFNOC_DUCDDC_BLOCK_CTRL_HPP
+#ifndef INCLUDED_THESEUS_RFNOC_DUCDDC_BLOCK_CTRL_HPP
+#define INCLUDED_THESEUS_RFNOC_DUCDDC_BLOCK_CTRL_HPP
 
 #include <uhd/rfnoc/source_block_ctrl_base.hpp>
 #include <uhd/rfnoc/sink_block_ctrl_base.hpp>
 #include <uhd/rfnoc/rate_node_ctrl.hpp>
 
-namespace uhd {
-    namespace rfnoc {
+namespace theseus {
 
 /*! \brief DUCDDC block controller
  *
@@ -24,17 +23,17 @@ namespace uhd {
  * While frequency-shift logic exists in the DUC, this block is not
  * intended to perform frequency shifts (just rate changes)
  */
-class UHD_RFNOC_API ducddc_block_ctrl :
-    public source_block_ctrl_base,
-    public sink_block_ctrl_base,
-    public rate_node_ctrl
+class UHD_RFNOC_API uhd::rfnoc::ducddc_block_ctrl :
+    public uhd::rfnoc::source_block_ctrl_base,
+    public uhd::rfnoc::sink_block_ctrl_base,
+    public uhd::rfnoc::rate_node_ctrl
 {
 public:
     UHD_RFNOC_BLOCK_OBJECT(ducddc_block_ctrl)
 
 }; /* class ducddc_block_ctrl*/
 
-}} /* namespace uhd::rfnoc */
+} /* namespace theseus */
 
-#endif /* INCLUDED_LIBUHD_RFNOC_DUCDDC_BLOCK_CTRL_HPP */
+#endif /* INCLUDED_THESEUS_RFNOC_DUCDDC_BLOCK_CTRL_HPP */
 
