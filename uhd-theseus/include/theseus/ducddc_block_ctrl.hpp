@@ -23,7 +23,7 @@ namespace theseus {
  * While frequency-shift logic exists in the DUC, this block is not
  * intended to perform frequency shifts (just rate changes)
  */
-class UHD_RFNOC_API uhd::rfnoc::ducddc_block_ctrl :
+class UHD_RFNOC_API ducddc_block_ctrl :
     public uhd::rfnoc::source_block_ctrl_base,
     public uhd::rfnoc::sink_block_ctrl_base,
     public uhd::rfnoc::rate_node_ctrl
