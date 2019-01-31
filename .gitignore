@@ -5,3 +5,6 @@ xsim_proj
 
 # Software
 build
+
+# gr-theseus
+gr-theseus/examples/*.py
