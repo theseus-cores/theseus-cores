@@ -6,6 +6,7 @@ stages:
 .conditionals: &conditionals
   refs:
     - master
+    - merge_requests
     - branches
     - web
 
