@@ -1,0 +1,7 @@
+# FPGA
+*.log
+build-ip
+xsim_proj
+
+# Software
+build
