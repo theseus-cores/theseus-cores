@@ -58,7 +58,7 @@ repos):
 ```
 mkdir build
 cd build
-cmake .. -DCMAKE_INSTALL_PREFIX /home/user/prefix/gnuradio -DENABLE_UHD=ON -DENABLE_GNURADIO=ON
+cmake .. -DCMAKE_INSTALL_PREFIX=/home/user/prefix -DENABLE_UHD=ON -DENABLE_GNURADIO=ON
 make
 make install
 ```
