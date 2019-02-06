@@ -66,7 +66,6 @@ $(CHAN_SRC_DIR)/slicer_48_13.v \
 $(CHAN_SRC_DIR)/dsp48_cic_M256_N1_R1_iw5_0_corr.v \
 $(CHAN_SRC_DIR)/dsp48_cic_M256_N1_R1_iw5_0.v \
 $(CHAN_SRC_DIR)/dsp48_comb_M256_N1_iw5_0.v \
-$(CHAN_SRC_DIR)/dsp48_corr_mult.v \
 $(CHAN_SRC_DIR)/dsp48_integrator_section_0.v \
 $(CHAN_SRC_DIR)/dsp48_output_add.v \
 $(CHAN_SRC_DIR)/dsp48_pfb_mac_0.v \
