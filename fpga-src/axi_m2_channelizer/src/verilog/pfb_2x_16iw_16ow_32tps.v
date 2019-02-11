@@ -509,7 +509,7 @@ endgenerate
 
 
 // PFB MAC blocks
-dsp48_pfb_mac pfb_mac_i_start (
+dsp48_pfb_mac_0 pfb_mac_i_start (
   .clk(clk),
   .ce(tvalid_d[6]),
   .a(taps[0]),
@@ -519,7 +519,7 @@ dsp48_pfb_mac pfb_mac_i_start (
 );
 
 // Latency = 4
-dsp48_pfb_mac pfb_mac_q_start (
+dsp48_pfb_mac_0 pfb_mac_q_start (
   .clk(clk),
   .ce(tvalid_d[6]),
   .a(taps[0]), 

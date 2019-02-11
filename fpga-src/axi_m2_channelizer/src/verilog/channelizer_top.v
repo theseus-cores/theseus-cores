@@ -7,6 +7,7 @@
 //***************************************************************************--
 
 // no timescale needed
+`include "chan_rfnoc_sim.vh"
 
 module channelizer_top#(
     parameter DATA_WIDTH = 32)
@@ -60,8 +61,8 @@ reg async_reset, async_reset_d1;
 reg reset_int,  next_reset_int;
 reg [4:0] reset_cnt, next_reset_cnt;
 
-wire [4:0] RESET_ZEROS = 5'd0;
-wire [4:0] RESET_HIGH_CNT = 5'b01000;  // buffer signals
+localparam [4:0] RESET_ZEROS = 5'd0;
+localparam [4:0] RESET_HIGH_CNT = 5'b01000;  // buffer signals
 
 wire buffer_tvalid;
 wire [DATA_WIDTH - 1:0] buffer_tdata;
@@ -91,11 +92,57 @@ wire [15:0] fft_config_tdata;  // fft status signals
 wire [7:0] m_axis_status_tdata;
 wire m_axis_status_tvalid;
 wire m_axis_status_tready;  // signal circ_phase : std_logic_vector(10 downto 0);
+wire m_axis_tvalid_s;
+wire [31:0] m_axis_tdata_s;
+wire [23:0] m_axis_tuser_s;
 
 localparam S_CONFIG = 0, S_IDLE = 1;
 reg config_state, next_config_state;
 
+`ifdef SIM_BIN_WRITE
+
+    localparam buffer_out = "buffer_output.bin";
+    localparam pfb_out = "pfb_output.bin";
+    localparam circ_out = "circ_output.bin";
+    localparam fft_out = "fft_output.bin";
+    localparam exp_out = "exp_output.bin";
+
+    integer buffer_descr, pfb_descr, circ_descr, fft_descr, exp_descr;
+
+    initial begin
+        buffer_descr = $fopen(buffer_out, "wb");
+        pfb_descr = $fopen(pfb_out, "wb");
+        circ_descr = $fopen(circ_out, "wb");
+        fft_descr = $fopen(fft_out, "wb");
+        exp_descr = $fopen(exp_out, "wb");
+    end
+
+    wire buffer_take, pfb_take, circ_take, fft_take, exp_take;
+
+    wire [63:0] buffer_st_tdata;
+    wire [63:0] pfb_st_tdata;
+    wire [63:0] fft_st_tdata;
+    wire [63:0] exp_st_tdata;
+
+    assign buffer_st_tdata = {21'd0, buffer_phase, buffer_tdata};
+    assign pfb_st_tdata = {21'd0, pfb_phase, pfb_tdata};
+    assign fft_st_tdata = {8'd0, fft_tuser, fft_tdata};
+    assign exp_st_tdata = {8'd0, m_axis_tuser_s, m_axis_tdata_s};
+
+    assign buffer_take = (buffer_tvalid & buffer_tready) ? 1'b1 : 1'b0;
+    assign pfb_take = (pfb_tvalid & pfb_tready) ? 1'b1 : 1'b0;
+
+    assign circ_take = (circ_tvalid & circ_tready) ? 1'b1 : 1'b0;
+    assign fft_take = (fft_tvalid & fft_tready) ? 1'b1 : 1'b0;
+    assign exp_take = (m_axis_tvalid_s & m_axis_tready) ? 1'b1 : 1'b0;
+
+`endif
+
+
   // FFT FWD/INV is bit 8 / nfft is bits 4 downto 0
+  assign m_axis_tvalid = m_axis_tvalid_s;
+  assign m_axis_tdata = m_axis_tdata_s;
+  assign m_axis_tuser = m_axis_tuser_s;
   assign fft_config_tdata = {11'b00000000000,nfft};
   assign fft_tdata = {fft_tdata_s[15:0],fft_tdata_s[31:16]};
   assign circ_tdata = {circ_tdata_s[15:0],circ_tdata_s[31:16]};
@@ -125,19 +172,19 @@ begin
             end else if (fft_size == FFT_256) begin
                 next_nfft = 5'b01000;
             end else if (fft_size == FFT_512) begin
-                next_nfft <= 5'b01001;
+                next_nfft = 5'b01001;
             end else if (fft_size == FFT_1024) begin
-                next_nfft <= 5'b01010;
+                next_nfft = 5'b01010;
             end else begin
-                next_nfft <= 5'b01011;
+                next_nfft = 5'b01011;
             end
         end
         S_IDLE :
         begin
-            if((async_reset == 1'b1 && async_reset_d1 == 1'b0)) begin
-                next_config_state <= S_CONFIG;
+            if (async_reset == 1'b1 && async_reset_d1 == 1'b0) begin
+                next_config_state = S_CONFIG;
             end else begin
-                next_config_state <= S_IDLE;
+                next_config_state = S_IDLE;
             end
         end
         default :
@@ -146,37 +193,41 @@ begin
     endcase
 end
 
-always @(posedge clk, posedge sync_reset) begin
-    if((sync_reset == 1'b1)) begin
+always @(posedge clk, posedge sync_reset)
+begin
+    if (sync_reset == 1'b1) begin
         config_state <= S_IDLE;
         fft_config_tvalid <= 1'b0;
         nfft <= 5'b00111;
+        fft_size_s <= 12'd128;
         // default to 128
-        reset_cnt <= 5'b11111;
+        reset_cnt <= 5'd31;
         reset_int <= 1'b1;
-        //31;
     end else begin
         config_state <= next_config_state;
         fft_config_tvalid <= next_fft_config_tvalid;
         nfft <= next_nfft;
+        if (fft_size != 0) begin
+            fft_size_s <= fft_size;
+        end
         reset_cnt <= next_reset_cnt;
         reset_int <= next_reset_int;
     end
 end
 
-always @(posedge clk) begin
-    fft_size_s <= fft_size;
-    async_reset <=  ~(sync_reset | reset_int);
+always @(posedge clk)
+begin
+    async_reset <= !(sync_reset | reset_int);
     async_reset_d1 <= async_reset;
 end
 
   // ensures that reset pulse is wide enough for all blocks.
 always @*
 begin
-    next_reset_cnt <= reset_cnt;
+    next_reset_cnt = reset_cnt;
     if (fft_size_s != fft_size) begin
-        next_reset_cnt <= RESET_HIGH_CNT;
-    end else if (reset_cnt != RESET_ZEROS) begin
+        next_reset_cnt = RESET_HIGH_CNT;
+    end else if (reset_cnt != 0) begin
         next_reset_cnt = reset_cnt - 1;
     end
     if (reset_cnt != RESET_ZEROS) begin
@@ -205,6 +256,121 @@ u_input_buffer(
     .m_axis_final_cnt(buffer_tlast),
     .m_axis_tready(buffer_tready)
 );
+
+`ifdef SIM_BIN_WRITE
+    grc_word_writer #(
+        .LISTEN_ONLY(1),
+        .ARRAY_LENGTH(1024),
+        .NUM_BYTES(8)
+    )
+    u_buffer_wr
+    (
+    	.clk(clk),
+    	.sync_reset(reset_int),
+    	.enable(1'b1),
+
+    	.fd(buffer_descr),
+
+    	.valid(buffer_take),
+    	.word(buffer_st_tdata),
+
+    	.wr_file(1'b0),
+
+    	.rdy_i(1'b1),
+    	.rdy_o()
+    );
+
+    grc_word_writer #(
+        .LISTEN_ONLY(1),
+        .ARRAY_LENGTH(1024),
+        .NUM_BYTES(8)
+    )
+    u_pfb_wr
+    (
+    	.clk(clk),
+    	.sync_reset(reset_int),
+    	.enable(1'b1),
+
+    	.fd(pfb_descr),
+
+    	.valid(pfb_take),
+    	.word(pfb_st_tdata),
+
+    	.wr_file(1'b0),
+
+    	.rdy_i(1'b1),
+    	.rdy_o()
+    );
+
+    grc_word_writer #(
+        .LISTEN_ONLY(1),
+        .ARRAY_LENGTH(1024),
+        .NUM_BYTES(4)
+    )
+    u_circ_wr
+    (
+    	.clk(clk),
+    	.sync_reset(reset_int),
+    	.enable(1'b1),
+
+    	.fd(circ_descr),
+
+    	.valid(circ_take),
+    	.word(circ_st_tdata),
+
+    	.wr_file(1'b0),
+
+    	.rdy_i(1'b1),
+    	.rdy_o()
+    );
+
+    grc_word_writer #(
+        .LISTEN_ONLY(1),
+        .ARRAY_LENGTH(1024),
+        .NUM_BYTES(8)
+    )
+    u_fft_wr
+    (
+        .clk(clk),
+        .sync_reset(reset_int),
+        .enable(1'b1),
+
+        .fd(fft_descr),
+
+        .valid(fft_take),
+        .word(fft_tdata),
+
+        .wr_file(1'b0),
+
+        .rdy_i(1'b1),
+        .rdy_o()
+    );
+
+    grc_word_writer #(
+        .LISTEN_ONLY(1),
+        .ARRAY_LENGTH(1024),
+        .NUM_BYTES(8)
+    )
+    u_exp_wr
+    (
+        .clk(clk),
+        .sync_reset(reset_int),
+        .enable(1'b1),
+
+        .fd(exp_descr),
+
+        .valid(exp_take),
+        .word(exp_st_tdata),
+
+        .wr_file(1'b0),
+
+        .rdy_i(1'b1),
+        .rdy_o()
+    );
+
+
+`endif
+
 
 pfb_2x_16iw_16ow_32tps u_pfb(
     .clk(clk),
@@ -293,9 +459,9 @@ exp_shifter u_shifter(
     .s_axis_status_tdata(m_axis_status_tdata),
     .s_axis_status_tready(m_axis_status_tready),
 
-    .m_axis_tvalid(m_axis_tvalid),
-    .m_axis_tdata(m_axis_tdata),
-    .m_axis_tuser(m_axis_tuser),
+    .m_axis_tvalid(m_axis_tvalid_s),
+    .m_axis_tdata(m_axis_tdata_s),
+    .m_axis_tuser(m_axis_tuser_s),
     .m_axis_tlast(m_axis_tlast),
 
     .eob_tag(eob_tag),

@@ -95,8 +95,8 @@ module noc_block_channelizer #(
     .SIMPLE_MODE(0),
     .RESIZE_OUTPUT_PACKET(0))
   axi_wrapper (
-    .clk(ce_clk),
-    .reset(ce_rst),
+    .bus_clk(bus_clk), .bus_rst(bus_rst),
+    .clk(ce_clk), .reset(ce_rst),
     .clear_tx_seqnum(clear_tx_seqnum),
     .next_dst(next_dst_sid),
     .set_stb(set_stb), .set_addr(set_addr), .set_data(set_data),
@@ -173,10 +173,12 @@ module noc_block_channelizer #(
   //
   // Readback registers
   // rb_stb set to 1'b1 on NoC Shell
+  wire [11:0] fft_size;
+  wire [8:0] avg_len;
   always @(posedge ce_clk) begin
     case(rb_addr)
       RB_NUM_TAPS : rb_data <= {NUM_TAPS};
-      SR_FFT_SIZE : rb_data <= {19'd0, fft_size};
+      SR_FFT_SIZE : rb_data <= {20'd0, fft_size};
       SR_AVG_LEN : rb_data <= {23'd0, avg_len};
       default : rb_data <= 64'h0BADC0DE0BADC0DE;
     endcase
@@ -185,7 +187,6 @@ module noc_block_channelizer #(
 
   /* Channelizer top level instantiation */
 
-wire [11:0] fft_size;
 axi_setting_reg #(
     .ADDR(SR_FFT_SIZE),
     .WIDTH(12))
@@ -202,10 +203,10 @@ set_fft_size (
     .o_tready(1'b1)
 );
 
-wire [8:0] avg_len;
+
 axi_setting_reg #(
     .ADDR(SR_AVG_LEN),
-    .WIDTH(12))
+    .WIDTH(9))
 set_avg_len (
     .clk(ce_clk),
     .reset(ce_rst),

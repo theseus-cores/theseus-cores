@@ -62,9 +62,9 @@ assign m_fifo_tready = m_axis_tready;
 assign m_axis_final_cnt = m_fifo_tdata[DATA_WIDTH + 16];
 assign s_axis_tready = ~almost_full;
 assign take_data = s_axis_tvalid & s_axis_tready & !sync_reset;
-assign final_cnt = (count_s == cnt_limit) ? 1'b1 : 1'b0;
-assign cnt_reset_0 = cnt_nib0_d0[7:0] == mask0 && cnt_nib1[7:0] == mask1;
-assign cnt_reset = (cnt_nib0[7:0] == mask0 && cnt_nib1[7:0] == mask1) ? 1'b1 : 1'b0;
+assign final_cnt = (count_s == 0) ? 1'b1 : 1'b0;
+assign cnt_reset_0 = (cnt_nib0_d0[7:0] == 0 && cnt_nib1[7:0] == 0) ? 1'b1 : 1'b0;
+assign cnt_reset = (cnt_nib0[7:0] == 0 && cnt_nib1[7:0] == 0) ? 1'b1 : 1'b0;
 
 assign count_s = {cnt_nib1[7:0], cnt_nib0_d0};
 assign count = m_fifo_tdata[DATA_WIDTH + 15:DATA_WIDTH];
@@ -76,8 +76,8 @@ always @(posedge clk)
 begin
 	if (sync_reset) begin
         reset_cnt <= 1'b0;
-        cnt_nib0 <= 0;
-        cnt_nib1 <= 0;
+        cnt_nib0 <= {1'b0, mask0};
+        cnt_nib1 <= {1'b0, mask1};
         startup <= 1'b1;
 	end else begin
         reset_cnt <= next_reset_cnt;
@@ -110,7 +110,7 @@ begin
     if (take_data) begin
         next_reset_cnt = cnt_reset;
         if (cnt_reset | startup) begin
-            next_cnt_nib0 = 9'b011111111;
+            next_cnt_nib0 = {1'b0, mask0};
         end else begin
             next_cnt_nib0 = cnt_nib0[7:0] - 1;
         end
@@ -118,7 +118,7 @@ begin
     end
 
     if (reset_cnt | cnt_reset_0) begin
-        next_cnt_nib1 = 9'b011111111;
+        next_cnt_nib1 = {1'b0, mask1};
     end else if (take_d0) begin
         next_cnt_nib1 = cnt_nib1[7:0] - cnt_nib0[8];
     end

@@ -299,10 +299,10 @@ begin
     end
 end
 
-  count_cycle_cw16_6 #(
-      .DATA_WIDTH(DATA_WIDTH))
-  u_in_count(
-      .clk(clk),
+count_cycle_cw16_6 #(
+    .DATA_WIDTH(DATA_WIDTH))
+u_in_count(
+    .clk(clk),
     .sync_reset(sync_reset),
     .s_axis_tvalid(s_axis_tvalid),
     .s_axis_tdata(s_axis_tdata),
@@ -312,35 +312,38 @@ end
     .m_axis_tdata(count_tdata),
     .m_axis_final_cnt(final_cnt),
     .count(count),
-    .m_axis_tready(count_tready));
+    .m_axis_tready(count_tready)
+);
 
-  // latency = 3
-  dp_block_read_first_ram #(
-      .DATA_WIDTH(DATA_WIDTH),
+// latency = 3
+dp_block_read_first_ram #(
+    .DATA_WIDTH(DATA_WIDTH),
     .ADDR_WIDTH(ADDR_WIDTH))
-  u_ram_0(
-      .clk(clk),
+u_ram_0(
+    .clk(clk),
     .wea(we0),
     .addra(wr_addr0),
     .addrb(rd_addr0),
     .dia(wr_data),
-    .dob(rd_data0));
+    .dob(rd_data0)
+);
 
   // latency = 3
-  dp_block_read_first_ram #(
-      .DATA_WIDTH(DATA_WIDTH),
+dp_block_read_first_ram #(
+    .DATA_WIDTH(DATA_WIDTH),
     .ADDR_WIDTH(ADDR_WIDTH))
-  u_ram_1(
-      .clk(clk),
+u_ram_1(
+    .clk(clk),
     .wea(we1),
     .addra(wr_addr1),
     .addrb(rd_addr1),
     .dia(wr_data),
-    .dob(rd_data1));
+    .dob(rd_data1)
+);
 
-  count_cycle_cw16_14 #(
-      .DATA_WIDTH(32))
-  u_out_count(
+count_cycle_cw16_14 #(
+    .DATA_WIDTH(32))
+u_out_count(
     .clk(clk),
     .sync_reset(sync_reset),
     .s_axis_tvalid(rd_tvalid),

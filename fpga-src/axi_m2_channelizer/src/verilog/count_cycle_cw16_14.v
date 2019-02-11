@@ -67,7 +67,7 @@ assign s_axis_tready = ~almost_full;
 assign take_data = s_axis_tvalid & s_axis_tready & !sync_reset;
 assign new_cnt = (take_data & (startup | start_sig));
 assign final_cnt = (count_s == cnt_limit) ? 1'b1 : 1'b0;
-assign cnt_reset_0 = cnt_nib0_d0[7:0] == mask0 && cnt_nib1[7:0] == mask1;
+assign cnt_reset_0 = (cnt_nib0_d0[7:0] == mask0 && cnt_nib1[7:0] == mask1) ? 1'b1 : 1'b0;
 assign cnt_reset = (cnt_nib0[7:0] == mask0 && cnt_nib1[7:0] == mask1) ? 1'b1 : 1'b0;
 
 assign count_s = {cnt_nib1[7:0], cnt_nib0_d0};
