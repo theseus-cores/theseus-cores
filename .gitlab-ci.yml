@@ -6,7 +6,6 @@ stages:
 .conditionals: &conditionals
   refs:
     - master
-    - merge_requests
     - branches
     - web
 
@@ -24,33 +23,39 @@ stages:
 
 build-uhd-master:
   stage: uhd
-  image: registry.gitlab.com/ejk/rf-community-docker/uhd:master-rfnoc-all
+  image: theseuscores/uhd:master-rfnoc-all
   script: *uhd-build
   only: *conditionals
 
 build-uhd-3.13:
   stage: uhd
-  image: registry.gitlab.com/ejk/rf-community-docker/uhd:UHD-3.13-rfnoc-all
+  image: theseuscores/uhd:UHD-3.13-rfnoc-all
   script: *uhd-build
   only: *conditionals
 
 build-gnuradio-maint-uhd-master:
   stage: gnuradio
-  image: registry.gitlab.com/ejk/rf-community-docker/gnuradio:maint-3.7-UHD-master-rfnoc
+  image: theseuscores/gnuradio:maint-3.7-UHD-master-rfnoc
   script: *gnuradio-build
   only: *conditionals
 
 build-gnuradio-maint-uhd-3.13:
   stage: gnuradio
-  image: registry.gitlab.com/ejk/rf-community-docker/gnuradio:maint-3.7-UHD-3.13-rfnoc
+  image: theseuscores/gnuradio:maint-3.7-UHD-3.13-rfnoc
   script: *gnuradio-build
   only: *conditionals
 
 fpga-test:
   stage: fpga
+  before_script:
+    - rm -rf ../uhd-fpga && git clone -b UHD-3.13 https://github.com/EttusResearch/fpga.git ../uhd-fpga
+    - source /opt/Xilinx/Vivado/2017.4/settings64.sh
   script:
-    - echo Hello World
+    - cd fpga-rfnoc/testbenches
+    - for d in ./*/ ; do (cd "$d" && pwd && make clean && ./runtestbench.sh); done
   only:
     - master
     - merge_requests
     - web
+  tags:
+    - vivado
