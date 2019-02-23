@@ -9,7 +9,7 @@ module noc_block_ddc_1_to_n #(
   parameter NOC_ID            = 64'hDDC0_1020_1234_5678,
   parameter STR_SINK_FIFOSIZE = 11,     //Log2 of input buffer size in 8-byte words (must hold at least 2 MTU packets)
   parameter MTU               = 10,     //Log2 of output buffer size in 8-byte words (must hold at least 1 MTU packet)
-  parameter NUM_CHAINS        = 2,
+  parameter NUM_CHAINS        = 4,
   parameter COMPAT_NUM_MAJOR  = 32'h2,
   parameter COMPAT_NUM_MINOR  = 32'h0,
   parameter NUM_HB            = 3,
