@@ -22,8 +22,6 @@ module noc_block_ddc_1_to_n_tb();
   `RFNOC_ADD_BLOCK(noc_block_ddc_1_to_n, 0 /* xbar port 0 */);
   `RFNOC_ADD_BLOCK(noc_block_fft, 1 /* xbar port 1 */);
 
-  localparam EXTENDED_TEST = 0;
-
   // FFT specific settings
   localparam [15:0] FFT_SIZE = 256;
   wire [7:0] fft_size_log2   = $clog2(FFT_SIZE);        // Set FFT size
@@ -262,16 +260,9 @@ module noc_block_ddc_1_to_n_tb();
     send_ramp(2);    // HBs enabled: 1, CIC rate: 1
     send_ramp(3);    // HBs enabled: 0, CIC rate: 3
     send_ramp(4);    // HBs enabled: 2, CIC rate: 1
-    if (EXTENDED_TEST) send_ramp(6);    // HBs enabled: 1, CIC rate: 3
     send_ramp(8);    // HBs enabled: 3, CIC rate: 1
     send_ramp(12);   // HBs enabled: 2, CIC rate: 3
     send_ramp(13);   // HBs enabled: 0, CIC rate: 13
-    if (EXTENDED_TEST) send_ramp(16);   // HBs enabled: 3, CIC rate: 2
-    if (EXTENDED_TEST) send_ramp(24);   // HBs enabled: 3, CIC rate: 3
-    send_ramp(40);   // HBs enabled: 3, CIC rate: 5
-    if (EXTENDED_TEST) send_ramp(200); // HBs enabled: 3, CIC rate: 25
-    send_ramp(255);  // HBs enabled: 0, CIC rate: 255
-    if (EXTENDED_TEST) send_ramp(2040); // HBs enabled: 3, CIC rate: 255
     `TEST_CASE_DONE(1);
 
     /********************************************************
@@ -353,11 +344,7 @@ module noc_block_ddc_1_to_n_tb();
     `RFNOC_CONNECT(noc_block_tb, noc_block_ddc_1_to_n, SC16, SPP);
     `RFNOC_CONNECT(noc_block_ddc_1_to_n, noc_block_tb, SC16, SPP);
     send_ramp(2,0,4);
-    send_ramp(3,0,4);
-    send_ramp(4,0,4);
-    if (EXTENDED_TEST) send_ramp(8,0,4);
-    send_ramp(13,0,4);
-    if (EXTENDED_TEST) send_ramp(24,0,4);
+    send_ramp(7,0,4);
     `TEST_CASE_DONE(1);
 
     // Calculate frequency response of filters
