@@ -7,7 +7,7 @@
 `timescale 1ns/1ps
 `define SIM_RUNTIME_US 10000
 `define NS_PER_TICK 1
-`define NUM_TEST_CASES 5
+`define NUM_TEST_CASES 6
 
 `include "sim_exec_report.vh"
 `include "sim_rfnoc_lib.svh"
@@ -17,7 +17,7 @@ module noc_block_ddc_1_to_n_tb();
   localparam BUS_CLK_PERIOD = $ceil(1e9/200e6);
   localparam CE_CLK_PERIOD  = $ceil(1e9/215e6);
   localparam NUM_CE         = 2;
-  localparam NUM_STREAMS    = 1;
+  localparam NUM_STREAMS    = 2;
   `RFNOC_SIM_INIT(NUM_CE, NUM_STREAMS, BUS_CLK_PERIOD, CE_CLK_PERIOD);
   `RFNOC_ADD_BLOCK(noc_block_ddc_1_to_n, 0 /* xbar port 0 */);
   `RFNOC_ADD_BLOCK(noc_block_fft, 1 /* xbar port 1 */);
@@ -54,7 +54,7 @@ module noc_block_ddc_1_to_n_tb();
   /********************************************************
   ** Helper Tasks
   ********************************************************/
-  task automatic set_decim_rate(input int decim_rate);
+  task automatic set_decim_rate(input int decim_rate, input int port=0);
     begin
       logic [7:0] cic_rate = 8'd0;
       logic [1:0] hb_enables = 2'b0;
@@ -76,8 +76,8 @@ module noc_block_ddc_1_to_n_tb();
       $display("Set decimation to %0d", decim_rate);
       $display("- Number of enabled HBs: %0d", hb_enables);
       $display("- CIC Rate:              %0d", cic_rate);
-      tb_streamer.write_reg(sid_noc_block_ddc_1_to_n, SR_N_ADDR, decim_rate);                  // Set decimation rate in AXI rate change
-      tb_streamer.write_reg(sid_noc_block_ddc_1_to_n, SR_DECIM_ADDR, {hb_enables,cic_rate});   // Enable HBs, set CIC rate
+      tb_streamer.write_reg(sid_noc_block_ddc_1_to_n, SR_N_ADDR, decim_rate, port);                  // Set decimation rate in AXI rate change
+      tb_streamer.write_reg(sid_noc_block_ddc_1_to_n, SR_DECIM_ADDR, {hb_enables,cic_rate}, port);   // Enable HBs, set CIC rate
 
     end
   endtask
@@ -131,6 +131,89 @@ module noc_block_ddc_1_to_n_tb();
             $sformat(s, "Incorrect packet size! Expected: %0d, Actual: %0d", PKT_SIZE_BYTES/8, recv_payload.size() + extra_samples);
             `ASSERT_ERROR(recv_payload.size() == PKT_SIZE_BYTES/8 + extra_samples, s);
           end
+          samples = 64'd0;
+          samples_old = 64'd0;
+          for (int i = 0; i < PKT_SIZE_BYTES/8; i++) begin
+            samples = recv_payload[i];
+            for (int j = 0; j < 4; j++) begin
+              // Need to check a range of values due to imperfect gain compensation
+              $sformat(s, "Ramp word %0d invalid! Expected: %0d-%0d, Received: %0d", 2*i,
+                  samples_old[16*j +: 16], samples_old[16*j +: 16]+16'd4, samples[16*j +: 16]);
+              `ASSERT_ERROR((samples_old[16*j +: 16]+16'd4 >= samples[16*j +: 16]) && (samples >= samples_old[16*j +: 16]), s);
+            end
+            samples_old = samples;
+          end
+          $display("Check complete");
+        end
+      join
+    end
+  endtask
+
+  task automatic send_multi_ramp (
+    input int unsigned decim_rate);
+    begin
+      set_decim_rate(decim_rate, 0);
+      set_decim_rate(decim_rate, 1);
+
+      // Setup DDC
+      tb_streamer.write_reg(sid_noc_block_ddc_1_to_n, SR_CONFIG_ADDR, 32'd1, 0);              // Enable clear EOB
+      tb_streamer.write_reg(sid_noc_block_ddc_1_to_n, SR_FREQ_ADDR, 32'd0, 0);                // CORDIC phase increment
+      tb_streamer.write_reg(sid_noc_block_ddc_1_to_n, SR_SCALE_IQ_ADDR, (1 << 14), 0); // Scaling, set to 1
+      tb_streamer.write_reg(sid_noc_block_ddc_1_to_n, SR_CONFIG_ADDR, 32'd1, 1);              // Enable clear EOB
+      tb_streamer.write_reg(sid_noc_block_ddc_1_to_n, SR_FREQ_ADDR, 32'd0, 1);                // CORDIC phase increment
+      tb_streamer.write_reg(sid_noc_block_ddc_1_to_n, SR_SCALE_IQ_ADDR, (1 << 14), 1); // Scaling, set to 1
+
+      // Send a short ramp, should pass through unchanged
+      fork
+        begin
+          cvita_payload_t send_payload;
+          cvita_metadata_t md;
+          $display("Send ramp");
+          for (int i = 0; i < decim_rate*(PKT_SIZE_BYTES/8); i++) begin
+            send_payload.push_back({16'(2*i/decim_rate), 16'(2*i/decim_rate), 16'((2*i+1)/decim_rate), 16'((2*i+1)/decim_rate)});
+          end
+          md.eob = 1;
+          tb_streamer.send(send_payload,md);
+          $display("Send ramp complete");
+        end
+        begin
+          string s;
+          logic [63:0] samples, samples_old;
+          cvita_payload_t recv_payload, temp_payload;
+          cvita_metadata_t md;
+          logic eob;
+          $display("Check ramp");
+          tb_streamer.recv(recv_payload,md,0);
+          $sformat(s, "Invalid EOB state! Expected %b, Received: %b", 1'b1, md.eob);
+          `ASSERT_ERROR(md.eob == 1'b1, s);
+          $sformat(s, "Incorrect packet size! Expected: %0d, Actual: %0d", PKT_SIZE_BYTES/8, recv_payload.size());
+          `ASSERT_ERROR(recv_payload.size() == PKT_SIZE_BYTES/8, s);
+          samples = 64'd0;
+          samples_old = 64'd0;
+          for (int i = 0; i < PKT_SIZE_BYTES/8; i++) begin
+            samples = recv_payload[i];
+            for (int j = 0; j < 4; j++) begin
+              // Need to check a range of values due to imperfect gain compensation
+              $sformat(s, "Ramp word %0d invalid! Expected: %0d-%0d, Received: %0d", 2*i,
+                  samples_old[16*j +: 16], samples_old[16*j +: 16]+16'd4, samples[16*j +: 16]);
+              `ASSERT_ERROR((samples_old[16*j +: 16]+16'd4 >= samples[16*j +: 16]) && (samples >= samples_old[16*j +: 16]), s);
+            end
+            samples_old = samples;
+          end
+          $display("Check complete");
+        end
+        begin
+          string s;
+          logic [63:0] samples, samples_old;
+          cvita_payload_t recv_payload, temp_payload;
+          cvita_metadata_t md;
+          logic eob;
+          $display("Check ramp");
+          tb_streamer.recv(recv_payload,md,1);
+          $sformat(s, "Invalid EOB state! Expected %b, Received: %b", 1'b1, md.eob);
+          `ASSERT_ERROR(md.eob == 1'b1, s);
+          $sformat(s, "Incorrect packet size! Expected: %0d, Actual: %0d", PKT_SIZE_BYTES/8, recv_payload.size());
+          `ASSERT_ERROR(recv_payload.size() == PKT_SIZE_BYTES/8, s);
           samples = 64'd0;
           samples_old = 64'd0;
           for (int i = 0; i < PKT_SIZE_BYTES/8; i++) begin
@@ -252,9 +335,12 @@ module noc_block_ddc_1_to_n_tb();
     ********************************************************/
     `TEST_CASE_START("Decimate by 1, 2, 3, 4, 6, 8, 12, 13, 16, 24, 40, 255, 2040");
     $display("Note: This test will take a long time!");
-    `RFNOC_CONNECT(noc_block_tb, noc_block_ddc_1_to_n, SC16, SPP);
-    `RFNOC_CONNECT(noc_block_ddc_1_to_n, noc_block_tb, SC16, SPP);
+    `RFNOC_CONNECT_BLOCK_PORT(noc_block_tb, 0, noc_block_ddc_1_to_n, 0, SC16, SPP);
+    `RFNOC_CONNECT_BLOCK_PORT(noc_block_tb, 1, noc_block_ddc_1_to_n, 1, SC16, SPP);
+    `RFNOC_CONNECT_BLOCK_PORT(noc_block_ddc_1_to_n, 0, noc_block_tb, 0, SC16, SPP);
+    `RFNOC_CONNECT_BLOCK_PORT(noc_block_ddc_1_to_n, 1, noc_block_tb, 1, SC16, SPP);
     tb_streamer.write_reg(sid_noc_block_ddc_1_to_n, SR_ENABLE_OUTPUT, 32'd1, 0); // Enable port 0 output
+    tb_streamer.write_reg(sid_noc_block_ddc_1_to_n, SR_ENABLE_OUTPUT, 32'd0, 1); // Disable port 1 output
     //readback regs
     tb_streamer.read_user_reg(sid_noc_block_ddc_1_to_n, RB_NUM_HB, num_hb);
     tb_streamer.read_user_reg(sid_noc_block_ddc_1_to_n, RB_CIC_MAX_DECIM, cic_max_decim);
@@ -264,8 +350,16 @@ module noc_block_ddc_1_to_n_tb();
     send_ramp(3);    // HBs enabled: 0, CIC rate: 3
     send_ramp(4);    // HBs enabled: 2, CIC rate: 1
     send_ramp(8);    // HBs enabled: 3, CIC rate: 1
-    send_ramp(12);   // HBs enabled: 2, CIC rate: 3
     send_ramp(13);   // HBs enabled: 0, CIC rate: 13
+    `TEST_CASE_DONE(1);
+
+    /********************************************************
+    ** Test 3.5 -- Test decimation rates on N-channels
+    ********************************************************/
+    `TEST_CASE_START("Decimate on 2 Channels from One input");
+    tb_streamer.write_reg(sid_noc_block_ddc_1_to_n, SR_ENABLE_OUTPUT, 32'd1, 1); // Enable port 1 output
+    send_multi_ramp(2); // 2x decimation on channel 0 and channel 1
+    tb_streamer.write_reg(sid_noc_block_ddc_1_to_n, SR_ENABLE_OUTPUT, 32'd0, 1); // Disable port 1 output
     `TEST_CASE_DONE(1);
 
     /********************************************************
@@ -347,7 +441,6 @@ module noc_block_ddc_1_to_n_tb();
     `RFNOC_CONNECT(noc_block_tb, noc_block_ddc_1_to_n, SC16, SPP);
     `RFNOC_CONNECT(noc_block_ddc_1_to_n, noc_block_tb, SC16, SPP);
     send_ramp(2,0,4);
-    send_ramp(7,0,4);
     `TEST_CASE_DONE(1);
 
     // Calculate frequency response of filters
