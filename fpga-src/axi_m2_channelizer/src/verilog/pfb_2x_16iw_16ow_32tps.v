@@ -69,7 +69,7 @@ reg [15:0] taps_addr, next_taps_addr;
 reg [24:0] taps_dina, next_taps_dina;
 reg [10:0] rom_addr, next_rom_addr;
 reg [24:0] rom_data, next_rom_data;
-reg reload_tready;
+reg reload_tready = 1'b0;
 
 reg new_coeffs, next_new_coeffs;
 reg [31:0] taps_we, next_taps_we;
@@ -92,10 +92,9 @@ assign phase_out = m_axis_tdata_s[10:0];
 assign fifo_tdata = {pouti, poutq, phase_d[38]};
 assign s_axis_reload_tready = reload_tready;
 
-assign bot_half = (phase_mux_d[2] == 1'b1 && fft_half[10:0] != 0) ? 1'b1 : 1'b0;
+assign bot_half = ((phase_mux_d[2] & fft_half[10:0]) != 0) ? 1'b1 : 1'b0;
 
 // logic implements the sample write address pipelining.
-integer n;
 always @(posedge clk)
 begin
 
@@ -117,36 +116,36 @@ begin
 
     wr_addr_d[0] <= wr_addr;
     wr_addr_d[3] <= {~rd_addr[12], rd_addr[11], rd_addr[10:0]};
-    wr_addr_d[6] = {~rd_addr_d[0][12], rd_addr_d[0][11], rd_addr_d[0][10:0]};
-    wr_addr_d[9] = {~rd_addr_d[1][12], rd_addr_d[1][11], rd_addr_d[1][10:0]};
-    wr_addr_d[12] = {~rd_addr_d[2][12], rd_addr_d[2][11], rd_addr_d[2][10:0]};
-    wr_addr_d[15] = {~rd_addr_d[3][12], rd_addr_d[3][11], rd_addr_d[3][10:0]};
-    wr_addr_d[18] = {~rd_addr_d[4][12], rd_addr_d[4][11], rd_addr_d[4][10:0]};
-    wr_addr_d[21] = {~rd_addr_d[5][12], rd_addr_d[5][11], rd_addr_d[5][10:0]};
-    wr_addr_d[24] = {~rd_addr_d[6][12], rd_addr_d[6][11], rd_addr_d[6][10:0]};
-    wr_addr_d[27] = {~rd_addr_d[7][12], rd_addr_d[7][11], rd_addr_d[7][10:0]};
-    wr_addr_d[30] = {~rd_addr_d[8][12], rd_addr_d[8][11], rd_addr_d[8][10:0]};
-    wr_addr_d[33] = {~rd_addr_d[9][12], rd_addr_d[9][11], rd_addr_d[9][10:0]};
-    wr_addr_d[36] = {~rd_addr_d[10][12], rd_addr_d[10][11], rd_addr_d[10][10:0]};
-    wr_addr_d[39] = {~rd_addr_d[11][12], rd_addr_d[11][11], rd_addr_d[11][10:0]};
-    wr_addr_d[42] = {~rd_addr_d[12][12], rd_addr_d[12][11], rd_addr_d[12][10:0]};
-    wr_addr_d[45] = {~rd_addr_d[13][12], rd_addr_d[13][11], rd_addr_d[13][10:0]};
-    wr_addr_d[48] = {~rd_addr_d[14][12], rd_addr_d[14][11], rd_addr_d[14][10:0]};
-    wr_addr_d[51] = {~rd_addr_d[15][12], rd_addr_d[15][11], rd_addr_d[15][10:0]};
-    wr_addr_d[54] = {~rd_addr_d[16][12], rd_addr_d[16][11], rd_addr_d[16][10:0]};
-    wr_addr_d[57] = {~rd_addr_d[17][12], rd_addr_d[17][11], rd_addr_d[17][10:0]};
-    wr_addr_d[60] = {~rd_addr_d[18][12], rd_addr_d[18][11], rd_addr_d[18][10:0]};
-    wr_addr_d[63] = {~rd_addr_d[19][12], rd_addr_d[19][11], rd_addr_d[19][10:0]};
-    wr_addr_d[66] = {~rd_addr_d[20][12], rd_addr_d[20][11], rd_addr_d[20][10:0]};
-    wr_addr_d[69] = {~rd_addr_d[21][12], rd_addr_d[21][11], rd_addr_d[21][10:0]};
-    wr_addr_d[72] = {~rd_addr_d[22][12], rd_addr_d[22][11], rd_addr_d[22][10:0]};
-    wr_addr_d[75] = {~rd_addr_d[23][12], rd_addr_d[23][11], rd_addr_d[23][10:0]};
-    wr_addr_d[78] = {~rd_addr_d[24][12], rd_addr_d[24][11], rd_addr_d[24][10:0]};
-    wr_addr_d[81] = {~rd_addr_d[25][12], rd_addr_d[25][11], rd_addr_d[25][10:0]};
-    wr_addr_d[84] = {~rd_addr_d[26][12], rd_addr_d[26][11], rd_addr_d[26][10:0]};
-    wr_addr_d[87] = {~rd_addr_d[27][12], rd_addr_d[27][11], rd_addr_d[27][10:0]};
-    wr_addr_d[90] = {~rd_addr_d[28][12], rd_addr_d[28][11], rd_addr_d[28][10:0]};
-    wr_addr_d[93] = {~rd_addr_d[29][12], rd_addr_d[29][11], rd_addr_d[29][10:0]};
+    wr_addr_d[6] <= {~rd_addr_d[0][12], rd_addr_d[0][11], rd_addr_d[0][10:0]};
+    wr_addr_d[9] <= {~rd_addr_d[1][12], rd_addr_d[1][11], rd_addr_d[1][10:0]};
+    wr_addr_d[12] <= {~rd_addr_d[2][12], rd_addr_d[2][11], rd_addr_d[2][10:0]};
+    wr_addr_d[15] <= {~rd_addr_d[3][12], rd_addr_d[3][11], rd_addr_d[3][10:0]};
+    wr_addr_d[18] <= {~rd_addr_d[4][12], rd_addr_d[4][11], rd_addr_d[4][10:0]};
+    wr_addr_d[21] <= {~rd_addr_d[5][12], rd_addr_d[5][11], rd_addr_d[5][10:0]};
+    wr_addr_d[24] <= {~rd_addr_d[6][12], rd_addr_d[6][11], rd_addr_d[6][10:0]};
+    wr_addr_d[27] <= {~rd_addr_d[7][12], rd_addr_d[7][11], rd_addr_d[7][10:0]};
+    wr_addr_d[30] <= {~rd_addr_d[8][12], rd_addr_d[8][11], rd_addr_d[8][10:0]};
+    wr_addr_d[33] <= {~rd_addr_d[9][12], rd_addr_d[9][11], rd_addr_d[9][10:0]};
+    wr_addr_d[36] <= {~rd_addr_d[10][12], rd_addr_d[10][11], rd_addr_d[10][10:0]};
+    wr_addr_d[39] <= {~rd_addr_d[11][12], rd_addr_d[11][11], rd_addr_d[11][10:0]};
+    wr_addr_d[42] <= {~rd_addr_d[12][12], rd_addr_d[12][11], rd_addr_d[12][10:0]};
+    wr_addr_d[45] <= {~rd_addr_d[13][12], rd_addr_d[13][11], rd_addr_d[13][10:0]};
+    wr_addr_d[48] <= {~rd_addr_d[14][12], rd_addr_d[14][11], rd_addr_d[14][10:0]};
+    wr_addr_d[51] <= {~rd_addr_d[15][12], rd_addr_d[15][11], rd_addr_d[15][10:0]};
+    wr_addr_d[54] <= {~rd_addr_d[16][12], rd_addr_d[16][11], rd_addr_d[16][10:0]};
+    wr_addr_d[57] <= {~rd_addr_d[17][12], rd_addr_d[17][11], rd_addr_d[17][10:0]};
+    wr_addr_d[60] <= {~rd_addr_d[18][12], rd_addr_d[18][11], rd_addr_d[18][10:0]};
+    wr_addr_d[63] <= {~rd_addr_d[19][12], rd_addr_d[19][11], rd_addr_d[19][10:0]};
+    wr_addr_d[66] <= {~rd_addr_d[20][12], rd_addr_d[20][11], rd_addr_d[20][10:0]};
+    wr_addr_d[69] <= {~rd_addr_d[21][12], rd_addr_d[21][11], rd_addr_d[21][10:0]};
+    wr_addr_d[72] <= {~rd_addr_d[22][12], rd_addr_d[22][11], rd_addr_d[22][10:0]};
+    wr_addr_d[75] <= {~rd_addr_d[23][12], rd_addr_d[23][11], rd_addr_d[23][10:0]};
+    wr_addr_d[78] <= {~rd_addr_d[24][12], rd_addr_d[24][11], rd_addr_d[24][10:0]};
+    wr_addr_d[81] <= {~rd_addr_d[25][12], rd_addr_d[25][11], rd_addr_d[25][10:0]};
+    wr_addr_d[84] <= {~rd_addr_d[26][12], rd_addr_d[26][11], rd_addr_d[26][10:0]};
+    wr_addr_d[87] <= {~rd_addr_d[27][12], rd_addr_d[27][11], rd_addr_d[27][10:0]};
+    wr_addr_d[90] <= {~rd_addr_d[28][12], rd_addr_d[28][11], rd_addr_d[28][10:0]};
+    wr_addr_d[93] <= {~rd_addr_d[29][12], rd_addr_d[29][11], rd_addr_d[29][10:0]};
 
     wr_addr_d[1] <= wr_addr_d[0];
     wr_addr_d[2] <= wr_addr_d[1];
@@ -225,9 +224,10 @@ begin
     if (tvalid_d[6] == 1'b1) begin
         next_tvalid_pipe[42:7] = {tvalid_pipe[41:7],tvalid_pipe[6]};
     end else begin
-        next_tvalid_pipe[42:7] <= tvalid_pipe[42:7];
+        next_tvalid_pipe[42:7] = tvalid_pipe[42:7];
     end
 end
+
 //tlast_proc 
 always @*
 begin
@@ -327,6 +327,7 @@ begin
 end
 
 // reload process
+integer n;
 always @*
 begin
     next_taps_addr = taps_addr;
@@ -423,11 +424,11 @@ begin
     if (tvalid_d[2] == 1'b1) begin
         next_rd_addr_d[0] = rd_addr;
         for (n=1; n<31; n=n+1) begin
-            next_rd_addr_d[n] <= rd_addr_d[n-1];
+            next_rd_addr_d[n] = rd_addr_d[n-1];
         end
     end else begin
         for (n=0; n<31; n=n+1) begin
-            next_rd_addr_d[n] <= rd_addr_d[n];
+            next_rd_addr_d[n] = rd_addr_d[n];
         end
     end
 end
@@ -571,7 +572,7 @@ dsp48_pfb_rnd pfb_rnd_q (
 
 axi_fifo_3 #(
     .DATA_WIDTH(43),
-    .ALMOST_FULL_THRESH(30),
+    .ALMOST_FULL_THRESH(16),
     .ADDR_WIDTH(6))
 u_fifo
 (

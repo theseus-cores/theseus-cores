@@ -8,9 +8,17 @@ module dsp48_pfb_rnd
 );
 
 wire [47:0] p_s;
+reg p_d = 1'b0;
 
 
 assign p = p_s[38:23];
+
+always @(posedge clk)
+begin
+    if (ce == 1'b1) begin
+		p_d <= p_s[0];
+    end
+end
 
 DSP48E1 #(
     // Feature Control Attributes: Data Path Selection
@@ -42,7 +50,7 @@ DSP48E1 #(
     .PREG(1), // Number of pipeline stages for P (0 or 1)
     .USE_SIMD("ONE48") // SIMD selection ("ONE48", "TWO24", "FOUR12")
 )
-dsp_48 (
+dsp_48_inst (
     // Cascade: 30-bit (each) output: Cascade Ports
     .ACOUT(), // 30-bit output: A port cascade output
     .BCOUT(), // 18-bit output: B port cascade output
@@ -66,27 +74,27 @@ dsp_48 (
     // Control: 4-bit (each) input: Control Inputs/Status Bits
     .ALUMODE(4'd0), // 4-bit input: ALU control input
     .CARRYINSEL(3'd0), // 3-bit input: Carry select input
-    .CEINMODE(ce), // 1-bit input: Clock enable input for INMODEREG
+    .CEINMODE(1'b1), // 1-bit input: Clock enable input for INMODEREG
     .CLK(clk), // 1-bit input: Clock input
     .INMODE(5'd19), // 5-bit input: INMODE control input
     .OPMODE(7'd28), // 7-bit input: Operation mode input
     .RSTINMODE(1'b0), // 1-bit input: Reset input for INMODEREG
     // Data: 30-bit (each) input: Data Ports
     .A(30'd0), // 30-bit input: A data input
-    .B(18'd0), // 18-bit input: B data input
+    .B(18'd1), // 18-bit input: B data input
     .C(48'd4194303), // 48-bit input: C data input
-    .CARRYIN(p[0]), // 1-bit input: Carry input signal
+    .CARRYIN(p_d), // 1-bit input: Carry input signal
     .D(25'd0), // 25-bit input: D data input
     // Reset/Clock Enable: 1-bit (each) input: Reset/Clock Enable Inputs
     .CEA1(ce), // 1-bit input: Clock enable input for 1st stage AREG
     .CEA2(1'b0), // 1-bit input: Clock enable input for 2nd stage AREG
     .CEAD(ce), // 1-bit input: Clock enable input for ADREG
-    .CEALUMODE(ce), // 1-bit input: Clock enable input for ALUMODERE
+    .CEALUMODE(1'b1), // 1-bit input: Clock enable input for ALUMODERE
     .CEB1(ce), // 1-bit input: Clock enable input for 1st stage BREG
     .CEB2(1'b0), // 1-bit input: Clock enable input for 2nd stage BREG
     .CEC(ce), // 1-bit input: Clock enable input for CREG
     .CECARRYIN(ce), // 1-bit input: Clock enable input for CARRYINREG
-    .CECTRL(ce), // 1-bit input: Clock enable input for OPMODEREG and CARRYINSELREG
+    .CECTRL(1'b1), // 1-bit input: Clock enable input for OPMODEREG and CARRYINSELREG
     .CED(ce), // 1-bit input: Clock enable input for DREG
     .CEM(ce), // 1-bit input: Clock enable input for MREG
     .CEP(ce), // 1-bit input: Clock enable input for PREG

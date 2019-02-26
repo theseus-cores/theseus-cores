@@ -47,7 +47,7 @@ DSP48E1 #(
     .PREG(1), // Number of pipeline stages for P (0 or 1)
     .USE_SIMD("ONE48") // SIMD selection ("ONE48", "TWO24", "FOUR12")
 )
-dsp_48 (
+dsp_48_inst (
     // Cascade: 30-bit (each) output: Cascade Ports
     .ACOUT(), // 30-bit output: A port cascade output
     .BCOUT(), // 18-bit output: B port cascade output
@@ -71,7 +71,7 @@ dsp_48 (
     // Control: 4-bit (each) input: Control Inputs/Status Bits
     .ALUMODE(4'd0), // 4-bit input: ALU control input
     .CARRYINSEL(3'd0), // 3-bit input: Carry select input
-    .CEINMODE(ce), // 1-bit input: Clock enable input for INMODEREG
+    .CEINMODE(1'b1), // 1-bit input: Clock enable input for INMODEREG
     .CLK(clk), // 1-bit input: Clock input
     .INMODE(5'd0), // 5-bit input: INMODE control input
     .OPMODE(7'd21), // 7-bit input: Operation mode input
@@ -86,12 +86,12 @@ dsp_48 (
     .CEA1(ce), // 1-bit input: Clock enable input for 1st stage AREG
     .CEA2(ce), // 1-bit input: Clock enable input for 2nd stage AREG
     .CEAD(ce), // 1-bit input: Clock enable input for ADREG
-    .CEALUMODE(ce), // 1-bit input: Clock enable input for ALUMODERE
+    .CEALUMODE(1'b1), // 1-bit input: Clock enable input for ALUMODERE
     .CEB1(ce), // 1-bit input: Clock enable input for 1st stage BREG
     .CEB2(ce), // 1-bit input: Clock enable input for 2nd stage BREG
     .CEC(ce), // 1-bit input: Clock enable input for CREG
     .CECARRYIN(ce), // 1-bit input: Clock enable input for CARRYINREG
-    .CECTRL(ce), // 1-bit input: Clock enable input for OPMODEREG and CARRYINSELREG
+    .CECTRL(1'b1), // 1-bit input: Clock enable input for OPMODEREG and CARRYINSELREG
     .CED(ce), // 1-bit input: Clock enable input for DREG
     .CEM(ce), // 1-bit input: Clock enable input for MREG
     .CEP(ce), // 1-bit input: Clock enable input for PREG

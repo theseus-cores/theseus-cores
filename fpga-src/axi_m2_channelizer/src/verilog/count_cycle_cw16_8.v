@@ -1,14 +1,14 @@
 /*****************************************************************************/
 //
 // Author : PJV
-// File : count_cycle_cw16_6
+// File : count_cycle_cw16_8
 // Description : Implement simple count / data alignment logic while optimizing pipelining.
 //                Useful for aligning data with addition of metadata
 //
 //
 /*****************************************************************************/
 
-module count_cycle_cw16_6 #( 
+module count_cycle_cw16_8 #( 
     parameter DATA_WIDTH=32)
 (
     input clk,
@@ -48,8 +48,9 @@ reg reset_cnt, next_reset_cnt;
 wire [7:0] mask0;
 wire [7:0] mask1;
 
-wire take_data;
+wire take_data, tready_s;
 wire final_cnt, cnt_reset;
+wire fifo_tready;
 wire [DATA_WIDTH + 16:0] fifo_tdata;
 wire cnt_reset_0;
 reg take_d0;
@@ -60,8 +61,9 @@ assign m_axis_tvalid = m_fifo_tvalid;
 assign m_axis_tdata = m_fifo_tdata[DATA_MSB:0];
 assign m_fifo_tready = m_axis_tready;
 assign m_axis_final_cnt = m_fifo_tdata[DATA_WIDTH + 16];
-assign s_axis_tready = ~almost_full;
-assign take_data = s_axis_tvalid & s_axis_tready & !sync_reset;
+assign tready_s = ~almost_full;
+assign take_data = s_axis_tvalid & tready_s & !sync_reset;
+assign s_axis_tready = tready_s;
 assign final_cnt = (count_s == 0) ? 1'b1 : 1'b0;
 assign cnt_reset_0 = (cnt_nib0_d0[7:0] == 0 && cnt_nib1[7:0] == 0) ? 1'b1 : 1'b0;
 assign cnt_reset = (cnt_nib0[7:0] == 0 && cnt_nib1[7:0] == 0) ? 1'b1 : 1'b0;
@@ -128,7 +130,7 @@ end
 
 axi_fifo_18 #(
     .DATA_WIDTH(DATA_WIDTH + 17),
-    .ALMOST_FULL_THRESH(5),
+    .ALMOST_FULL_THRESH(4),
     .ADDR_WIDTH(3))
 u_fifo
 (
@@ -137,7 +139,7 @@ u_fifo
 
     .s_axis_tvalid(take_d1),
     .s_axis_tdata(fifo_tdata),
-    .s_axis_tready(),
+    .s_axis_tready(fifo_tready),
 
     .almost_full(almost_full),
     .m_axis_tvalid(m_fifo_tvalid),

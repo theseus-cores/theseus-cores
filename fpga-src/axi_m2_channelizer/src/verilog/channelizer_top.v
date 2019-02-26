@@ -89,12 +89,13 @@ wire fft_tready;  // fft config signals.
 reg fft_config_tvalid, next_fft_config_tvalid;
 wire fft_config_tready;
 wire [15:0] fft_config_tdata;  // fft status signals
-wire [7:0] m_axis_status_tdata;
-wire m_axis_status_tvalid;
-wire m_axis_status_tready;  // signal circ_phase : std_logic_vector(10 downto 0);
 wire m_axis_tvalid_s;
 wire [31:0] m_axis_tdata_s;
 wire [23:0] m_axis_tuser_s;
+
+wire [7:0] m_axis_status_tdata;
+wire m_axis_status_tvalid;
+wire m_axis_status_tready = 1'b1;
 
 localparam S_CONFIG = 0, S_IDLE = 1;
 reg config_state, next_config_state;
@@ -123,18 +124,20 @@ reg config_state, next_config_state;
     wire [63:0] pfb_st_tdata;
     wire [63:0] fft_st_tdata;
     wire [63:0] exp_st_tdata;
+    wire [31:0] circ_st_tdata;
 
     assign buffer_st_tdata = {21'd0, buffer_phase, buffer_tdata};
     assign pfb_st_tdata = {21'd0, pfb_phase, pfb_tdata};
     assign fft_st_tdata = {8'd0, fft_tuser, fft_tdata};
     assign exp_st_tdata = {8'd0, m_axis_tuser_s, m_axis_tdata_s};
+    assign circ_st_tdata = circ_tdata_s;
 
-    assign buffer_take = (buffer_tvalid & buffer_tready) ? 1'b1 : 1'b0;
-    assign pfb_take = (pfb_tvalid & pfb_tready) ? 1'b1 : 1'b0;
+    assign buffer_take = buffer_tvalid & buffer_tready;
+    assign pfb_take = pfb_tvalid & pfb_tready;
 
-    assign circ_take = (circ_tvalid & circ_tready) ? 1'b1 : 1'b0;
-    assign fft_take = (fft_tvalid & fft_tready) ? 1'b1 : 1'b0;
-    assign exp_take = (m_axis_tvalid_s & m_axis_tready) ? 1'b1 : 1'b0;
+    assign circ_take = circ_tvalid & circ_tready;
+    assign fft_take = fft_tvalid & fft_tready;
+    assign exp_take = m_axis_tvalid_s & m_axis_tready;
 
 `endif
 
@@ -146,6 +149,8 @@ reg config_state, next_config_state;
   assign fft_config_tdata = {11'b00000000000,nfft};
   assign fft_tdata = {fft_tdata_s[15:0],fft_tdata_s[31:16]};
   assign circ_tdata = {circ_tdata_s[15:0],circ_tdata_s[31:16]};
+  assign s_axis_reload_tready = 1'b1;
+
 
 always @*
 begin
@@ -338,7 +343,7 @@ u_input_buffer(
         .fd(fft_descr),
 
         .valid(fft_take),
-        .word(fft_tdata),
+        .word(fft_st_tdata),
 
         .wr_file(1'b0),
 
@@ -454,10 +459,6 @@ exp_shifter u_shifter(
 
     .fft_size(fft_size_s),
     .avg_len(avg_len),
-
-    .s_axis_status_tvalid(m_axis_status_tvalid),
-    .s_axis_status_tdata(m_axis_status_tdata),
-    .s_axis_status_tready(m_axis_status_tready),
 
     .m_axis_tvalid(m_axis_tvalid_s),
     .m_axis_tdata(m_axis_tdata_s),

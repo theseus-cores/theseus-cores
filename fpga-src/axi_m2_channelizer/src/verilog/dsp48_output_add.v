@@ -10,11 +10,17 @@ module dsp48_output_add
 wire [29:0] a_s;
 wire [24:0] d_s;
 wire [47:0] p_s;
+reg p_d = 1'b0;
 
 
 assign p = p_s[16:1];
 assign a_s = {{14{a[15]}}, a};
 assign d_s = {{9{d[15]}}, d};
+
+always @(posedge clk)
+begin
+	p_d <= p_s[0];
+end
 
 DSP48E1 #(
     // Feature Control Attributes: Data Path Selection
@@ -46,7 +52,7 @@ DSP48E1 #(
     .PREG(1), // Number of pipeline stages for P (0 or 1)
     .USE_SIMD("ONE48") // SIMD selection ("ONE48", "TWO24", "FOUR12")
 )
-dsp_48 (
+dsp_48_inst (
     // Cascade: 30-bit (each) output: Cascade Ports
     .ACOUT(), // 30-bit output: A port cascade output
     .BCOUT(), // 18-bit output: B port cascade output
@@ -77,7 +83,7 @@ dsp_48 (
     .RSTINMODE(1'b0), // 1-bit input: Reset input for INMODEREG
     // Data: 30-bit (each) input: Data Ports
     .A(a_s), // 30-bit input: A data input
-    .B(18'd0), // 18-bit input: B data input
+    .B(18'd1), // 18-bit input: B data input
     .C(48'd0), // 48-bit input: C data input
     .CARRYIN(a[0]), // 1-bit input: Carry input signal
     .D(d_s), // 25-bit input: D data input

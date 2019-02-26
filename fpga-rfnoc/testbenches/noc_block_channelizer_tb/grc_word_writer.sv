@@ -165,22 +165,23 @@ begin:array_fil
 	end
 end
 
+integer kk;
+integer jj;
+integer result;
+integer lidx;
+
 always @*
 begin:file_write
-	integer ii;
-	integer jj;
-	integer result;
-	integer lidx, ridx;
 
 	if (sync_reset == 1'b1) begin
 		tsk_reset();
 	end else if (fifo_full_d2 == 1'b1) begin
-		for (ii = 0; ii < (index_wr + 1); ii = ii + 1) begin
+		for (kk = 0; kk < (index_wr + 1); kk = kk + 1) begin
 			for (jj = 0; jj < NUM_BYTES; jj = jj + 1) begin
 				lidx = (NUM_BYTES - jj) * 8 - 1;
-				$fwrite(fd, "%c", word_array_copy[ii][lidx-:8]);
+				$fwrite(fd, "%c", word_array_copy[kk][lidx-:8]);
 			end
-			$display("writing : %d, %d", word_array_copy[ii], ii);
+			// $display("writing : %d, %d", word_array_copy[ii], ii);
 		end
 		result = $ftell(fd);
 		$display("File has %0d bytes", result);

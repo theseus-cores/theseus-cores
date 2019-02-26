@@ -44,12 +44,12 @@ reg full1, next_full1;
 reg [ADDR_MSB:0] wr_half;
 reg [ADDR_WIDTH:0] wr_full;
 
-parameter WR_ZEROS = 1'b0;
 reg [ADDR_MSB:0] wr_full_slice, wr_full_m1;
 reg [ADDR_MSB:0] wr_ptr0, next_wr_ptr0;
 reg [ADDR_MSB:0] wr_ptr1, next_wr_ptr1;
 reg [ADDR_MSB:0] rd_ptr0, next_rd_ptr0;
 reg [ADDR_MSB:0] rd_ptr1, next_rd_ptr1;
+
 reg [ADDR_MSB:0] rd_ptr0_d0, rd_ptr0_d1, rd_ptr0_d2;
 reg [ADDR_MSB:0] rd_ptr1_d0, rd_ptr1_d1, rd_ptr1_d2;
 
@@ -64,10 +64,12 @@ wire [DATA_WIDTH - 1:0] rd_data0, rd_data1;
 reg [DATA_WIDTH - 1:0] wr_data, next_wr_data;
 
 wire [ADDR_MSB:0] phase_s;
+
 reg [2:0] rd_side_d;
 reg [2:0] rd_en_d;
 reg [2:0] rd_tlast_d;
 reg rd_tlast, next_rd_tlast;
+
 reg tvalid_fifo, next_tvalid_fifo;
 reg [DATA_WIDTH + ADDR_MSB:0] tdata_fifo, next_tdata_fifo;
 wire [DATA_WIDTH + ADDR_MSB:0] m_axis_tdata_s;
@@ -142,9 +144,11 @@ begin
     rd_en_d <= {rd_en_d[1:0],rd_en};
     rd_side_d <= {rd_side_d[1:0],rd_side};
     rd_tlast_d <= {rd_tlast_d[1:0],rd_tlast};
+
     rd_ptr0_d0 <= rd_ptr0;
     rd_ptr0_d1 <= rd_ptr0_d0;
     rd_ptr0_d2 <= rd_ptr0_d1;
+
     rd_ptr1_d0 <= rd_ptr1;
     rd_ptr1_d1 <= rd_ptr1_d0;
     rd_ptr1_d2 <= rd_ptr1_d1;
@@ -180,7 +184,7 @@ always @*
 begin
     next_we0 = 1'b0;
     next_we1 = 1'b0;
-    next_wr_data = {(((DATA_WIDTH - 1))-((0))+1){1'b0}};
+    next_wr_data = 0;
     next_wr_ptr0 = wr_ptr0;
     next_wr_ptr1 = wr_ptr1;
     next_wr_side = wr_side;
@@ -198,7 +202,7 @@ begin
             if (full1 == 1'b0) begin
                 next_we1 = 1'b1;
                 next_wr_ptr1 = (phase_s + wr_half) & wr_full_slice;
-                if((phase_s == wr_full_slice)) begin
+                if (phase_s == wr_full_slice) begin
                     next_wr_side = 1'b0;
                 end
             end
@@ -224,7 +228,7 @@ begin
                 next_rd_en = 1'b1;
                 next_rd_ptr0 = 0;
                 next_state = S_READ0;
-            end else if((rd_side == 1'b0 && full1 == 1'b1 && almost_full == 1'b0)) begin
+            end else if (rd_side == 1'b0 && full1 == 1'b1 && almost_full == 1'b0) begin
                 next_rd_side = 1'b1;
                 next_rd_en = 1'b1;
                 next_rd_ptr1 = 0;
@@ -233,10 +237,10 @@ begin
         end
         S_READ0 :
         begin
-            if((almost_full == 1'b0)) begin
+            if (almost_full == 1'b0) begin
                 next_rd_en = 1'b1;
                 next_rd_ptr0 = rd_ptr0 + 1;
-                if((rd_ptr0 == (wr_full_m1))) begin
+                if (rd_ptr0 == (wr_full_m1)) begin
                     next_state = S_IDLE;
                     next_rd_tlast = 1'b1;
                 end
@@ -264,11 +268,11 @@ always @*
 begin
     next_tvalid_fifo = 1'b0;
     next_tlast_fifo = 1'b0;
-    next_tdata_fifo = {(((DATA_WIDTH + ADDR_MSB))-((0))+1){1'b0}};
+    next_tdata_fifo = 0;
     if (rd_en_d[2] == 1'b1) begin
         next_tvalid_fifo = 1'b1;
         next_tlast_fifo = rd_tlast_d[2];
-        if((rd_side_d[2] == 1'b0)) begin
+        if (rd_side_d[2] == 1'b0) begin
             next_tdata_fifo = tdata0;
         end else begin
             next_tdata_fifo = tdata1;
@@ -310,7 +314,7 @@ out_fifo(
     .s_axis_tvalid(tvalid_fifo),
     .s_axis_tdata(tdata_fifo),
     .s_axis_tlast(tlast_fifo),
-    .s_axis_tready(/* open */),
+    .s_axis_tready(),
     .almost_full(almost_full),
     .m_axis_tvalid(m_axis_tvalid),
     .m_axis_tdata(m_axis_tdata_s),

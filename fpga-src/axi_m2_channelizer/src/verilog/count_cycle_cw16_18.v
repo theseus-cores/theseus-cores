@@ -1,14 +1,14 @@
 /*****************************************************************************/
 //
 // Author : PJV
-// File : count_cycle_cw16_14
+// File : count_cycle_cw16_18
 // Description : Implement simple count / data alignment logic while optimizing pipelining.
 //                Useful for aligning data with addition of metadata
 //
 //
 /*****************************************************************************/
 
-module count_cycle_cw16_14 #( 
+module count_cycle_cw16_18 #( 
     parameter DATA_WIDTH=32)
 (
     input clk,
@@ -17,8 +17,9 @@ module count_cycle_cw16_14 #(
     input s_axis_tvalid,
     input [DATA_WIDTH-1:0] s_axis_tdata,
     input [15:0] cnt_limit,
-    input start_sig,
     output s_axis_tready,
+    input start_sig,
+    output af,
 
     output m_axis_tvalid,
     output [DATA_WIDTH-1:0] m_axis_tdata,
@@ -49,8 +50,9 @@ reg reset_cnt, next_reset_cnt;
 wire [7:0] mask0;
 wire [7:0] mask1;
 
-wire take_data;
+wire take_data, tready_s;
 wire final_cnt, cnt_reset;
+wire fifo_tready;
 wire [DATA_WIDTH + 16:0] fifo_tdata;
 wire cnt_reset_0;
 reg take_d0;
@@ -63,8 +65,10 @@ assign m_axis_tvalid = m_fifo_tvalid;
 assign m_axis_tdata = m_fifo_tdata[DATA_MSB:0];
 assign m_fifo_tready = m_axis_tready;
 assign m_axis_final_cnt = m_fifo_tdata[DATA_WIDTH + 16];
-assign s_axis_tready = ~almost_full;
-assign take_data = s_axis_tvalid & s_axis_tready & !sync_reset;
+assign tready_s = fifo_tready;
+assign af = almost_full;
+assign take_data = s_axis_tvalid & tready_s & !sync_reset;
+assign s_axis_tready = tready_s;
 assign new_cnt = (take_data & (startup | start_sig));
 assign final_cnt = (count_s == cnt_limit) ? 1'b1 : 1'b0;
 assign cnt_reset_0 = (cnt_nib0_d0[7:0] == mask0 && cnt_nib1[7:0] == mask1) ? 1'b1 : 1'b0;
@@ -135,7 +139,7 @@ end
 axi_fifo_18 #(
     .DATA_WIDTH(DATA_WIDTH + 17),
     .ALMOST_FULL_THRESH(16),
-    .ADDR_WIDTH(3))
+    .ADDR_WIDTH(5))
 u_fifo
 (
     .clk(clk),
@@ -143,7 +147,7 @@ u_fifo
 
     .s_axis_tvalid(take_d1),
     .s_axis_tdata(fifo_tdata),
-    .s_axis_tready(),
+    .s_axis_tready(fifo_tready),
 
     .almost_full(almost_full),
     .m_axis_tvalid(m_fifo_tvalid),

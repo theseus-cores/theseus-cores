@@ -81,13 +81,14 @@ reg rd_tvalid, next_rd_tvalid;
 reg bottom_active, next_bottom_active;
 reg [3:0] rd_tvalid_d, rd_start_d;
 reg rd_start, next_rd_start;
-wire rd_tready;
+wire rd_tready, almost_full;
 reg rd0_finish, next_rd0_finish, rd1_finish, next_rd1_finish;
 wire [SAMPLE_WIDTH - 1:0] a_i, a_q, d_i, d_q;
 wire [SAMPLE_WIDTH - 1:0] i_out, q_out;
 wire [15:0] phase_s;
 wire write0, write1;
 
+assign rd_tready = ~almost_full;
 assign phase_out = phase_s[FFT_SIZE_WIDTH - 2:0];
 assign phase_wr = phase_in[ADDR_MSB:0];
 assign roll_over = roll_over_s[ADDR_MSB:0];
@@ -117,14 +118,14 @@ assign we1_bottom = we1 & bottom_active;
 always @(posedge clk, posedge sync_reset)
 begin
     if (sync_reset == 1'b1) begin
-        wr_ptr0 <= {(((ADDR_WIDTH))-((0))+1){1'b0}};
-        wr_ptr1 <= {(((ADDR_WIDTH))-((0))+1){1'b0}};
+        wr_ptr0 <= 0;
+        wr_ptr1 <= 0;
         wr_side <= 1'b0;
-        rd_ptr0 <= {(((ADDR_WIDTH))-((0))+1){1'b0}};
-        rd_ptr1 <= {(((ADDR_WIDTH))-((0))+1){1'b0}};
+        rd_ptr0 <= 0;
+        rd_ptr1 <= 0;
         state <= S_IDLE;
         start_sig <= 1'b0;
-        rd_tdata <= {((((DATA_WIDTH * 2) - 1))-((0))+1){1'b0}};
+        rd_tdata <= 0;
         rd_en <= 1'b0;
         rd_side <= 1'b1;
         rd_tvalid <= 1'b0;
@@ -170,7 +171,7 @@ begin
     tready = 1'b0;
     next_we0 = 1'b0;
     next_we1 = 1'b0;
-    next_wr_data = {(((DATA_WIDTH - 1))-((0))+1){1'b0}};
+    next_wr_data = 0;
     next_wr_ptr0 = wr_ptr0;
     next_wr_ptr1 = wr_ptr1;
     next_wr_side = wr_side;
@@ -187,10 +188,10 @@ begin
                 tready = 1'b1;
                 next_wr_data = s_axis_tdata;
                 if (phase_in == wr_roll_over) begin
-                    next_wr_ptr0 = {1'b1,phase_wr & roll_over};
+                    next_wr_ptr0 = {1'b1, phase_wr & roll_over};
                     next_wr_side = 1'b1;
                 end else begin
-                    next_wr_ptr0 = {1'b0,phase_wr & roll_over};
+                    next_wr_ptr0 = {1'b0, phase_wr & roll_over};
                 end
             end
         end else begin
@@ -199,10 +200,10 @@ begin
                 tready = 1'b1;
                 next_wr_data = s_axis_tdata;
                 if((phase_in == wr_roll_over)) begin
-                    next_wr_ptr1 = {1'b1,phase_wr & roll_over};
+                    next_wr_ptr1 = {1'b1, phase_wr & roll_over};
                     next_wr_side = 1'b0;
                 end else begin
-                    next_wr_ptr1 = {1'b0,phase_wr & roll_over};
+                    next_wr_ptr1 = {1'b0, phase_wr & roll_over};
                 end
             end
         end
@@ -225,15 +226,15 @@ begin
             if (rd_side == 1'b1 && full0 == 1'b1 && rd_tready == 1'b1) begin
                 next_rd_side = 1'b0;
                 next_rd_en = 1'b1;
-                next_rd_ptr0 = {(((ADDR_WIDTH))-((0))+1){1'b0}};
-                next_rd_ptr1 = {(((ADDR_WIDTH))-((0))+1){1'b0}};
+                next_rd_ptr0 = 0;
+                next_rd_ptr1 = 0;
                 next_state = S_READ0;
                 next_start_sig = 1'b1;
             end else if (rd_side == 1'b0 && full1 == 1'b1 && rd_tready == 1'b1) begin
                 next_rd_side = 1'b1;
                 next_rd_en = 1'b1;
-                next_rd_ptr1 = {(((ADDR_WIDTH))-((0))+1){1'b0}};
-                next_rd_ptr0 = {(((ADDR_WIDTH))-((0))+1){1'b0}};
+                next_rd_ptr1 = 0;
+                next_rd_ptr0 = 0;
                 next_state = S_READ1;
                 next_start_sig = 1'b1;
             end
@@ -295,10 +296,10 @@ end
 
   // latency = 3
   dp_block_read_first_ram #(
-      .DATA_WIDTH(DATA_WIDTH),
+    .DATA_WIDTH(DATA_WIDTH),
     .ADDR_WIDTH(ADDR_WIDTH - 1))
   u_ram_0_top(
-      .clk(clk),
+    .clk(clk),
     .wea(we0_top),
     .addra(wr_addr0),
     .addrb(rd_addr0),
@@ -306,10 +307,10 @@ end
     .dob(rd_data0_top));
 
   dp_block_read_first_ram #(
-      .DATA_WIDTH(DATA_WIDTH),
+    .DATA_WIDTH(DATA_WIDTH),
     .ADDR_WIDTH(ADDR_WIDTH - 1))
   u_ram_0_bottom(
-      .clk(clk),
+    .clk(clk),
     .wea(we0_bottom),
     .addra(wr_addr0),
     .addrb(rd_addr0),
@@ -318,10 +319,10 @@ end
 
   // latency = 3
   dp_block_read_first_ram #(
-      .DATA_WIDTH(DATA_WIDTH),
+    .DATA_WIDTH(DATA_WIDTH),
     .ADDR_WIDTH(ADDR_WIDTH - 1))
   u_ram_1_top(
-      .clk(clk),
+    .clk(clk),
     .wea(we1_top),
     .addra(wr_addr1),
     .addrb(rd_addr1),
@@ -330,10 +331,10 @@ end
 
   // latency = 3
   dp_block_read_first_ram #(
-      .DATA_WIDTH(DATA_WIDTH),
+    .DATA_WIDTH(DATA_WIDTH),
     .ADDR_WIDTH(ADDR_WIDTH - 1))
   u_ram_1_bottom(
-      .clk(clk),
+    .clk(clk),
     .wea(we1_bottom),
     .addra(wr_addr1),
     .addrb(rd_addr1),
@@ -342,28 +343,30 @@ end
 
   // latency = 4
   dsp48_output_add u_dadd_i(
-      .clk(clk),
+    .clk(clk),
     .a(a_i),
     .d(d_i),
     .p(i_out));
 
   // latency = 4
   dsp48_output_add u_dadd_q(
-      .clk(clk),
+    .clk(clk),
     .a(a_q),
     .d(d_q),
     .p(q_out));
 
-  count_cycle_cw16_14 #(
-      .DATA_WIDTH(32))
+  count_cycle_cw16_18 #(
+    .DATA_WIDTH(32))
   u_out_count(
-      .clk(clk),
+    .clk(clk),
     .sync_reset(sync_reset),
     .s_axis_tvalid(rd_tvalid_d[3]),
     .s_axis_tdata(out_tdata),
     .cnt_limit(cnt_limit_out),
     .start_sig(rd_start_d[3]),
-    .s_axis_tready(rd_tready),
+    .s_axis_tready(),
+    .af(almost_full),
+
     .m_axis_tvalid(m_axis_tvalid),
     .m_axis_tdata(m_axis_tdata),
     .m_axis_final_cnt(m_axis_final_cnt),

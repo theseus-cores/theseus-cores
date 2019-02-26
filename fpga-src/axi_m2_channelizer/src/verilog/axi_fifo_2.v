@@ -36,17 +36,17 @@ localparam [ADDR_WIDTH:0] high_thresh = ALMOST_FULL_THRESH;
 
 reg [ADDR_WIDTH:0] data_cnt_s = {{ADDR_P1{{1'b0}}}};
 reg [ADDR_P1:0] high_compare;
-reg [ADDR_WIDTH:0] wr_ptr = {{ADDR_P1{{1'b0}}}}, next_wr_ptr;
-reg [ADDR_WIDTH:0] wr_addr = {{ADDR_P1{{1'b0}}}}, next_wr_addr;
-reg [ADDR_WIDTH:0] rd_ptr = {{ADDR_P1{{1'b0}}}}, next_rd_ptr;
+reg [ADDR_WIDTH:0] wr_ptr = 0, next_wr_ptr;
+reg [ADDR_WIDTH:0] wr_addr = 0, next_wr_addr;
+reg [ADDR_WIDTH:0] rd_ptr = 0, next_rd_ptr;
 
 (* ram_style = "block" *) reg [FIFO_MSB:0] buffer [DEPTH-1:0];
 wire [FIFO_MSB:0] wr_data;
 
 // full when first MSB different but rest same
-wire full = ((wr_ptr[ADDR_WIDTH] != rd_ptr[ADDR_WIDTH]) && (wr_ptr[ADDR_MSB:0] == rd_ptr[ADDR_MSB:0]));
+wire full;
 // empty when pointers match exactly
-wire empty = (wr_ptr == rd_ptr);
+wire empty;
 
 // control signals
 reg wr;
@@ -54,8 +54,11 @@ reg rd;
 reg [1:0] occ_reg, next_occ_reg;
 reg [FIFO_MSB:0] data_d0, data_d1, next_data_d0, next_data_d1;
 
+// control signals
+assign full = ((wr_ptr[ADDR_WIDTH] != rd_ptr[ADDR_WIDTH]) && (wr_ptr[ADDR_MSB:0] == rd_ptr[ADDR_MSB:0]));
 assign s_axis_tready = ~full;
 assign m_axis_tvalid = occ_reg[1];
+assign empty = (wr_ptr == rd_ptr) ? 1'b1 : 1'b0;
 
 assign wr_data = s_axis_tdata;
 assign m_axis_tdata = data_d1;
@@ -93,8 +96,8 @@ end
 
 always @(posedge clk) begin
     if (sync_reset) begin
-        wr_ptr <= {{ADDR_P1{{1'b0}}}};
-        wr_addr <= {{ADDR_P1{{1'b0}}}};
+        wr_ptr <= 0;
+        wr_addr <= 0;
         occ_reg <= 0;
         data_d0 <= 0;
         data_d1 <= 0;
@@ -147,7 +150,7 @@ end
 
 always @(posedge clk) begin
     if (sync_reset) begin
-        rd_ptr <= {{ADDR_P1{{1'b0}}}};
+        rd_ptr <= 0;
     end else begin
         rd_ptr <= next_rd_ptr;
     end

@@ -32,22 +32,20 @@ localparam FIFO_MSB = FIFO_WIDTH - 1;
 localparam ADDR_MSB = ADDR_WIDTH - 1;
 localparam DEPTH = 2 ** ADDR_WIDTH;
 
-reg [ADDR_WIDTH:0] wr_ptr = {{ADDR_P1{{1'b0}}}}, next_wr_ptr;
-reg [ADDR_WIDTH:0] wr_addr = {{ADDR_P1{{1'b0}}}}, next_wr_addr;
-reg [ADDR_WIDTH:0] rd_ptr = {{ADDR_P1{{1'b0}}}}, next_rd_ptr;
+reg [ADDR_WIDTH:0] wr_ptr = 0, next_wr_ptr;
+reg [ADDR_WIDTH:0] wr_addr = 0, next_wr_addr;
+reg [ADDR_WIDTH:0] rd_ptr = 0, next_rd_ptr;
 
 (* ram_style = "distributed" *) reg [FIFO_MSB:0] buffer [DEPTH-1:0];
 wire [FIFO_MSB:0] wr_data;
 
-wire [16:0] delay_p1;
 reg [8:0] delay_d1, next_delay_d1;
-wire add_valid;
 wire add_delay;
+wire [ADDR_WIDTH:0] delay_s;
 // full when first MSB different but rest same
-wire full = ((wr_addr[ADDR_WIDTH] != rd_ptr[ADDR_WIDTH]) && (wr_addr[ADDR_MSB:0] == rd_ptr[ADDR_MSB:0]));
-wire [15:0] delay_s;
+wire full;
 // empty when pointers match exactly
-wire empty = (wr_ptr == rd_ptr);
+wire empty;
 
 // control signals
 reg wr;
@@ -55,13 +53,16 @@ reg rd;
 reg [1:0] occ_reg, next_occ_reg;
 reg [FIFO_MSB:0] data_d0, data_d1, next_data_d0, next_data_d1;
 
+// control signals
+assign full = ((wr_addr[ADDR_WIDTH] != rd_ptr[ADDR_WIDTH]) && (wr_addr[ADDR_MSB:0] == rd_ptr[ADDR_MSB:0]));
 assign s_axis_tready = ~full;
 assign m_axis_tvalid = occ_reg[1];
+assign empty = (wr_ptr == rd_ptr) ? 1'b1 : 1'b0;
 
 assign wr_data = s_axis_tdata;
 assign m_axis_tdata = data_d1;
 assign add_delay = (delay != delay_d1) ? 1'b1 : 1'b0;
-assign delay_s = {{7{delay[8]}}, delay};
+assign delay_s = {1'b0, delay};
 
 integer i;
 initial begin
@@ -69,16 +70,6 @@ initial begin
         buffer[i] = 0;
     end
 end
-
-add_16_16_l2 delay_adder
-(
-    .clk(clk),
-    .valid_i(add_delay),
-    .a(delay_s),
-    .b(16'd1),
-    .valid_o(add_valid),
-    .c(delay_p1)
-);
 
 // Write logic
 always @* begin
@@ -93,8 +84,8 @@ always @* begin
             // not full, perform write
             wr = 1'b1;
             next_wr_ptr = wr_ptr + 1;
-            if (add_valid == 1'b1 && add_delay == 1'b1) begin
-                next_wr_addr = wr_ptr + delay_p1[8:0];
+            if (add_delay == 1'b1) begin
+                next_wr_addr = wr_ptr + delay_s + 1;
                 next_delay_d1 = delay;
             end else begin
                 next_wr_addr = wr_addr + 1;
@@ -105,8 +96,8 @@ end
 
 always @(posedge clk) begin
     if (sync_reset) begin
-        wr_ptr <= {{ADDR_P1{{1'b0}}}};
-        wr_addr <= {{ADDR_P1{{1'b0}}}};
+        wr_ptr <= 0;
+        wr_addr <= delay_s;
         occ_reg <= 0;
         data_d0 <= 0;
         data_d1 <= 0;
@@ -161,7 +152,7 @@ end
 
 always @(posedge clk) begin
     if (sync_reset) begin
-        rd_ptr <= {{ADDR_P1{{1'b0}}}};
+        rd_ptr <= 0;
     end else begin
         rd_ptr <= next_rd_ptr;
     end

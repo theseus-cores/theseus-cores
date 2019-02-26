@@ -44,7 +44,7 @@ DSP48E1 #(
     .PREG(1), // Number of pipeline stages for P (0 or 1)
     .USE_SIMD("ONE48") // SIMD selection ("ONE48", "TWO24", "FOUR12")
 )
-dsp_48 (
+dsp_48_inst (
     // Cascade: 30-bit (each) output: Cascade Ports
     .ACOUT(), // 30-bit output: A port cascade output
     .BCOUT(), // 18-bit output: B port cascade output

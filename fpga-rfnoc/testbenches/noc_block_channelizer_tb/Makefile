@@ -51,13 +51,16 @@ $(LIB_IP_CHANNELIZER_XFFT_SRCS))
 SIM_TOP = noc_block_channelizer_tb
 
 # $(CHAN_SRC_DIR)/ouput_buffer.v \
+# $(CHAN_SRC_DIR)/exp_shift_sp_rom.v \
+# $(CHAN_SRC_DIR)/dsp48_shift_corr.v \
+# $(SIM_DIR)/sig_store_test8.bin \
+#
 # Add test bench, user design under test, and
 # additional user created files
 SIM_SRCS = $(abspath ./noc_block_channelizer_tb.sv \
-$(SIM_DIR)/sig_store_256.bin \
-$(SIM_DIR)/M_32_taps.bin \
+$(SIM_DIR)/sig_tones_8.bin \
+$(SIM_DIR)/M_8_taps.bin \
 $(SIM_DIR)/chan_rfnoc_sim.vh \
-$(CHAN_SRC_DIR)/add_16_16_l2.v \
 $(CHAN_SRC_DIR)/dp_block_read_first_ram.v \
 $(CHAN_SRC_DIR)/dp_block_write_first_ram.v \
 $(CHAN_SRC_DIR)/axi_fifo_2.v \
@@ -66,8 +69,8 @@ $(CHAN_SRC_DIR)/axi_fifo_18.v \
 $(CHAN_SRC_DIR)/axi_fifo_19.v \
 $(CHAN_SRC_DIR)/axi_fifo_51.v \
 $(CHAN_SRC_DIR)/axi_fifo_80.v \
-$(CHAN_SRC_DIR)/count_cycle_cw16_6.v \
-$(CHAN_SRC_DIR)/count_cycle_cw16_14.v \
+$(CHAN_SRC_DIR)/count_cycle_cw16_8.v \
+$(CHAN_SRC_DIR)/count_cycle_cw16_18.v \
 $(CHAN_SRC_DIR)/slicer_48_13.v \
 $(CHAN_SRC_DIR)/dsp48_cic_M256_N1_R1_iw5_0_corr.v \
 $(CHAN_SRC_DIR)/dsp48_cic_M256_N1_R1_iw5_0.v \
@@ -77,13 +80,11 @@ $(CHAN_SRC_DIR)/dsp48_output_add.v \
 $(CHAN_SRC_DIR)/dsp48_pfb_mac_0.v \
 $(CHAN_SRC_DIR)/dsp48_pfb_mac.v \
 $(CHAN_SRC_DIR)/dsp48_pfb_rnd.v \
-$(CHAN_SRC_DIR)/dsp48_shift_corr.v \
 $(CHAN_SRC_DIR)/cic_M256_N1_R1_iw5_0_correction_sp_rom.v \
 $(CHAN_SRC_DIR)/cic_M256_N1_R1_iw5_0_offset_sp_rom.v \
 $(CHAN_SRC_DIR)/comb_M256_N1_iw5_0.v \
 $(CHAN_SRC_DIR)/cic_M256_N1_R1_iw5_0.v \
 $(CHAN_SRC_DIR)/circ_buffer.v \
-$(CHAN_SRC_DIR)/exp_shift_sp_rom.v \
 $(CHAN_SRC_DIR)/exp_shifter.v \
 $(CHAN_SRC_DIR)/input_buffer.v \
 $(CHAN_SRC_DIR)/pfb_2x_16iw_16ow_32tps.v \

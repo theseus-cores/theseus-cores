@@ -20,6 +20,8 @@ module noc_block_channelizer_tb();
   `RFNOC_ADD_BLOCK(noc_block_channelizer, 0);
 
   localparam SPP = 16; // Samples per packet
+  localparam [31:0] FFT_SIZE = 32'd8;
+  localparam [31:0] AVG_LEN = 32'd16;
 
   /********************************************************
   ** Verification
@@ -67,8 +69,7 @@ module noc_block_channelizer_tb();
     ** Test 4 -- Load Coefficients
     ********************************************************/
     `TEST_CASE_START("Load Coefficients");
-    // fd_coeffs = $fopen("/home/phil/git_clones/theseus-cores/fpga-rfnoc/testbenches/noc_block_channelizer_tb/M_32_taps.bin", "r");
-    fd_coeffs = $fopen("M_32_taps.bin", "r");
+    fd_coeffs = $fopen("M_8_taps.bin", "r");
     $display("current file position = %d", $ftell(fd_coeffs));
     temp = $fseek(fd_coeffs, 0, `SEEK_END);
     file_size = $ftell(fd_coeffs) >> 2;  // this is in bytes / 4.
@@ -87,23 +88,18 @@ module noc_block_channelizer_tb();
         reg [31:0] data32;
         reg [31:0] memory;
         int file_idx;
-        // data32 = 32'd256;
-        // set fft_size to 16
-        data32 = 32'd16;
-        tb_streamer.write_reg(sid_noc_block_channelizer, noc_block_channelizer.SR_FFT_SIZE, data32);
-        // set avg_len to 32
-        data32 = 32'd32;
-        tb_streamer.write_reg(sid_noc_block_channelizer, noc_block_channelizer.SR_AVG_LEN, data32);
+        tb_streamer.write_reg(sid_noc_block_channelizer, noc_block_channelizer.SR_FFT_SIZE, FFT_SIZE);
+        tb_streamer.write_reg(sid_noc_block_channelizer, noc_block_channelizer.SR_AVG_LEN, AVG_LEN);
         for (int i=0; i<file_size; i++) begin //file_size
               file_idx = $ftell(fd_coeffs);
               num_read = $fread(memory, fd_coeffs, file_idx, 1);
-              data32 = {memory[7:0], memory[15:8], memory[23:16], memory[31:24]};
+              // data32 = {memory[7:0], memory[15:8], memory[23:16], memory[31:24]};
               // $display("Taps - Current file position = %d", $ftell(fd_coeffs));
               // $display("DATA = %d", data32);
               if (i == file_size-1) begin
-                tb_streamer.write_reg(sid_noc_block_channelizer, noc_block_channelizer.SR_RELOAD_LAST, data32);
+                tb_streamer.write_reg(sid_noc_block_channelizer, noc_block_channelizer.SR_RELOAD_LAST, memory);
               end else begin
-                tb_streamer.write_reg(sid_noc_block_channelizer, noc_block_channelizer.SR_RELOAD, data32);
+                tb_streamer.write_reg(sid_noc_block_channelizer, noc_block_channelizer.SR_RELOAD, memory);
               end
         end
     end
@@ -115,8 +111,8 @@ module noc_block_channelizer_tb();
     ********************************************************/
     // Sending an impulse will readback the FIR filter coefficients
     `TEST_CASE_START("Test Channelizer");
-    // fd_int = $fopen("/home/phil/git_clones/theseus-cores/fpga-rfnoc/testbenches/noc_block_channelizer_tb/sig_store_256.bin", "r");
-    fd_int = $fopen("sig_store_256.bin", "r");
+    // fd_int = $fopen("sig_store_test8.bin", "r");
+    fd_int = $fopen("sig_tones_8.bin", "r");
 
     $display("current file position = %d", $ftell(fd_int));
     temp = $fseek(fd_int, 0, `SEEK_END);
@@ -146,8 +142,7 @@ module noc_block_channelizer_tb();
         int frame_end;
         int file_idx;
         // set fft_size to 16
-        data32_0 = 32'd16;
-        tb_streamer.write_reg(sid_noc_block_channelizer, noc_block_channelizer.SR_FFT_SIZE, data32_0);
+        tb_streamer.write_reg(sid_noc_block_channelizer, noc_block_channelizer.SR_FFT_SIZE, FFT_SIZE);
         for (int i=0; i<num_words; i++) begin
             send_payload = {};
             for (int j=0; j<SPP; j++) begin
@@ -157,10 +152,8 @@ module noc_block_channelizer_tb();
               //   frame_end = 0;
               // end
               file_idx = $ftell(fd_int);
-              num_read = $fread(memory, fd_int, file_idx, 1);
-              data32_0 = {memory[7:0], memory[15:8], memory[23:16], memory[31:24]};
-              num_read = $fread(memory, fd_int, file_idx, 1);
-              data32_1 = {memory[7:0], memory[15:8], memory[23:16], memory[31:24]};
+              num_read = $fread(data32_0, fd_int, file_idx, 1);
+              num_read = $fread(data32_1, fd_int, file_idx, 1);
               data = {data32_0, data32_1};
               // $display("Input Data - Current file position = %d", $ftell(fd_int));
               // $display("DATA = %d", data);

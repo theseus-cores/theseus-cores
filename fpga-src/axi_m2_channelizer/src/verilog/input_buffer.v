@@ -76,11 +76,13 @@ reg [DATA_WIDTH - 1:0] rd_tdata, next_rd_tdata;
 reg rd_tvalid, next_rd_tvalid;
 reg rd_start, next_rd_start;
 wire rd_tready;
+wire almost_full;
 reg rd0_finish, next_rd0_finish, rd1_finish, next_rd1_finish;
 
 wire [15:0] phase_s;
 wire write0, write1;
 
+assign rd_tready = ~almost_full;
 assign roll_over = roll_over_s[ADDR_MSB:0];
 assign roll_over_m1 = {roll_over_s[ADDR_MSB:1],1'b0};
 assign cnt_limit_in = {PAD_IN,roll_over};
@@ -299,7 +301,7 @@ begin
     end
 end
 
-count_cycle_cw16_6 #(
+count_cycle_cw16_8 #(
     .DATA_WIDTH(DATA_WIDTH))
 u_in_count(
     .clk(clk),
@@ -341,7 +343,7 @@ u_ram_1(
     .dob(rd_data1)
 );
 
-count_cycle_cw16_14 #(
+count_cycle_cw16_18 #(
     .DATA_WIDTH(32))
 u_out_count(
     .clk(clk),
@@ -350,7 +352,8 @@ u_out_count(
     .s_axis_tdata(rd_tdata),
     .cnt_limit(cnt_limit_out),
     .start_sig(rd_start),
-    .s_axis_tready(rd_tready),
+    .s_axis_tready(open),
+    .af(almost_full),
     .m_axis_tvalid(m_axis_tvalid),
     .m_axis_tdata(m_axis_tdata),
     .m_axis_final_cnt(m_axis_final_cnt),

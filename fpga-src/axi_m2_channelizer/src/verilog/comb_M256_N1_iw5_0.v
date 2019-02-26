@@ -72,6 +72,7 @@ u_diff_delay
     .s_axis_tdata(s_axis_tdata),
     .s_axis_tready(),
 
+    .delay(msetting_s),
     .m_axis_tvalid(tvalid_s),
     .m_axis_tdata(diff_delay),
     .m_axis_tready(1'b1)
