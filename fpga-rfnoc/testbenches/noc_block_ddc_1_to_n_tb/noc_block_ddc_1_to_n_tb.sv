@@ -21,6 +21,7 @@ module noc_block_ddc_1_to_n_tb();
   `RFNOC_SIM_INIT(NUM_CE, NUM_STREAMS, BUS_CLK_PERIOD, CE_CLK_PERIOD);
   `RFNOC_ADD_BLOCK(noc_block_ddc_1_to_n, 0 /* xbar port 0 */);
   `RFNOC_ADD_BLOCK(noc_block_fft, 1 /* xbar port 1 */);
+  defparam noc_block_ddc_1_to_n.NUM_CHAINS  = 2;
 
   // FFT specific settings
   localparam [15:0] FFT_SIZE = 256;
@@ -32,9 +33,9 @@ module noc_block_ddc_1_to_n_tb();
   int cic_max_decim; //default 255
 
   // DDC
-  wire [7:0] SR_N_ADDR           = noc_block_ddc_1_to_n.axi_rate_change_ch0.SR_N_ADDR;
-  wire [7:0] SR_M_ADDR           = noc_block_ddc_1_to_n.axi_rate_change_ch0.SR_M_ADDR;
-  wire [7:0] SR_CONFIG_ADDR      = noc_block_ddc_1_to_n.axi_rate_change_ch0.SR_CONFIG_ADDR;
+  wire [7:0] SR_N_ADDR           = noc_block_ddc_1_to_n.gen_ddc_chains[0].axi_rate_change.SR_N_ADDR;
+  wire [7:0] SR_M_ADDR           = noc_block_ddc_1_to_n.gen_ddc_chains[0].axi_rate_change.SR_M_ADDR;
+  wire [7:0] SR_CONFIG_ADDR      = noc_block_ddc_1_to_n.gen_ddc_chains[0].axi_rate_change.SR_CONFIG_ADDR;
   wire [7:0] SR_FREQ_ADDR        = noc_block_ddc_1_to_n.SR_FREQ_ADDR;
   wire [7:0] SR_SCALE_IQ_ADDR    = noc_block_ddc_1_to_n.SR_SCALE_IQ_ADDR;
   wire [7:0] SR_DECIM_ADDR       = noc_block_ddc_1_to_n.SR_DECIM_ADDR;
@@ -42,6 +43,7 @@ module noc_block_ddc_1_to_n_tb();
   wire [7:0] SR_COEFFS_ADDR      = noc_block_ddc_1_to_n.SR_COEFFS_ADDR;
   wire [7:0] RB_NUM_HB           = noc_block_ddc_1_to_n.RB_NUM_HB;
   wire [7:0] RB_CIC_MAX_DECIM    = noc_block_ddc_1_to_n.RB_CIC_MAX_DECIM;
+  wire [7:0] SR_ENABLE_OUTPUT    = noc_block_ddc_1_to_n.SR_ENABLE_OUTPUT;
 
 
   localparam SPP                 = FFT_SIZE;
@@ -252,6 +254,7 @@ module noc_block_ddc_1_to_n_tb();
     $display("Note: This test will take a long time!");
     `RFNOC_CONNECT(noc_block_tb, noc_block_ddc_1_to_n, SC16, SPP);
     `RFNOC_CONNECT(noc_block_ddc_1_to_n, noc_block_tb, SC16, SPP);
+    tb_streamer.write_reg(sid_noc_block_ddc_1_to_n, SR_ENABLE_OUTPUT, 32'd1, 0); // Enable port 0 output
     //readback regs
     tb_streamer.read_user_reg(sid_noc_block_ddc_1_to_n, RB_NUM_HB, num_hb);
     tb_streamer.read_user_reg(sid_noc_block_ddc_1_to_n, RB_CIC_MAX_DECIM, cic_max_decim);
