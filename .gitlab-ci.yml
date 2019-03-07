@@ -21,6 +21,12 @@ stages:
   - cmake ../ -DENABLE_UHD=1 -DENABLE_GNURADIO=1
   - make -j10
 
+.fpga-script: &fpga-script
+  - rm -rf ../uhd-fpga && git clone -b UHD-3.13 https://github.com/EttusResearch/fpga.git ../uhd-fpga
+  - source /opt/Xilinx/Vivado/2017.4/settings64.sh
+  - cd fpga-rfnoc/testbenches
+  - for d in ./*/ ; do (cd "$d" && pwd && make clean && ./runtestbench.sh); done
+
 build-uhd-master:
   stage: uhd
   image: theseuscores/uhd:master-rfnoc-all
@@ -45,17 +51,24 @@ build-gnuradio-maint-uhd-3.13:
   script: *gnuradio-build
   only: *conditionals
 
-fpga-test:
+fpga-test-master:
   stage: fpga
-  before_script:
-    - rm -rf ../uhd-fpga && git clone -b UHD-3.13 https://github.com/EttusResearch/fpga.git ../uhd-fpga
-    - source /opt/Xilinx/Vivado/2017.4/settings64.sh
-  script:
-    - cd fpga-rfnoc/testbenches
-    - for d in ./*/ ; do (cd "$d" && pwd && make clean && ./runtestbench.sh); done
+  script: *fpga-script
   only:
-    - master
-    - merge_requests
-    - web
+    refs:
+      - merge_requests
+    changes:
+      - fpga-rfnoc/*/**
+      - fpga-src/*/**
+  tags:
+    - vivado
+
+fpga-test-merge:
+  stage: fpga
+  script: *fpga-script
+  only:
+    refs:
+      - master
+      - web
   tags:
     - vivado
