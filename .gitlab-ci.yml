@@ -23,6 +23,7 @@ stages:
 
 .fpga-script: &fpga-script
   - rm -rf ../uhd-fpga && git clone -b UHD-3.13 https://github.com/EttusResearch/fpga.git ../uhd-fpga
+  - export UHD_FPGA_DIR=`pwd`/../uhd-fpga
   - source /opt/Xilinx/Vivado/2017.4/settings64.sh
   - cd fpga-rfnoc/testbenches
   - for d in ./*/ ; do (cd "$d" && pwd && make clean && ./runtestbench.sh); done
