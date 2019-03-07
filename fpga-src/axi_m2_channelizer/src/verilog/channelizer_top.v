@@ -106,7 +106,7 @@ reg config_state, next_config_state;
     localparam pfb_out = "pfb_output.bin";
     localparam circ_out = "circ_output.bin";
     localparam fft_out = "fft_output.bin";
-    localparam exp_out = "exp_output.bin";
+    localparam exp_out = "chan_output.bin";
 
     integer buffer_descr, pfb_descr, circ_descr, fft_descr, exp_descr;
 

@@ -49,16 +49,11 @@ $(LIB_IP_CHANNELIZER_XFFT_SRCS))
 #-------------------------------------------------
 # Define only one toplevel module
 SIM_TOP = noc_block_channelizer_tb
-
-# $(CHAN_SRC_DIR)/ouput_buffer.v \
-# $(CHAN_SRC_DIR)/exp_shift_sp_rom.v \
-# $(CHAN_SRC_DIR)/dsp48_shift_corr.v \
-# $(SIM_DIR)/sig_store_test8.bin \
 #
 # Add test bench, user design under test, and
 # additional user created files
 SIM_SRCS = $(abspath ./noc_block_channelizer_tb.sv \
-$(SIM_DIR)/sig_tones_8.bin \
+$(SIM_DIR)/sig_tones_input.bin \
 $(SIM_DIR)/M_8_taps.bin \
 $(SIM_DIR)/chan_rfnoc_sim.vh \
 $(CHAN_SRC_DIR)/dp_block_read_first_ram.v \

@@ -93,9 +93,12 @@ module noc_block_channelizer_tb();
         for (int i=0; i<file_size; i++) begin //file_size
               file_idx = $ftell(fd_coeffs);
               num_read = $fread(memory, fd_coeffs, file_idx, 1);
-              // data32 = {memory[7:0], memory[15:8], memory[23:16], memory[31:24]};
-              // $display("Taps - Current file position = %d", $ftell(fd_coeffs));
-              // $display("DATA = %d", data32);
+              if (i % 1000 == 0 && i != 0) begin
+                $display("Taps - Current file position = %d", $ftell(fd_coeffs) / 4 - 1);
+                $display("Current simulation time = %t",$time);
+                // $display("Wall time = %s",$system("date"));
+                $display("");
+              end
               if (i == file_size-1) begin
                 tb_streamer.write_reg(sid_noc_block_channelizer, noc_block_channelizer.SR_RELOAD_LAST, memory);
               end else begin
@@ -111,8 +114,7 @@ module noc_block_channelizer_tb();
     ********************************************************/
     // Sending an impulse will readback the FIR filter coefficients
     `TEST_CASE_START("Test Channelizer");
-    // fd_int = $fopen("sig_store_test8.bin", "r");
-    fd_int = $fopen("sig_tones_8.bin", "r");
+    fd_int = $fopen("sig_tones_input.bin", "r");
 
     $display("current file position = %d", $ftell(fd_int));
     temp = $fseek(fd_int, 0, `SEEK_END);
@@ -126,9 +128,8 @@ module noc_block_channelizer_tb();
     offset = $fseek(fd_int, 0, `SEEK_SET);
     $display("Reader - current file position = %d", $ftell(fd_int));
     tb_streamer.read_reg(sid_noc_block_channelizer, RB_NOC_ID, readback);
-    // $display("Read Frame Detect NOC ID: %16x", readback);
+    $display("Read Frame Detect NOC ID: %16x", readback);
 
-    // tb_streamer.write_reg(sid_noc_block_channelizer, noc_block_channelizer.SR_FFT_SIZE, 256);
     fork
     begin
         int r;
@@ -146,19 +147,17 @@ module noc_block_channelizer_tb();
         for (int i=0; i<num_words; i++) begin
             send_payload = {};
             for (int j=0; j<SPP; j++) begin
-              // if ((i % SPP-1) == 0 && i != 0) begin
-              //   frame_end = 1;
-              // end else begin
-              //   frame_end = 0;
-              // end
               file_idx = $ftell(fd_int);
               num_read = $fread(data32_0, fd_int, file_idx, 1);
               num_read = $fread(data32_1, fd_int, file_idx, 1);
               data = {data32_0, data32_1};
-              // $display("Input Data - Current file position = %d", $ftell(fd_int));
-              // $display("DATA = %d", data);
+              if (i % 1000 == 0 && i != 0 && j == 0) begin
+                $display("Input Data - Current file position = %d", $ftell(fd_int) / 4 - 1);
+                $display("Current simulation time = %t", $time);
+                // $display("Wall time = %s", $date);
+                $display("");
+              end
               send_payload.push_back(data);
-              // #5ns;
             end
             md.eob = 1;
             tb_streamer.send(send_payload, md);
@@ -168,12 +167,9 @@ module noc_block_channelizer_tb();
       cvita_metadata_t md;
       cvita_payload_t recv_payload;
       md.eob = 0;
-      // make sure t7he
-      //while (~md.eob) tb_streamer.recv(recv_payload,md);
+      // AXI output port.
       while(1) begin
         while (~md.eob) tb_streamer.recv(recv_payload,md);
-        // tb_streamer.recv(recv_payload,md);
-        // $display("Reading Data");
         md.eob = 0;
         #200ns;
       end
