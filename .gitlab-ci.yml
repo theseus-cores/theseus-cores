@@ -51,19 +51,19 @@ build-gnuradio-maint-uhd-3.13:
   script: *gnuradio-build
   only: *conditionals
 
-fpga-test-master:
+fpga-test-merge:
   stage: fpga
   script: *fpga-script
   only:
     refs:
       - merge_requests
     changes:
-      - fpga-rfnoc/*/**
-      - fpga-src/*/**
+      - fpga-rfnoc/**/*
+      - fpga-src/**/*
   tags:
     - vivado
 
-fpga-test-merge:
+fpga-test-master:
   stage: fpga
   script: *fpga-script
   only:
