@@ -1,21 +1,33 @@
-# generate taps (only needs to be done once)
+
+## Generate Tap files.
+
+This only needs to be done once.  Frequency response plots will populate inside the python directory.
 
     python ./python/channelizer.py -t
 
-# generate test input.
+## Generate Test Input.
 
-The argument can be a list of Normalized discrete frequency (range -1, 1) centers.  The example shown is a two tones centered at .3 and .4.
+The argument can be a list of Normalized discrete frequency (range -1, 1) centers.  The example shown is a two tones centered at .3 and .4.  The .bin file will be placed in the noc_block_channelizer_tb directory.
 
     python ./python/channelizer.py -i .3 .4
 
-# run the RTL simulation.
+## Run the RTL simulation.
+
+This currently takes ~2.5 hrs.
 
     make xsim
 
-# copy .bin files into noc_block_channelizer_tb root.
+## Plot RTL Sim Output
+
+First copy .bin files into noc_block_channelizer_tb root.
 
     find . -iname "*.bin" -exec cp {} ./ \;
 
-# Generate output plots
+Generate plots
 
     python ./python/channelizer.py -c '../chan_output.bin'
+
+
+## Notes
+
+All of the python commands were run from noc_block_channelizer_tb directory
