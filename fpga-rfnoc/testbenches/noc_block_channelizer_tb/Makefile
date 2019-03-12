@@ -6,7 +6,6 @@
 # Top-of-Makefile
 #-------------------------------------------------
 # Define BASE_DIR to point to the "top" dir
-BASE_DIR = $(abspath ../../../../fpga/usrp3/top)
 
 $(info BASE_DIR="$(BASE_DIR)")
 # Include viv_sim_preample after defining BASE_DIR
