@@ -1,0 +1,6 @@
+name: min_env
+channels:
+  - conda-forge
+  - defaults
+prefix: /home/phil/anaconda3/envs/min_env
+
