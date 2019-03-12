@@ -55,10 +55,9 @@ qvec = (16, 15)
 qvec_coef = (25, 24)
 Mmax = 2048
 
-rc('text', usetex=True)
+fil_transbw_factors = (10, 4.5)
 
-k_1x = OrderedDict([('4', 18), ('8', 66.396), ('16', 61.396), ('32', 54.396), ('64', 47.396), ('128', 39.396),
-                    ('256', 31.396), ('512', 24.396), ('1024', 17.396), ('2048', 12.396), ('4096', 9.396)])
+rc('text', usetex=True)
 
 
 def cart2pol(x, y):
@@ -147,14 +146,15 @@ class Channelizer(object):
         self.paths = M
 
     def gen_float_taps(self, gen_2X, K=None):
+        self.rate = 1
         if gen_2X:
             self.rate = 2
         if K is None:
             if gen_2X:
                 # self.K = 10.519
-                self.K = 18.601
+                # self.K = 18.601
+                self.K = 22.086093
             else:
-                self.rate = 1
                 self.K = 30.794
         else:
             self.K = K
@@ -378,9 +378,9 @@ class Channelizer(object):
         msb_terms = OrderedDict()
         for M in M_vec:
             if self.rate == 1:
-                trans_bw = 1 / (10. * M)
+                trans_bw = 1 / (fil_transbw_factors[0] * M)
             else:
-                trans_bw = 1 / (3.5 * M)
+                trans_bw = 1 / (fil_transbw_factors[1] * M)
             num_taps = M * taps_per_phase
             fc = 1. / M
             filter_obj = LPFilter(M=M, P=M, pbr=self.pbr, sba=self.sba, num_taps=num_taps, fc=fc,
@@ -1064,6 +1064,16 @@ def process_chan_out(file_name, row_offset=100):
     resps = []
     wvecs = []
     time_sigs = []
+    row_size = np.shape(comp_rsh)[1] - row_offset
+    if row_size < 64:
+        print("Not enough samples in file for conclusive spectral plots")
+        return -1
+
+    if row_size > 2048:
+        fft_size = 2048
+    else:
+        fft_size = row_size
+
     for ii, row in enumerate(comp_rsh):
         row = row[row_offset:]
         print(np.shape(row))
@@ -1078,27 +1088,27 @@ def process_chan_out(file_name, row_offset=100):
             res_value = np.max(psd)
             print("{} : Largest value = {}, i{} - resp = {} db".format(ii, real_value, imag_value, res_value))
 
-    title = 'Channelized Output'
-    fig, ax = plt.subplots(nrows=4, ncols=2)
-    fig.subplots_adjust(bottom=.10, left=.1, top=.95)
-    fig.subplots_adjust(hspace=.50, wspace=.2)
-    fig.set_size_inches(12., 12.)
-    fig.set_dpi(120)
-    plot_psd_helper(ax[0][0], wvecs[0], resps[0], title='Channel 0', y_min=-120, y_max=10)
-    plot_psd_helper(ax[0][1], wvecs[1], resps[1], title='Channel 1', y_min=-120, y_max=10)
-    plot_psd_helper(ax[1][0], wvecs[2], resps[2], title='Channel 2', y_min=-120, y_max=10)
-    plot_psd_helper(ax[1][1], wvecs[3], resps[3], title='Channel 3', y_min=-120, y_max=10)
-    plot_psd_helper(ax[2][0], wvecs[4], resps[4], title='Channel 4', y_min=-120, y_max=10)
-    plot_psd_helper(ax[2][1], wvecs[5], resps[5], title='Channel 5', y_min=-120, y_max=10)
-    plot_psd_helper(ax[3][0], wvecs[6], resps[6], title='Channel 6', y_min=-120, y_max=10)
-    plot_psd_helper(ax[3][1], wvecs[7], resps[7], title='Channel 7', y_min=-120, y_max=10)
+    # title = 'Channelized Output'
+    # fig, ax = plt.subplots(nrows=4, ncols=2)
+    # fig.subplots_adjust(bottom=.10, left=.1, top=.95)
+    # fig.subplots_adjust(hspace=.50, wspace=.2)
+    # fig.set_size_inches(12., 12.)
+    # fig.set_dpi(120)
+    # plot_psd_helper(ax[0][0], wvecs[0], resps[0], title='Channel 0', y_min=-120, y_max=10)
+    # plot_psd_helper(ax[0][1], wvecs[1], resps[1], title='Channel 1', y_min=-120, y_max=10)
+    # plot_psd_helper(ax[1][0], wvecs[2], resps[2], title='Channel 2', y_min=-120, y_max=10)
+    # plot_psd_helper(ax[1][1], wvecs[3], resps[3], title='Channel 3', y_min=-120, y_max=10)
+    # plot_psd_helper(ax[2][0], wvecs[4], resps[4], title='Channel 4', y_min=-120, y_max=10)
+    # plot_psd_helper(ax[2][1], wvecs[5], resps[5], title='Channel 5', y_min=-120, y_max=10)
+    # plot_psd_helper(ax[3][0], wvecs[6], resps[6], title='Channel 6', y_min=-120, y_max=10)
+    # plot_psd_helper(ax[3][1], wvecs[7], resps[7], title='Channel 7', y_min=-120, y_max=10)
 
-    file_name = copy.copy(title)
-    file_name = ''.join(e if e.isalnum() else '_' for e in file_name)
-    file_name += '.png'
-    file_name = file_name.replace("__", "_")
-    print(file_name)
-    fig.savefig(file_name)
+    # file_name = copy.copy(title)
+    # file_name = ''.join(e if e.isalnum() else '_' for e in file_name)
+    # file_name += '.png'
+    # file_name = file_name.replace("__", "_")
+    # print(file_name)
+    # fig.savefig(file_name)
 
     print(M)
     if len(resps) > 0:
@@ -1168,6 +1178,8 @@ def get_args():
     # parser.add_argument('-s', '--rtl_synth_outfile', type=str, help='Process RTL output file specified by input string -- can use \'default\' as input ')
     parser.add_argument('-i', '--rtl_sim_input', nargs='+', help='Generate tones based on list of tone frequencies (Normalized Discrete Freq range -1 -> 1)', required=False)
     parser.add_argument('-t', '--generate_taps', action='store_true', help='Generates tap files for all valid FFT Sizes : [8, 16, 32, 64, 128, 256, 512, 1024, 2048]')
+    parser.add_argument('-o', '--opt_taps', action='store_true', help='Returns optimized filter parameters all valid FFT Sizes : [8, 16, 32, 64, 128, 256, 512, 1024, 2048]')
+
 
     args = parser.parse_args()
 
@@ -1186,6 +1198,10 @@ def get_args():
 
     if args.generate_taps:
         gen_tap_plots(M_list)
+
+    if args.opt_taps:
+        populate_fil_table()
+
 
     return args
 
