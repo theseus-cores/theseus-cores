@@ -30,6 +30,7 @@ LIB_IP_DIR = $(BASE_DIR)/../lib/ip
 IP_DIR = $(LIB_IP_DIR)
 SIM_DIR = $(abspath ./)
 
+CHAN_RFNOC_DIR = $(abspath ../../m2_channelizer)
 CHAN_IP_DIR = $(abspath ../../../fpga-src/axi_m2_channelizer/ip)
 CHAN_SRC_DIR = $(abspath ../../../fpga-src/axi_m2_channelizer/src/verilog)
 
@@ -85,7 +86,7 @@ $(CHAN_SRC_DIR)/input_buffer.v \
 $(CHAN_SRC_DIR)/pfb_2x_16iw_16ow_32tps.v \
 $(SIM_DIR)/grc_word_writer.sv \
 $(CHAN_SRC_DIR)/channelizer_top.v \
-$(CHAN_SRC_DIR)/noc_block_channelizer.v \
+$(CHAN_RFNOC_DIR)/noc_block_channelizer.v \
 )
 
 # MODELSIM_USER_DO = $(abspath wave.do)

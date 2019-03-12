@@ -3,8 +3,16 @@
 build-ip
 xsim_proj
 
+# python
+*.pyc
+
 # Software
 build
 
 # gr-theseus
 gr-theseus/examples/*.py
+
+# random outputs
+*.bin
+*.png
+*.tar.gz
