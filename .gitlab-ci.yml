@@ -40,6 +40,12 @@ build-uhd-3.13:
   script: *uhd-build
   only: *conditionals
 
+build-uhd-3.14:
+  stage: uhd
+  image: theseuscores/uhd:UHD-3.14-rfnoc-all
+  script: *uhd-build
+  only: *conditionals
+
 build-gnuradio-maint-uhd-master:
   stage: gnuradio
   image: theseuscores/gnuradio:maint-3.7-UHD-master-rfnoc
@@ -49,6 +55,12 @@ build-gnuradio-maint-uhd-master:
 build-gnuradio-maint-uhd-3.13:
   stage: gnuradio
   image: theseuscores/gnuradio:maint-3.7-UHD-3.13-rfnoc
+  script: *gnuradio-build
+  only: *conditionals
+
+build-gnuradio-maint-uhd-3.14:
+  stage: gnuradio
+  image: theseuscores/gnuradio:maint-3.7-UHD-3.14-rfnoc
   script: *gnuradio-build
   only: *conditionals
 
