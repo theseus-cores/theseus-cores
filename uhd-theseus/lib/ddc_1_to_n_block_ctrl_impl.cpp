@@ -154,6 +154,13 @@ public:
             stream_cmd.num_samps *= decimation;
         }
 
+        // Disable or enable output channel based on stream mode
+        if (stream_cmd.stream_mode == uhd::stream_cmd_t::STREAM_MODE_STOP_CONTINUOUS) {
+            set_arg<int>("enable", 0, chan);
+        } else {
+            set_arg<int>("enable", 1, chan);
+        }
+
         source_node_ctrl::sptr this_upstream_block_ctrl =
                 boost::dynamic_pointer_cast<source_node_ctrl>(list_upstream_nodes().at(upstream_chan).lock());
         if (this_upstream_block_ctrl) {
