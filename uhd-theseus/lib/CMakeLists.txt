@@ -12,6 +12,7 @@ link_directories(
  )
 
 list(APPEND uhd_theseus_sources
+    ddc_1_to_n_block_ctrl_impl.cpp
 	ducddc_block_ctrl_impl.cpp
 )
 
