@@ -156,7 +156,7 @@ link_directories(
 ###########################################################################
 # Linking for gr-ettus
 ###########################################################################
-FIND_PACKAGE(ettus REQUIRED)
+FIND_PACKAGE(ettus REQUIRED NO_CMAKE_FIND_ROOT_PATH)
 IF(ettus_FOUND)
 	include_directories(${ETTUS_INCLUDE_DIRS})
 	message(" * INCLUDES = ${ETTUS_INCLUDE_DIRS}")
