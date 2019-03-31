@@ -1,11 +1,11 @@
 <!--This defines one NoC-Block.-->
 <nocblock>
   <name>DDC 1-to-2</name>
-  <blockname>DDC1TO2</blockname>
-  <key>DDC1TO2</key>
+  <blockname>DDC1TON</blockname>
+  <key>DDC1TON</key>
   <!--There can be several of these:-->
   <ids>
-    <id revision="0">DDC0102040000000</id>
+    <id revision="0">DDC0102020000000</id>
   </ids>
   <!-- Registers -->
   <registers>
@@ -117,7 +117,7 @@
     <arg>
       <name>enable</name>
       <type>int</type>
-      <value>1</value>
+      <value>0</value>
       <check>GE($enable, 0) AND LE($enable, 1)</check>
       <action>SR_WRITE("ENABLE_OUTPUT", $enable)</action>
       <port>0</port>
@@ -182,7 +182,7 @@
     <arg>
       <name>enable</name>
       <type>int</type>
-      <value>1</value>
+      <value>0</value>
       <check>GE($enable, 0) AND LE($enable, 1)</check>
       <action>SR_WRITE("ENABLE_OUTPUT", $enable)</action>
       <port>1</port>
@@ -204,4 +204,3 @@
     </source>
   </ports>
 </nocblock>
-
