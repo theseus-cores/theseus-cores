@@ -42,8 +42,14 @@ public:
         //     false /* Let it slide if minors mismatch */
         // );
 
+        _tree->access<double>(get_arg_path("input_rate/value", 0))
+            .add_coerced_subscriber([this](const double rate){
+                this->set_input_rate(rate, 0);
+            })
+        ;
+
         // Argument/prop tree hooks
-        for (size_t chan = 0; chan < get_input_ports().size(); chan++) {
+        for (size_t chan = 0; chan < get_output_ports().size(); chan++) {
             const double default_freq = get_arg<double>("freq", chan);
             _tree->access<double>(get_arg_path("freq/value", chan))
                 .set_coercer([this, chan](const double value){
@@ -58,49 +64,6 @@ public:
                     return this->set_output_rate(value, chan);
                 })
                 .set(default_output_rate)
-            ;
-            _tree->access<double>(get_arg_path("input_rate/value", chan))
-                .add_coerced_subscriber([this, chan](const double rate){
-                    this->set_input_rate(rate, chan);
-                })
-            ;
-
-            // Legacy properties (for backward compat w/ multi_usrp)
-            const uhd::fs_path dsp_base_path = _root_path / "legacy_api" / chan;
-            // Legacy properties simply forward to the block args properties
-            _tree->create<double>(dsp_base_path / "rate/value")
-                .set_coercer([this, chan](const double value){
-                    return this->_tree->access<double>(
-                        this->get_arg_path("output_rate/value", chan)
-                    ).set(value).get();
-                })
-                .set_publisher([this, chan](){
-                    return this->_tree->access<double>(
-                        this->get_arg_path("output_rate/value", chan)
-                    ).get();
-                })
-            ;
-            _tree->create<uhd::meta_range_t>(dsp_base_path / "rate/range")
-                .set_publisher([this](){
-                    return get_output_rates();
-                })
-            ;
-            _tree->create<double>(dsp_base_path / "freq/value")
-                .set_coercer([this, chan](const double value){
-                    return this->_tree->access<double>(
-                        this->get_arg_path("freq/value", chan)
-                    ).set(value).get();
-                })
-                .set_publisher([this, chan](){
-                    return this->_tree->access<double>(
-                        this->get_arg_path("freq/value", chan)
-                    ).get();
-                })
-            ;
-            _tree->create<uhd::meta_range_t>(dsp_base_path / "freq/range")
-                .set_publisher([this](){
-                    return get_freq_range();
-                })
             ;
             _tree->access<uhd::time_spec_t>("time/cmd")
                 .add_coerced_subscriber([this, chan](const uhd::time_spec_t time_spec){
@@ -177,7 +140,9 @@ public:
     ) {
         UHD_RFNOC_BLOCK_TRACE() << "ddc_1_to_n_block_ctrl_base::issue_stream_cmd()" ;
 
-        if (list_upstream_nodes().count(chan) == 0) {
+        size_t upstream_chan = 0;
+
+        if (list_upstream_nodes().count(upstream_chan) == 0) {
             UHD_LOGGER_INFO("RFNOC") << "No upstream blocks." ;
             return;
         }
@@ -185,16 +150,16 @@ public:
         uhd::stream_cmd_t stream_cmd = stream_cmd_;
         if (stream_cmd.stream_mode == uhd::stream_cmd_t::STREAM_MODE_NUM_SAMPS_AND_DONE or
             stream_cmd.stream_mode == uhd::stream_cmd_t::STREAM_MODE_NUM_SAMPS_AND_MORE) {
-            size_t decimation = get_arg<double>("input_rate", chan) / get_arg<double>("output_rate", chan);
+            size_t decimation = get_arg<double>("input_rate", upstream_chan) / get_arg<double>("output_rate", chan);
             stream_cmd.num_samps *= decimation;
         }
 
         source_node_ctrl::sptr this_upstream_block_ctrl =
-                boost::dynamic_pointer_cast<source_node_ctrl>(list_upstream_nodes().at(chan).lock());
+                boost::dynamic_pointer_cast<source_node_ctrl>(list_upstream_nodes().at(upstream_chan).lock());
         if (this_upstream_block_ctrl) {
             this_upstream_block_ctrl->issue_stream_cmd(
                     stream_cmd,
-                    get_upstream_port(chan)
+                    get_upstream_port(upstream_chan)
             );
         }
     }
@@ -267,7 +232,7 @@ private:
     //! Set the DDS frequency shift the signal to \p requested_freq
     double set_freq(const double requested_freq, const size_t chan)
     {
-        const double input_rate = get_arg<double>("input_rate");
+        const double input_rate = get_arg<double>("input_rate", 0);
         double actual_freq;
         int32_t freq_word;
         get_freq_and_freq_word(requested_freq, input_rate, actual_freq, freq_word);
@@ -278,7 +243,7 @@ private:
     //! Return a range of valid frequencies the DDS can tune to
     uhd::meta_range_t get_freq_range(void)
     {
-        const double input_rate = get_arg<double>("input_rate");
+        const double input_rate = get_arg<double>("input_rate", 0);
         return uhd::meta_range_t(
                 -input_rate/2,
                 +input_rate/2,
@@ -289,7 +254,7 @@ private:
     uhd::meta_range_t get_output_rates(void)
     {
         uhd::meta_range_t range;
-        const double input_rate = get_arg<double>("input_rate");
+        const double input_rate = get_arg<double>("input_rate", 0);
         for (int hb = _num_halfbands; hb >= 0; hb--) {
             const size_t decim_offset = _cic_max_decim<<(hb-1);
             for(size_t decim = _cic_max_decim; decim > 0; decim--) {
@@ -304,7 +269,7 @@ private:
 
     double set_output_rate(const int requested_rate, const size_t chan)
     {
-        const double input_rate = get_arg<double>("input_rate");
+        const double input_rate = get_arg<double>("input_rate", 0);
         const size_t decim_rate =
             boost::math::iround(input_rate/this->get_output_rates().clip(requested_rate, true));
         size_t decim = decim_rate;
@@ -325,7 +290,7 @@ private:
         // FIXME this should be a rb reg in the FPGA, not based on a hard-coded
         // Noc-ID
         if (noc_id == 0xDDC5E15CA7000000) {
-            UHD_LOG_DEBUG("DDC", "EISCAT DDC! Assuming real inputs.");
+            UHD_LOG_DEBUG("DDC1TON", "EISCAT DDC! Assuming real inputs.");
             sr_write("M", 2, chan);
         } else {
             sr_write("M", 1, chan);
@@ -361,10 +326,16 @@ private:
     //! Set frequency and decimation again
     void set_input_rate(const double /* rate */, const size_t chan)
     {
-        const double desired_freq = _tree->access<double>(get_arg_path("freq", chan) / "value").get_desired();
-        set_arg<double>("freq", desired_freq, chan);
-        const double desired_output_rate = _tree->access<double>(get_arg_path("output_rate", chan) / "value").get_desired();
-        set_arg<double>("output_rate", desired_output_rate, chan);
+        if (chan != 0){
+            return;
+        }
+
+        for (size_t ochan = 0; ochan < get_output_ports().size(); ochan++) {
+            const double desired_freq = _tree->access<double>(get_arg_path("freq", ochan) / "value").get_desired();
+            set_arg<double>("freq", desired_freq, ochan);
+            const double desired_output_rate = _tree->access<double>(get_arg_path("output_rate", ochan) / "value").get_desired();
+            set_arg<double>("output_rate", desired_output_rate, ochan);
+        }
     }
 
     // Calculate compensation gain values for algorithmic gain of DDS and CIC taking into account
@@ -402,4 +373,4 @@ private:
     }
 };
 
-UHD_RFNOC_BLOCK_REGISTER(ddc_1_to_n_block_ctrl, "DDC1TO2");
+UHD_RFNOC_BLOCK_REGISTER(ddc_1_to_n_block_ctrl, "DDC1TON");
