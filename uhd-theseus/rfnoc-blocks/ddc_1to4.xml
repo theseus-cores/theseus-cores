@@ -1,11 +1,11 @@
 <!--This defines one NoC-Block.-->
 <nocblock>
-  <name>DDC 1-to-2</name>
+  <name>DDC 1-to-4</name>
   <blockname>DDC1TON</blockname>
   <key>DDC1TON</key>
   <!--There can be several of these:-->
   <ids>
-    <id revision="0">DDC0102020000000</id>
+    <id revision="0">DDC0102040000000</id>
   </ids>
   <!-- Registers -->
   <registers>
@@ -145,6 +145,94 @@
       <action>SR_WRITE("ENABLE_OUTPUT", $enable)</action>
       <port>1</port>
     </arg>
+    <!--Port 2-->
+    <arg>
+      <name>freq</name>
+      <type>double</type>
+      <value>0.0</value>
+      <port>2</port>
+    </arg>
+    <arg>
+      <name>input_rate</name>
+      <type>double</type>
+      <value>1.0</value>
+      <port>2</port>
+      <check>GE($input_rate, 0.0)</check>
+      <check_message>The input rate must be a positive value (in Hz).</check_message>
+    </arg>
+    <arg>
+      <name>output_rate</name>
+      <type>double</type>
+      <value>1.0</value>
+      <port>2</port>
+      <check>GE($output_rate, 0.0)</check>
+      <check_message>The output rate must be a positive value (in Hz).</check_message>
+    </arg>
+    <arg>
+      <name>fullscale</name>
+      <type>double</type>
+      <value>1.0</value>
+      <port>2</port>
+      <check>GE($fullscale, 0.0)</check>
+    </arg>
+    <arg>
+      <name>scalar_correction</name>
+      <type>double</type>
+      <value>1.0</value>
+      <port>2</port>
+    </arg>
+    <arg>
+      <name>enable</name>
+      <type>int</type>
+      <value>0</value>
+      <check>GE($enable, 0) AND LE($enable, 1)</check>
+      <action>SR_WRITE("ENABLE_OUTPUT", $enable)</action>
+      <port>2</port>
+    </arg>
+    <!--Port 3-->
+    <arg>
+      <name>freq</name>
+      <type>double</type>
+      <value>0.0</value>
+      <port>3</port>
+    </arg>
+    <arg>
+      <name>input_rate</name>
+      <type>double</type>
+      <value>1.0</value>
+      <port>3</port>
+      <check>GE($input_rate, 0.0)</check>
+      <check_message>The input rate must be a positive value (in Hz).</check_message>
+    </arg>
+    <arg>
+      <name>output_rate</name>
+      <type>double</type>
+      <value>1.0</value>
+      <port>3</port>
+      <check>GE($output_rate, 0.0)</check>
+      <check_message>The output rate must be a positive value (in Hz).</check_message>
+    </arg>
+    <arg>
+      <name>fullscale</name>
+      <type>double</type>
+      <value>1.0</value>
+      <port>3</port>
+      <check>GE($fullscale, 0.0)</check>
+    </arg>
+    <arg>
+      <name>scalar_correction</name>
+      <type>double</type>
+      <value>1.0</value>
+      <port>3</port>
+    </arg>
+    <arg>
+      <name>enable</name>
+      <type>int</type>
+      <value>0</value>
+      <check>GE($enable, 0) AND LE($enable, 1)</check>
+      <action>SR_WRITE("ENABLE_OUTPUT", $enable)</action>
+      <port>3</port>
+    </arg>
 </args>
   <!--All the connections to the outside world are listed in 'ports':-->
   <ports>
@@ -158,6 +246,14 @@
     </source>
     <source>
       <name>out1</name>
+      <type>sc16</type>
+    </source>
+    <source>
+      <name>out2</name>
+      <type>sc16</type>
+    </source>
+    <source>
+      <name>out3</name>
       <type>sc16</type>
     </source>
   </ports>
