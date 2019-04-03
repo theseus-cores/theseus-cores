@@ -2,7 +2,7 @@
 <block>
   <name>RFNoC: DDC 1-to-N</name>
   <key>theseus_rfnoc_ddc_1_to_n</key>
-  <import>import ettus</import>
+  <import>import theseus</import>
   <make>ettus.rfnoc_generic(
     self.device3,
     uhd.stream_args( \# TX Stream Args
@@ -22,6 +22,7 @@ for ichan, irate, ifreq  in zip(xrange($num_chans), $output_rate, $freq):
     self.$(id).set_arg("output_rate", float(irate), ichan)
     self.$(id).set_arg("fullscale", $fullscale, ichan)
     self.$(id).set_arg("freq", ifreq, ichan)
+    self.$(id).set_arg("enable", 1, ichan)
 </make>
 <callback>set_arg("input_rate", float($input_rate))</callback>
 <callback>for i, rate in zip(xrange($num_chans), $output_rate):

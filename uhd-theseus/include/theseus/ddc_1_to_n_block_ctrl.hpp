@@ -13,7 +13,8 @@
 #include <uhd/rfnoc/rate_node_ctrl.hpp>
 #include <uhd/rfnoc/scalar_node_ctrl.hpp>
 
-namespace theseus {
+namespace uhd {
+    namespace rfnoc {
 
 /*! \brief DDC 1-to-N block controller
  *
@@ -24,16 +25,16 @@ namespace theseus {
  * It also includes a CORDIC component to shift signals in frequency.
  */
 class UHD_RFNOC_API ddc_1_to_n_block_ctrl :
-    public uhd::rfnoc::source_block_ctrl_base,
-    public uhd::rfnoc::sink_block_ctrl_base,
-    public uhd::rfnoc::rate_node_ctrl,
-    public uhd::rfnoc::scalar_node_ctrl
+    public source_block_ctrl_base,
+    public sink_block_ctrl_base,
+    public rate_node_ctrl,
+    public scalar_node_ctrl
 {
 public:
     UHD_RFNOC_BLOCK_OBJECT(ddc_1_to_n_block_ctrl)
 
 }; /* class ddc_1_to_n_block_ctrl*/
 
-} /* namespace theseus */
+}} /* namespace uhd::rfnoc */
 
 #endif /* INCLUDED_LIBUHD_RFNOC_DDC_1_TO_N_BLOCK_CTRL_HPP */

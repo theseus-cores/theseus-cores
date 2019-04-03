@@ -7,6 +7,15 @@ cmake_minimum_required(VERSION 2.8.2)
 project(theseus-cores)
 
 ########################################################################
+# Install Dirs
+########################################################################
+
+SET(RUNTIME_DIR bin)
+SET(LIBRARY_DIR lib$)
+SET(INCLUDE_DIR include)
+SET(PKG_DATA_DIR share/uhd)
+
+########################################################################
 # Conditionally include desired components
 ########################################################################
 

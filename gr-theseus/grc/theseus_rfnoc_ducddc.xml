@@ -2,7 +2,7 @@
 <block>
   <name>RFNoC: DUCDDC</name>
   <key>theseus_rfnoc_ducddc</key>
-  <import>import ettus</import>
+  <import>import theseus</import>
   <make>ettus.rfnoc_generic(
     self.device3,
     uhd.stream_args( \# TX Stream Args

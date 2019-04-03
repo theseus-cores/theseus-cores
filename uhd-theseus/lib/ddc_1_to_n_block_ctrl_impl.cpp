@@ -16,7 +16,6 @@ static const int32_t MAX_FREQ_WORD = boost::numeric::bounds<int32_t>::highest();
 static const int32_t MIN_FREQ_WORD = boost::numeric::bounds<int32_t>::lowest();
 
 using namespace uhd::rfnoc;
-using namespace theseus;
 
 class ddc_1_to_n_block_ctrl_impl : public ddc_1_to_n_block_ctrl
 {
@@ -28,6 +27,7 @@ public:
         , _cic_max_decim(narrow_cast<size_t>(
                     user_reg_read64(RB_REG_CIC_MAX_DECIM)))
     {
+        UHD_LOG_INFO(unique_id(), "RFNOC THESEUS");
         UHD_LOG_DEBUG(unique_id(),
             "Loading DDC 1-to-N with " << get_num_halfbands() << " halfbands and "
             "max CIC decimation " << get_cic_max_decim()
@@ -80,6 +80,14 @@ public:
                     })
                 ;
             }
+
+            int default_enable = 0;
+            _tree->access<int>(get_arg_path("enable/value", chan))
+                .add_coerced_subscriber([this, chan](const int value){
+                    this->enable_channel(value, chan);
+                })
+                .set(default_enable);
+            ;
 
             // Rate 1:1 by default
             sr_write("N", 1, chan);
@@ -138,7 +146,7 @@ public:
             const uhd::stream_cmd_t &stream_cmd_,
             const size_t chan
     ) {
-        UHD_RFNOC_BLOCK_TRACE() << "ddc_1_to_n_block_ctrl_base::issue_stream_cmd()" ;
+        UHD_RFNOC_BLOCK_TRACE() << "ddc_1_to_n_block_ctrl_base::issue_stream_cmd() (chan " << chan << ")" ;
 
         size_t upstream_chan = 0;
 
@@ -330,14 +338,20 @@ private:
         return input_rate/decim_rate;
     }
 
+    void enable_channel(const int value, const size_t chan){
+        UHD_LOG_DEBUG(unique_id(), "Output Channel " << chan << " ==> " << (value ? "ON" : "OFF"));
+        sr_write("ENABLE_OUTPUT", value, chan);
+    }
+
     //! Set frequency and decimation again
-    void set_input_rate(const double /* rate */, const size_t chan)
+    void set_input_rate(const double rate, const size_t chan)
     {
         if (chan != 0){
             return;
         }
-
+        UHD_LOG_DEBUG(unique_id(), "Setting input rate to " <<  rate);
         for (size_t ochan = 0; ochan < get_output_ports().size(); ochan++) {
+            UHD_LOG_DEBUG(unique_id(), "Updating freq/rate settings for output port " << ochan);
             const double desired_freq = _tree->access<double>(get_arg_path("freq", ochan) / "value").get_desired();
             set_arg<double>("freq", desired_freq, ochan);
             const double desired_output_rate = _tree->access<double>(get_arg_path("output_rate", ochan) / "value").get_desired();

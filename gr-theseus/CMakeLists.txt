@@ -138,16 +138,17 @@ endif(DOXYGEN_FOUND)
 # Setup the include and linker paths
 ########################################################################
 include_directories(
-    # ${CMAKE_SOURCE_DIR}/gr-theseus/lib
-    # ${CMAKE_SOURCE_DIR}/gr-theseus/include
-    # ${CMAKE_BINARY_DIR}/gr-theseus/lib
-    # ${CMAKE_BINARY_DIR}/gr-theseus/include
+    ${CMAKE_SOURCE_DIR}/gr-theseus/lib
+    ${CMAKE_SOURCE_DIR}/gr-theseus/include
+    ${CMAKE_BINARY_DIR}/gr-theseus/lib
+    ${CMAKE_BINARY_DIR}/gr-theseus/include
     ${Boost_INCLUDE_DIRS}
     ${CPPUNIT_INCLUDE_DIRS}
     ${GNURADIO_ALL_INCLUDE_DIRS}
 )
 
 link_directories(
+    uhd-theseus
     ${Boost_LIBRARY_DIRS}
     ${CPPUNIT_LIBRARY_DIRS}
     ${GNURADIO_RUNTIME_LIBRARY_DIRS}
@@ -179,10 +180,10 @@ add_custom_target(uninstall
 ########################################################################
 # Add subdirectories
 ########################################################################
-# add_subdirectory(include/gr-theseus)
-# add_subdirectory(lib)
-# add_subdirectory(swig)
-# add_subdirectory(python)
+add_subdirectory(include/theseus)
+add_subdirectory(lib)
+add_subdirectory(swig)
+add_subdirectory(python)
 add_subdirectory(grc)
 # add_subdirectory(apps)
 # add_subdirectory(docs)
