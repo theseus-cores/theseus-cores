@@ -98,7 +98,6 @@
       <type>int</type>
       <value>0</value>
       <check>GE($enable, 0) AND LE($enable, 1)</check>
-      <action>SR_WRITE("ENABLE_OUTPUT", $enable)</action>
       <port>0</port>
     </arg>
     <!--Port 1-->
@@ -142,7 +141,6 @@
       <type>int</type>
       <value>0</value>
       <check>GE($enable, 0) AND LE($enable, 1)</check>
-      <action>SR_WRITE("ENABLE_OUTPUT", $enable)</action>
       <port>1</port>
     </arg>
     <!--Port 2-->
@@ -186,7 +184,6 @@
       <type>int</type>
       <value>0</value>
       <check>GE($enable, 0) AND LE($enable, 1)</check>
-      <action>SR_WRITE("ENABLE_OUTPUT", $enable)</action>
       <port>2</port>
     </arg>
     <!--Port 3-->
@@ -230,7 +227,6 @@
       <type>int</type>
       <value>0</value>
       <check>GE($enable, 0) AND LE($enable, 1)</check>
-      <action>SR_WRITE("ENABLE_OUTPUT", $enable)</action>
       <port>3</port>
     </arg>
 </args>
