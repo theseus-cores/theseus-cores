@@ -101,7 +101,6 @@ begin
     slice_valid_d1 <= slice_valid_d0;
     slice_valid_d2 <= slice_valid_d1;
     slice_valid_d3 <= slice_valid_d2;
-    slice_valid_d4 <= slice_valid_d3;
 end
 
 
@@ -196,6 +195,7 @@ u_fifo
     .s_axis_tready(),
 
     .almost_full(almost_full),
+
     .m_axis_tvalid(m_axis_tvalid),
     .m_axis_tdata(m_axis_tdata),
     .m_axis_tready(m_axis_tready)
