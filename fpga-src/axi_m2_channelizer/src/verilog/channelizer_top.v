@@ -7,7 +7,7 @@
 //***************************************************************************--
 
 // no timescale needed
-`include "chan_rfnoc_sim.vh"
+// `include "chan_rfnoc_sim.vh"
 
 module channelizer_top#(
     parameter DATA_WIDTH = 32)
