@@ -28,15 +28,23 @@ list(APPEND gr_theseus_sources
   theseus_generic_impl.cc
 )
 
-set(gr_theseus_sources "${gr_theseus_sources}" PARENT_SCOPE)
+# NOTE: I couldnt figure out how to properly link gnuradio's swig library with
+# uhd-theseus such that block controllers are imported correctly into a flowgraph...
+# So I'm just adding them here I suppose. This seems to do the trick...
+# TODO: Figure out how to link the generated swig with RFNOC block controllers
+list(APPEND uhd_theseus_sources
+  ${CMAKE_SOURCE_DIR}/uhd-theseus/lib/ddc_1_to_n_block_ctrl_impl.cpp
+  ${CMAKE_SOURCE_DIR}/uhd-theseus/lib/ducddc_block_ctrl_impl.cpp
+)
+
+set(gr_theseus_sources "${gr_theseus_sources} ${uhd_theseus_sources}" PARENT_SCOPE)
 if(NOT gr_theseus_sources)
     MESSAGE(STATUS "No C++ sources... skipping lib/")
     return()
 endif(NOT gr_theseus_sources)
 
-add_library(gnuradio-theseus SHARED ${gr_theseus_sources})
+add_library(gnuradio-theseus SHARED ${gr_theseus_sources} ${uhd_theseus_sources})
 target_link_libraries(gnuradio-theseus
-  uhd-theseus
   ${Boost_LIBRARIES}
   ${GNURADIO_ALL_LIBRARIES}
   ${ETTUS_LIBRARIES}

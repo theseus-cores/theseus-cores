@@ -140,15 +140,16 @@ endif(DOXYGEN_FOUND)
 include_directories(
     ${CMAKE_SOURCE_DIR}/gr-theseus/lib
     ${CMAKE_SOURCE_DIR}/gr-theseus/include
-    ${CMAKE_BINARY_DIR}/gr-theseus/lib
-    ${CMAKE_BINARY_DIR}/gr-theseus/include
+    ${CMAKE_SOURCE_DIR}/uhd-theseus/lib
+    ${CMAKE_SOURCE_DIR}/uhd-theseus/include
+    ${CMAKE_BINARY_DIR}/lib
+    ${CMAKE_BINARY_DIR}/include
     ${Boost_INCLUDE_DIRS}
     ${CPPUNIT_INCLUDE_DIRS}
     ${GNURADIO_ALL_INCLUDE_DIRS}
 )
 
 link_directories(
-    uhd-theseus
     ${Boost_LIBRARY_DIRS}
     ${CPPUNIT_LIBRARY_DIRS}
     ${GNURADIO_RUNTIME_LIBRARY_DIRS}
