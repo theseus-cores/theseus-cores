@@ -8,10 +8,10 @@
 #include <uhd/utils/log.hpp>
 #include <uhd/convert.hpp>
 #include <uhd/types/ranges.hpp>
+#include <boost/math/special_functions/round.hpp>
 #include <cmath>
 
 using namespace uhd::rfnoc;
-using namespace theseus;
 
 class ducddc_block_ctrl_impl : public ducddc_block_ctrl
 {
@@ -125,7 +125,7 @@ public:
         return get_arg<double>("output_rate", port == ANY_PORT ? 0 : port);
     }
 
-    void issue_stream_cmd(
+    virtual void issue_stream_cmd(
             const uhd::stream_cmd_t &stream_cmd_,
             const size_t chan
     ) {

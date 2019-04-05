@@ -12,7 +12,9 @@
 #include <uhd/rfnoc/sink_block_ctrl_base.hpp>
 #include <uhd/rfnoc/rate_node_ctrl.hpp>
 
-namespace theseus {
+namespace uhd {
+
+namespace rfnoc {
 
 /*! \brief DUCDDC block controller
  *
@@ -24,16 +26,16 @@ namespace theseus {
  * intended to perform frequency shifts (just rate changes)
  */
 class UHD_RFNOC_API ducddc_block_ctrl :
-    public uhd::rfnoc::source_block_ctrl_base,
-    public uhd::rfnoc::sink_block_ctrl_base,
-    public uhd::rfnoc::rate_node_ctrl
+    virtual public uhd::rfnoc::source_block_ctrl_base,
+    virtual public uhd::rfnoc::sink_block_ctrl_base,
+    virtual public uhd::rfnoc::rate_node_ctrl
 {
 public:
     UHD_RFNOC_BLOCK_OBJECT(ducddc_block_ctrl)
 
 }; /* class ducddc_block_ctrl*/
 
-} /* namespace theseus */
+} } /* namespace theseus */
 
 #endif /* INCLUDED_THESEUS_RFNOC_DUCDDC_BLOCK_CTRL_HPP */
 

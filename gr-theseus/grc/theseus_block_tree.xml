@@ -10,4 +10,8 @@
 		<name>Theseus Cores</name>
 		<block>theseus_rfnoc_ducddc</block>
 	</cat>
+    <cat>
+        <name>Theseus Cores</name>
+        <block>theseus_rfnoc_ddc_1_to_n</block>
+    </cat>
 </cat>

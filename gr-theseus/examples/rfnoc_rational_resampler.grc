@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<?grc format='1' created='3.7.11'?>
+<?grc format='1' created='3.7.12'?>
 <flow_graph>
   <timestamp>Wed Oct 24 09:42:41 2018</timestamp>
   <block>
@@ -174,7 +174,7 @@
     </param>
     <param>
       <key>dev_args</key>
-      <value>"master_clock_rate=%i" % (mclk)</value>
+      <value></value>
     </param>
     <param>
       <key>_enabled</key>
@@ -456,6 +456,10 @@
       <value></value>
     </param>
     <param>
+      <key>hide</key>
+      <value>none</value>
+    </param>
+    <param>
       <key>type</key>
       <value>eng_float</value>
     </param>
@@ -499,12 +503,16 @@
       <value></value>
     </param>
     <param>
+      <key>hide</key>
+      <value>none</value>
+    </param>
+    <param>
       <key>type</key>
       <value>string</value>
     </param>
     <param>
       <key>value</key>
-      <value>n3xx</value>
+      <value>x300</value>
     </param>
   </block>
   <block>
@@ -540,6 +548,10 @@
     <param>
       <key>short_id</key>
       <value></value>
+    </param>
+    <param>
+      <key>hide</key>
+      <value>none</value>
     </param>
     <param>
       <key>type</key>
@@ -637,7 +649,7 @@
     </param>
     <param>
       <key>_enabled</key>
-      <value>True</value>
+      <value>0</value>
     </param>
     <param>
       <key>_coordinate</key>
@@ -658,6 +670,10 @@
     <param>
       <key>short_id</key>
       <value></value>
+    </param>
+    <param>
+      <key>hide</key>
+      <value>none</value>
     </param>
     <param>
       <key>type</key>
@@ -795,7 +811,7 @@
     </param>
     <param>
       <key>_enabled</key>
-      <value>0</value>
+      <value>1</value>
     </param>
     <param>
       <key>fftsize</key>
@@ -902,7 +918,7 @@
     </param>
     <param>
       <key>fpga_module_name</key>
-      <value>noc_block_duc</value>
+      <value>noc_block_ducddc</value>
     </param>
     <param>
       <key>grvlen</key>
@@ -914,7 +930,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(344, 568)</value>
+      <value>(328, 476)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -972,6 +988,10 @@
       <value></value>
     </param>
     <param>
+      <key>otw</key>
+      <value>sc16</value>
+    </param>
+    <param>
       <key>device_index</key>
       <value>-1</value>
     </param>
@@ -982,6 +1002,10 @@
     <param>
       <key>fpga_module_name</key>
       <value>noc_block_ddc</value>
+    </param>
+    <param>
+      <key>grvlen</key>
+      <value>1</value>
     </param>
     <param>
       <key>freq</key>
@@ -998,6 +1022,10 @@
     <param>
       <key>_rotation</key>
       <value>0</value>
+    </param>
+    <param>
+      <key>type</key>
+      <value>fc32</value>
     </param>
     <param>
       <key>id</key>
@@ -1043,6 +1071,10 @@
       <value></value>
     </param>
     <param>
+      <key>otw</key>
+      <value>sc16</value>
+    </param>
+    <param>
       <key>device_index</key>
       <value>-1</value>
     </param>
@@ -1053,6 +1085,10 @@
     <param>
       <key>fpga_module_name</key>
       <value>noc_block_duc</value>
+    </param>
+    <param>
+      <key>grvlen</key>
+      <value>1</value>
     </param>
     <param>
       <key>freq</key>
@@ -1069,6 +1105,10 @@
     <param>
       <key>_rotation</key>
       <value>0</value>
+    </param>
+    <param>
+      <key>type</key>
+      <value>fc32</value>
     </param>
     <param>
       <key>id</key>
@@ -1089,6 +1129,93 @@
     <param>
       <key>output_rate</key>
       <value>input_rate*interp</value>
+    </param>
+  </block>
+  <block>
+    <key>uhd_rfnoc_streamer_ducddc</key>
+    <param>
+      <key>alias</key>
+      <value></value>
+    </param>
+    <param>
+      <key>block_index</key>
+      <value>-1</value>
+    </param>
+    <param>
+      <key>comment</key>
+      <value></value>
+    </param>
+    <param>
+      <key>affinity</key>
+      <value></value>
+    </param>
+    <param>
+      <key>decim</key>
+      <value>decim</value>
+    </param>
+    <param>
+      <key>otw</key>
+      <value>sc16</value>
+    </param>
+    <param>
+      <key>device_index</key>
+      <value>-1</value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>fpga_module_name</key>
+      <value>noc_block_duc</value>
+    </param>
+    <param>
+      <key>grvlen</key>
+      <value>1</value>
+    </param>
+    <param>
+      <key>fullscale</key>
+      <value>1.0</value>
+    </param>
+    <param>
+      <key>_coordinate</key>
+      <value>(328, 588)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>type</key>
+      <value>fc32</value>
+    </param>
+    <param>
+      <key>id</key>
+      <value>uhd_rfnoc_streamer_ducddc_0</value>
+    </param>
+    <param>
+      <key>input_rate</key>
+      <value>input_rate</value>
+    </param>
+    <param>
+      <key>interp</key>
+      <value>interp</value>
+    </param>
+    <param>
+      <key>maxoutbuf</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>minoutbuf</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>num_chans</key>
+      <value>1</value>
+    </param>
+    <param>
+      <key>output_rate</key>
+      <value>input_rate*interp/decim</value>
     </param>
   </block>
   <block>
@@ -1191,6 +1318,12 @@
     <sink_key>0</sink_key>
   </connection>
   <connection>
+    <source_block_id>blocks_throttle_0</source_block_id>
+    <sink_block_id>uhd_rfnoc_streamer_ducddc_0</sink_block_id>
+    <source_key>0</source_key>
+    <sink_key>0</sink_key>
+  </connection>
+  <connection>
     <source_block_id>low_pass_filter_0</source_block_id>
     <sink_block_id>blocks_throttle_0</sink_block_id>
     <source_key>0</source_key>
@@ -1211,6 +1344,12 @@
   <connection>
     <source_block_id>uhd_rfnoc_streamer_duc_0</source_block_id>
     <sink_block_id>uhd_rfnoc_streamer_ddc_0</sink_block_id>
+    <source_key>0</source_key>
+    <sink_key>0</sink_key>
+  </connection>
+  <connection>
+    <source_block_id>uhd_rfnoc_streamer_ducddc_0</source_block_id>
+    <sink_block_id>uhd_rfnoc_streamer_fifo_0</sink_block_id>
     <source_key>0</source_key>
     <sink_key>0</sink_key>
   </connection>

@@ -1,46 +1,40 @@
 <?xml version="1.0"?>
 <block>
-  <name>RFNoC: DUCDDC</name>
-  <key>theseus_rfnoc_ducddc</key>
+  <name>RFNoC: DDC 1-to-N</name>
+  <key>theseus_rfnoc_ddc_1_to_n</key>
   <import>import theseus</import>
   <make>ettus.rfnoc_generic(
     self.device3,
     uhd.stream_args( \# TX Stream Args
         cpu_format="$type",
         otw_format="$otw",
-        args="input_rate={},output_rate={},fullscale={}".format($input_rate, $output_rate, $fullscale),
+        args="input_rate={},fullscale={}".format($input_rate, $fullscale),
     ),
     uhd.stream_args( \# RX Stream Args
         cpu_format="$type",
         otw_format="$otw",
         args="",
     ),
-    "DUCDDC", $block_index, $device_index,
+    "DDC1TON", $block_index, $device_index,
 )
-for chan in xrange($num_chans):
-    self.$(id).set_arg("interp", float($interp), chan)
-    self.$(id).set_arg("decim", float($decim), chan)
-    self.$(id).set_arg("input_rate", float($input_rate), chan)
-    self.$(id).set_arg("output_rate", float($output_rate), chan)
+self.$(id).set_arg("input_rate", float($input_rate), 0)
+for ichan, irate, ifreq  in zip(xrange($num_chans), $output_rate, $freq):
+    self.$(id).set_arg("output_rate", float(irate), ichan)
+    self.$(id).set_arg("fullscale", $fullscale, ichan)
+    self.$(id).set_arg("freq", ifreq, ichan)
+    self.$(id).set_arg("enable", 1, ichan)
 </make>
-  <callback>set_arg("interp", float($interp))</callback>
-  <callback>set_arg("decim", float($decim))</callback>
-  <callback>set_arg("input_rate", float($input_rate))</callback>
-  <callback>set_arg("output_rate", float($output_rate))</callback>
+<callback>set_arg("input_rate", float($input_rate))</callback>
+<callback>for i, rate in zip(xrange($num_chans), $output_rate):
+    self.$(id).set_arg("output_rate", float(rate), i)</callback>
+<callback>for i, freq in zip(xrange($num_chans), $freq):
+    self.$(id).set_arg("freq", freq, i)</callback>
 
   <param>
     <name>Num Channels</name>
     <key>num_chans</key>
     <value>1</value>
     <type>int</type>
-    <option>
-      <name>1</name>
-      <key>1</key>
-    </option>
-    <option>
-      <name>2</name>
-      <key>2</key>
-    </option>
   </param>
 
   <param>
@@ -50,24 +44,17 @@ for chan in xrange($num_chans):
     <type>real</type>
   </param>
   <param>
-    <name>Output Rate</name>
+    <name>Output Rate List</name>
     <key>output_rate</key>
-    <value>samp_rate</value>
-    <type>real</type>
+    <value>[samp_rate]</value>
+    <type>real_vector</type>
   </param>
   <param>
-    <name>Interpolation</name>
-    <key>interp</key>
-    <value>1</value>
-    <type>int</type>
+    <name>Frequency List</name>
+    <key>freq</key>
+    <value>[0.0]</value>
+    <type>real_vector</type>
   </param>
-  <param>
-    <name>Decimation</name>
-    <key>decim</key>
-    <value>1</value>
-    <type>int</type>
-  </param>
-
   <param>
     <name>Full scale</name>
     <key>fullscale</key>
@@ -123,7 +110,7 @@ for chan in xrange($num_chans):
   <param>
     <name>FPGA Module Name</name>
     <key>fpga_module_name</key>
-    <value>noc_block_ducddc</value>
+    <value>noc_block_ddc_1_to_n</value>
     <type>string</type>
     <hide>all</hide>
     <tab>RFNoC Config</tab>
@@ -136,14 +123,15 @@ for chan in xrange($num_chans):
     <type>int</type>
   </param>
 
-  <check>$output_rate == $input_rate*$interp/$decim</check>
+  <check>$num_chans == len($output_rate)</check>
+  <check>$num_chans == len($freq)</check>
 
   <sink>
     <name>in</name>
     <type>$type.type</type>
     <vlen>$grvlen</vlen>
     <domain>rfnoc</domain>
-    <nports>$num_chans</nports>
+    <nports>1</nports>
   </sink>
 
   <source>

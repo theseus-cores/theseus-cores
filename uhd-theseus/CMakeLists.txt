@@ -93,15 +93,6 @@ IF(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" AND ${CMAKE_CXX_COMPILER_ID} STREQUAL "C
 ENDIF()
 
 ########################################################################
-# Install Dirs
-########################################################################
-
-SET(RUNTIME_DIR bin)
-SET(LIBRARY_DIR lib$)
-SET(INCLUDE_DIR include)
-SET(PKG_DATA_DIR share/uhd)
-
-########################################################################
 # Local Include Dir
 ########################################################################
 include_directories(
