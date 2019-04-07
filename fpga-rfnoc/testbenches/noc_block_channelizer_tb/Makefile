@@ -6,7 +6,6 @@
 # Top-of-Makefile
 #-------------------------------------------------
 # Define BASE_DIR to point to the "top" dir
-UHD_FPGA_DIR = /home/phil/git_clones/fpga
 BASE_DIR = ${UHD_FPGA_DIR}/usrp3/top
 
 $(info BASE_DIR="$(BASE_DIR)")
