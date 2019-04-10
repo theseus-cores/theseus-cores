@@ -18,11 +18,14 @@
     "DDC1TON", $block_index, $device_index,
 )
 self.$(id).set_arg("input_rate", float($input_rate), 0)
-for ichan, irate, ifreq  in zip(xrange($num_chans), $output_rate, $freq):
-    self.$(id).set_arg("output_rate", float(irate), ichan)
-    self.$(id).set_arg("fullscale", $fullscale, ichan)
-    self.$(id).set_arg("freq", ifreq, ichan)
-    self.$(id).set_arg("enable", 1, ichan)
+for ichan, ion, irate, ifreq  in zip(xrange($num_chans), $enable_chans, $output_rate, $freq):
+    if ion:
+        self.$(id).set_arg("output_rate", float(irate), ichan)
+        self.$(id).set_arg("fullscale", $fullscale, ichan)
+        self.$(id).set_arg("freq", ifreq, ichan)
+        self.$(id).set_arg("enable", 1, ichan)
+    else:
+        self.$(id).set_arg("enable", 0, ichan)
 </make>
 <callback>set_arg("input_rate", float($input_rate))</callback>
 <callback>for i, rate in zip(xrange($num_chans), $output_rate):
@@ -42,6 +45,12 @@ for ichan, irate, ifreq  in zip(xrange($num_chans), $output_rate, $freq):
     <key>input_rate</key>
     <value>samp_rate</value>
     <type>real</type>
+  </param>
+  <param>
+    <name>Enable Channels</name>
+    <key>enable_chans</key>
+    <value>[0]</value>
+    <type>int_vector</type>
   </param>
   <param>
     <name>Output Rate List</name>
@@ -123,6 +132,7 @@ for ichan, irate, ifreq  in zip(xrange($num_chans), $output_rate, $freq):
     <type>int</type>
   </param>
 
+  <check>$num_chans == len($enable_chans)</check>
   <check>$num_chans == len($output_rate)</check>
   <check>$num_chans == len($freq)</check>
 
