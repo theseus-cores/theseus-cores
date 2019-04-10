@@ -60,19 +60,16 @@ public:
     {
         _n_taps = uint32_t(user_reg_read64(RB_NUM_TAPS));
         UHD_ASSERT_THROW(_n_taps);
-        set_taps(64);
-    }
+        UHD_LOG_DEBUG(unique_id(), "Loading PFB M/2 Channelizer with max " << _n_taps << " taps.");
 
-    void set_fft_size(const int fft_size)
-    {
-        sr_write(SR_FFT_SIZE, uint32_t(fft_size));
-        set_taps(fft_size);
-    }
-
-    size_t get_fft_size()
-    {
-        _fft_size = uint32_t(user_reg_read64(SR_FFT_SIZE));
-        return _fft_size;
+        // Initialize subscriber for fft_size
+        // Set default to 64
+        _tree->access<double>(get_arg_path("fft_size/value", 0))
+            .add_coerced_subscriber([this](const int value){
+                this->set_taps(value);
+            })
+            .set(64)
+        ;
     }
 
 private:
