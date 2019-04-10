@@ -1,0 +1,7 @@
+/*!
+ * \defgroup block GNU Radio THESEUS C++ Signal Processing Blocks
+ * \brief All C++ blocks that can be used from the THESEUS GNU Radio
+ *        module are listed here or in the subcategories below.
+ *
+ */
+
