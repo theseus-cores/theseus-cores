@@ -50,13 +50,15 @@ $(LIB_IP_CHANNELIZER_XFFT_SRCS))
 #-------------------------------------------------
 # Define only one toplevel module
 SIM_TOP = noc_block_channelizer_tb
+SIM_RUNTIME_US = 20000
 #
+# $(SIM_DIR)/chan_rfnoc_sim.vh \
 # Add test bench, user design under test, and
 # additional user created files
 SIM_SRCS = $(abspath ./noc_block_channelizer_tb.sv \
+$(SIM_DIR)/chan_rfnoc_sim.vh \
 $(SIM_DIR)/sig_tones_input.bin \
 $(SIM_DIR)/M_8_taps.bin \
-$(SIM_DIR)/chan_rfnoc_sim.vh \
 $(CHAN_SRC_DIR)/dp_block_read_first_ram.v \
 $(CHAN_SRC_DIR)/dp_block_write_first_ram.v \
 $(CHAN_SRC_DIR)/axi_fifo_2.v \

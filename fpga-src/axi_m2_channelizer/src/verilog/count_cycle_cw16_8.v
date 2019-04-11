@@ -142,6 +142,7 @@ u_fifo
     .s_axis_tready(fifo_tready),
 
     .almost_full(almost_full),
+
     .m_axis_tvalid(m_fifo_tvalid),
     .m_axis_tdata(m_fifo_tdata),
     .m_axis_tready(m_fifo_tready)

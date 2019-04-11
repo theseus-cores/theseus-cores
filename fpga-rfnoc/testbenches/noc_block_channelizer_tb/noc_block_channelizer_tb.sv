@@ -9,6 +9,7 @@
 
 `include "sim_exec_report.vh"
 `include "sim_rfnoc_lib.svh"
+// `include "chan_rfnoc_sim.vh"
 
 module noc_block_channelizer_tb();
   `TEST_BENCH_INIT("noc_block_channelizer",`NUM_TEST_CASES,`NS_PER_TICK);

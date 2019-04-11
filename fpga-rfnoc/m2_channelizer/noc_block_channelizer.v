@@ -2,6 +2,8 @@
 //
 // Copyright 2015 Ettus Research
 //
+//
+
 module noc_block_channelizer #(
   parameter NOC_ID = 64'hF2A3373CFBFB4BFA,
   parameter STR_SINK_FIFOSIZE = 11)

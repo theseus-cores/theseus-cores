@@ -45,5 +45,6 @@ circ_buffer.v \
 exp_shifter.v \
 input_buffer.v \
 pfb_2x_16iw_16ow_32tps.v \
+chan_rfnoc_sim.vh \
 channelizer_top.v \
 )
