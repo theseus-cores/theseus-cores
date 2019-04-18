@@ -43,7 +43,7 @@ run to completion and indicate success or failure. However, consistent with
 the RFNoC workflow, testbenches may also be run with `make xsim GUI=1` to
 bring up the Vivado waveform viewer for debugging.
 
-## Software Builds
+## Software Builds (from source)
 
 Feature flags are exposed via CMake to enable UHD or Gnuradio software builds:
 
@@ -62,3 +62,7 @@ cmake .. -DCMAKE_INSTALL_PREFIX=/home/user/prefix -DENABLE_UHD=ON -DENABLE_GNURA
 make
 make install
 ```
+
+The `theseus-cores` pybombs recipe provides a build using pybombs... For example, inside a pybombs prefix, run: `pybombs install theseus-cores`
+
+(TODO: Move theseus-cores.lwr recipe in gr-etcetera and CGRAN)
