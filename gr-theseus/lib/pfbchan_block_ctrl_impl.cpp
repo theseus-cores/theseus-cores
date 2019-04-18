@@ -390,4 +390,4 @@ private:
 
 };
 
-UHD_RFNOC_BLOCK_REGISTER(pfbchan_block_ctrl, "PFBCHANNELIZER");
+UHD_RFNOC_BLOCK_REGISTER(pfbchan_block_ctrl, "pfbchannelizer");

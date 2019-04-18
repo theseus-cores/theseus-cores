@@ -1,6 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2017 <+YOU OR YOUR COMPANY+>.
+ * Copyright 2018 Ettus Research
  *
  * This is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,28 +18,28 @@
  * Boston, MA 02110-1301, USA.
  */
 
+#ifndef INCLUDED_THESEUS_PFBCHAN_IMPL_H
+#define INCLUDED_THESEUS_PFBCHAN_IMPL_H
 
-#ifndef INCLUDED_THESEUS_RFNOC_PFBCHAN_BLOCK_CTRL_HPP
-#define INCLUDED_THESEUS_RFNOC_PFBCHAN_BLOCK_CTRL_HPP
+#include <theseus/pfbchan.h>
+#include <theseus/pfbchan_block_ctrl.hpp>
+#include <ettus/rfnoc_block_impl.h>
 
-#include <uhd/rfnoc/source_block_ctrl_base.hpp>
-#include <uhd/rfnoc/sink_block_ctrl_base.hpp>
+namespace gr {
+  namespace theseus {
 
-namespace uhd {
-    namespace rfnoc {
+    class pfbchan_impl : public pfbchan, public gr::ettus::rfnoc_block_impl
+    {
+     private:
+         size_t d_fft_size;
+         gr::thread::mutex d_mutex; // mutex to protect set/work access
 
-/*! \brief Block controller for the PFB M/2 Channelizer RFNoC block.
- *
- */
-class UHD_RFNOC_API pfbchan_block_ctrl :
-	public uhd::rfnoc::source_block_ctrl_base,
-	public uhd::rfnoc::sink_block_ctrl_base
-{
-public:
-    UHD_RFNOC_BLOCK_OBJECT(pfbchan_block_ctrl)
+     public:
+      pfbchan_impl(const gr::ettus::device3::sptr &dev, const int block_select, const int device_select);
+      ~pfbchan_impl();
+    };
 
-}; /* class pfbchan_block_ctrl*/
+  } // namespace theseus
+} // namespace gr
 
-}} /* namespace uhd::rfnoc */
-
-#endif /* INCLUDED_THESEUS_RFNOC_PFB_CHANNELIZER_M2_HPP */
+#endif /* INCLUDED_THESEUS_PFBCHAN_IMPL_H */
