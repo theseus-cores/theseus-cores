@@ -22,7 +22,6 @@
 #include <vector>
 #include <uhd/convert.hpp>
 
-// TODO: Get rid of these includes here??...
 #include <gnuradio/types.h>
 #include <gnuradio/fft/fft.h>
 #include <gnuradio/fft/fft.h>
@@ -117,7 +116,7 @@ private:
             sr_write(SR_RELOAD, boost::uint32_t(taps_fi[i]));
             printf("tap[%d] = %d\n", (int) i, (int) boost::uint32_t(taps_fi[i]));
         }
-        sr_write(SR_RELOAD_TLAST, boost::uint32_t(taps_fi.back())); 
+        sr_write(SR_RELOAD_TLAST, boost::uint32_t(taps_fi.back()));
         printf("final tap = %d\n", (int) boost::uint32_t(taps_fi.back()));
         printf("set_taps() done\n");
     }
@@ -391,4 +390,4 @@ private:
 
 };
 
-UHD_RFNOC_BLOCK_REGISTER(pfbchan_block_ctrl,"chanmux");
+UHD_RFNOC_BLOCK_REGISTER(pfbchan_block_ctrl, "PFBCHANNELIZER");
