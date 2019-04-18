@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<block>
+  <name>RFNoC: PFB Channelizer</name>
+  <key>theseus_rfnoc_pfbchan</key>
+  <import>import theseus</import>
+  <make>theseus.pfbchan(
+    self.device3,
+    $block_index,
+    $device_index,
+)
+self.$(id).set_arg("fft_size", $fft_size)
+</make>
+
+  <callback>set_arg("fft_size", $fft_size)</callback>
+
+  <param>
+     <name>FFT Size</name>
+     <key>fft_size</key>
+     <value>128</value>
+     <type>int</type>
+  </param>
+
+  <param>
+    <name>Block Select</name>
+    <key>block_index</key>
+    <value>-1</value>
+    <type>int</type>
+    <hide>#if int($block_index()) &lt; 0 then 'part' else 'none'#</hide>
+    <tab>RFNoC Config</tab>
+  </param>
+  <param>
+    <name>Device Select</name>
+    <key>device_index</key>
+    <value>-1</value>
+    <type>int</type>
+    <hide>#if int($device_index()) &lt; 0 then 'part' else 'none'#</hide>
+    <tab>RFNoC Config</tab>
+  </param>
+
+  <param>
+    <name>FPGA Module Name</name>
+    <key>fpga_module_name</key>
+    <value>noc_block_pfbchan</value>
+    <type>string</type>
+    <hide>all</hide>
+    <tab>RFNoC Config</tab>
+  </param>
+
+  <param>
+    <name>Force Vector Length</name>
+    <key>grvlen</key>
+    <value>1</value>
+    <type>int</type>
+  </param>
+
+  <sink>
+    <name>in</name>
+    <type>complex</type>
+    <vlen>$grvlen</vlen>
+    <domain>rfnoc</domain>
+  </sink>
+
+  <source>
+    <name>out</name>
+    <type>complex</type>
+    <vlen>$grvlen</vlen>
+    <domain>rfnoc</domain>
+  </source>
+</block>
