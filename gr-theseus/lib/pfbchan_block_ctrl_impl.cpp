@@ -38,11 +38,11 @@ static const float a3 = 1.421413741;
 static const float a4 = -1.453152027;
 static const float a5 = 1.061405429;
 static const float p = 0.3275911;
-static const float K = 10.519;
+static const float K = 22.086093;
 
-static const int taps_per_phase = 24;
+static const int taps_per_phase = 32;
 static const int qvec_coef[2] = {25, 24};
-static const int max_fft_size = 4;
+static const int max_fft_size = 2048;
 static const int qvec[2] = {16, 15};
 
 static const boost::uint32_t RB_NUM_TAPS = 128;
