@@ -27,8 +27,7 @@
 #include <uhd/rfnoc/rate_node_ctrl.hpp>
 
 namespace uhd {
-
-namespace rfnoc {
+	namespace theseus {
 
 /*! \brief DUCDDC block controller
  *

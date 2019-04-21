@@ -17,6 +17,8 @@
  * Boston, MA 02110-1301, USA.
  */
 
+// Note this is copied from gr-ettus as an example block
+
 #include <gnuradio/io_signature.h>
 #include "theseus_generic_impl.h"
 #include <boost/format.hpp>

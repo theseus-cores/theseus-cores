@@ -26,8 +26,9 @@
 #include <cmath>
 
 using namespace uhd::rfnoc;
+using namespace uhd::theseus;
 
-class ducddc_block_ctrl_impl : public ducddc_block_ctrl
+class ducddc_block_ctrl_impl : public uhd::theseus::ducddc_block_ctrl
 {
 public:
     UHD_RFNOC_BLOCK_CONSTRUCTOR(ducddc_block_ctrl)

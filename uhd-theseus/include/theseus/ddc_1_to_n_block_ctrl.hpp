@@ -27,27 +27,27 @@
 #include <uhd/rfnoc/scalar_node_ctrl.hpp>
 
 namespace uhd {
-    namespace rfnoc {
+    namespace theseus {
 
 /*! \brief DDC 1-to-N block controller
  *
  * This block provides DSP for Rx operations.
- * Its main component is a DDC chain, which can decimate over a wide range
- * of decimation rates (using a CIC and halfband filters).
+ * The first channel's input is split to N output channels.
+ * Output channels are independently tuneable
  *
  * It also includes a CORDIC component to shift signals in frequency.
  */
 class UHD_RFNOC_API ddc_1_to_n_block_ctrl :
-    public source_block_ctrl_base,
-    public sink_block_ctrl_base,
-    public rate_node_ctrl,
-    public scalar_node_ctrl
+    public uhd::rfnoc::source_block_ctrl_base,
+    public uhd::rfnoc::sink_block_ctrl_base,
+    public uhd::rfnoc::rate_node_ctrl,
+    public uhd::rfnoc::scalar_node_ctrl
 {
 public:
     UHD_RFNOC_BLOCK_OBJECT(ddc_1_to_n_block_ctrl)
 
 }; /* class ddc_1_to_n_block_ctrl*/
 
-}} /* namespace uhd::rfnoc */
+}} /* namespace uhd::theseus */
 
 #endif /* INCLUDED_LIBUHD_RFNOC_DDC_1_TO_N_BLOCK_CTRL_HPP */

@@ -30,6 +30,7 @@ static const int32_t MAX_FREQ_WORD = boost::numeric::bounds<int32_t>::highest();
 static const int32_t MIN_FREQ_WORD = boost::numeric::bounds<int32_t>::lowest();
 
 using namespace uhd::rfnoc;
+using namespace uhd::theseus;
 
 class ddc_1_to_n_block_ctrl_impl : public ddc_1_to_n_block_ctrl
 {
