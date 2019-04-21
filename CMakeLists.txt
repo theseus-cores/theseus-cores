@@ -1,4 +1,6 @@
-# Todo: Header, copyright, license
+#
+# Copyright 2019 Theseus Cores
+#
 
 ########################################################################
 # Initialize project

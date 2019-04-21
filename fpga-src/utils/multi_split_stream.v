@@ -1,5 +1,5 @@
 //
-// Copyright 2019 Theseus-Cores
+// Copyright 2019 Theseus Cores
 //
 
 module multi_split_stream #(

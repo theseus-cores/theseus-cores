@@ -1,8 +1,5 @@
 //
-// Copyright 2016 Ettus Research
-// Copyright 2018 Ettus Research, a National Instruments Company
-//
-// SPDX-License-Identifier: LGPL-3.0-or-later
+// Copyright 2019 Theseus Cores
 //
 
 module noc_block_ddc_1_to_n #(
