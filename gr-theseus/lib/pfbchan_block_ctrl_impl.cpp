@@ -384,7 +384,7 @@ private:
             }
         }
         for (size_t i=0; i<output_vector.size(); i++){
-            printf("output_vector[i] = %d\n", output_vector[i]);
+            printf("output_vector[%d] = %d\n", i, output_vector[i]);
         }
     }
 
