@@ -66,3 +66,14 @@ make install
 The `theseus-cores` pybombs recipe provides a build using pybombs... For example, inside a pybombs prefix, run: `pybombs install theseus-cores`
 
 (TODO: Move theseus-cores.lwr recipe in gr-etcetera and CGRAN)
+
+## Licensing
+
+The theseus-cores repo combines several sub-projects, including both FPGA and software. The licenses are provisioned as follows:
+
+- uhd-theseus: GPLv3
+- gr-theseus: GPLv3
+- fpga-src: MIT
+- fpga-rfnoc: MIT
+
+While UHD and Gnuradio software components are distributed under GPLv3 to maintain compatiblity with their corresponding libraries, we have decided to release the FPGA code under the more permissive MIT license.
