@@ -77,7 +77,7 @@ private:
 
     void set_taps(const int fft_size)
     {
-
+        UHD_LOG_DEBUG(unique_id(), "Setting taps to " << fft_size);
         gr_vector_float taps;
         tap_equation(fft_size, taps);
         int desired_msb = 40;  //TODO: replace internal constant
