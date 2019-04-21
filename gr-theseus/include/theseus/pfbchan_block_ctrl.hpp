@@ -42,4 +42,4 @@ public:
 
 }} /* namespace uhd::rfnoc */
 
-#endif /* INCLUDED_THESEUS_RFNOC_PFB_CHANNELIZER_M2_HPP */
+#endif /* INCLUDED_THESEUS_RFNOC_PFBCHAN_BLOCK_CTRL_HPP */

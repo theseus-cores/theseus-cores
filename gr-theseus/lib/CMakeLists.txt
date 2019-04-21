@@ -26,7 +26,6 @@ include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIRS})
 list(APPEND gr_theseus_sources
   theseus_generic_impl.cc
-  pfbchan_impl.cc
   pfbchan_block_ctrl_impl.cpp
 )
 
