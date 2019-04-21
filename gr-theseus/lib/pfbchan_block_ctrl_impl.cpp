@@ -63,7 +63,7 @@ public:
 
         // Initialize subscriber for fft_size
         // Set default to 64
-        _tree->access<double>(get_arg_path("fft_size/value", 0))
+        _tree->access<int>(get_arg_path("fft_size/value", 0))
             .add_coerced_subscriber([this](const int value){
                 this->set_taps(value);
             })
