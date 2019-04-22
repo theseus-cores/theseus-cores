@@ -22,7 +22,6 @@
 #include <vector>
 #include <uhd/convert.hpp>
 
-// TODO: Get rid of these includes here??...
 #include <gnuradio/types.h>
 #include <gnuradio/fft/fft.h>
 #include <gnuradio/fft/fft.h>
@@ -39,11 +38,11 @@ static const float a3 = 1.421413741;
 static const float a4 = -1.453152027;
 static const float a5 = 1.061405429;
 static const float p = 0.3275911;
-static const float K = 10.519;
+static const float K = 22.086093;
 
-static const int taps_per_phase = 24;
+static const int taps_per_phase = 32;
 static const int qvec_coef[2] = {25, 24};
-static const int max_fft_size = 4;
+static const int max_fft_size = 2048;
 static const int qvec[2] = {16, 15};
 
 static const boost::uint32_t RB_NUM_TAPS = 128;
@@ -64,7 +63,7 @@ public:
 
         // Initialize subscriber for fft_size
         // Set default to 64
-        _tree->access<double>(get_arg_path("fft_size/value", 0))
+        _tree->access<int>(get_arg_path("fft_size/value", 0))
             .add_coerced_subscriber([this](const int value){
                 this->set_taps(value);
             })
@@ -78,7 +77,7 @@ private:
 
     void set_taps(const int fft_size)
     {
-
+        UHD_LOG_DEBUG(unique_id(), "Setting taps to " << fft_size);
         gr_vector_float taps;
         tap_equation(fft_size, taps);
         int desired_msb = 40;  //TODO: replace internal constant
@@ -117,7 +116,7 @@ private:
             sr_write(SR_RELOAD, boost::uint32_t(taps_fi[i]));
             printf("tap[%d] = %d\n", (int) i, (int) boost::uint32_t(taps_fi[i]));
         }
-        sr_write(SR_RELOAD_TLAST, boost::uint32_t(taps_fi.back())); 
+        sr_write(SR_RELOAD_TLAST, boost::uint32_t(taps_fi.back()));
         printf("final tap = %d\n", (int) boost::uint32_t(taps_fi.back()));
         printf("set_taps() done\n");
     }
@@ -385,10 +384,10 @@ private:
             }
         }
         for (size_t i=0; i<output_vector.size(); i++){
-            printf("output_vector[i] = %d\n", output_vector[i]);
+            printf("output_vector[%d] = %d\n", i, output_vector[i]);
         }
     }
 
 };
 
-UHD_RFNOC_BLOCK_REGISTER(pfbchan_block_ctrl,"chanmux");
+UHD_RFNOC_BLOCK_REGISTER(pfbchan_block_ctrl, "pfbchannelizer");

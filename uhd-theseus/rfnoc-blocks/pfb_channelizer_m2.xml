@@ -2,7 +2,7 @@
 <!--Default XML file-->
 <nocblock>
   <name>Polyphase M/2 Channelizer</name>
-  <blockname>PFBCHANNELIZER</blockname>
+  <blockname>pfbchannelizer</blockname>
   <ids>
     <id revision="0">F2A3373CFBFB4BFA</id>
   </ids>
