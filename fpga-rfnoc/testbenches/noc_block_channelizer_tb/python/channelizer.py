@@ -20,6 +20,7 @@ from collections import OrderedDict
 from matplotlib import rc
 from argparse import ArgumentParser
 import os
+import gc
 plt.ion()
 
 gen_vhdl = False
@@ -53,7 +54,7 @@ pfb_msb = 38
 desired_msb = pfb_msb
 qvec = (16, 15)
 qvec_coef = (25, 24)
-Mmax = 2048
+max_M = 2048
 
 fil_transbw_factors = (10, 4.5)
 
@@ -122,7 +123,7 @@ class Channelizer(object):
         *
 
     """
-    def __init__(self, M=64, max_M=512, pbr=.1, sba=-80, taps_per_phase=32, gen_2X=True, qvec_coef=(25, 24),
+    def __init__(self, M=64, max_M=max_M, pbr=.1, sba=-80, taps_per_phase=32, gen_2X=True, qvec_coef=(25, 24),
                  qvec=(18, 17), desired_msb=None, K=None):
 
         self.taps_per_phase = taps_per_phase
@@ -488,10 +489,7 @@ class Channelizer(object):
 
             fp_utils.coe_write(fi_obj, radix=16, file_name=file_name, filter_type=False)
 
-    def gen_tap_file(self, file_name=None):
-        """
-            Helper function that generates a single file used for programming the internal ram
-        """
+    def gen_tap_vec(self):
         pfb_fil = copy.deepcopy(self.poly_fil_fi)
         pfb_fil = pfb_fil.T
         vec = np.array([])
@@ -500,6 +498,17 @@ class Channelizer(object):
             col_vec = np.concatenate((col, pad))
             vec = np.concatenate((vec, col_vec))
 
+        return vec
+
+    def output_tap_vec(self):
+        with open('{}M_{}_taps.txt'.format(sim_path, self.M), 'w') as f:
+            f.writelines(["%s\n" % int(item)  for item in self.gen_tap_vec()])
+
+    def gen_tap_file(self, file_name=None):
+        """
+            Helper function that generates a single file used for programming the internal ram
+        """
+        vec = self.gen_tap_vec()
         print(len(vec))
         write_binary_file(vec, file_name, 'i', big_endian=True)
 
@@ -930,7 +939,7 @@ def test_256_chan(gen_taps=False):
     chan.plot_filter()
 
 
-def gen_taps(M, max_M=512, gen_2X=True, taps_per_phase=taps_per_phase, pfb_msb=40):
+def gen_taps(M, max_M=max_M, gen_2X=True, taps_per_phase=taps_per_phase, pfb_msb=40):
 
     chan = Channelizer(M=M, max_M=max_M, gen_2X=gen_2X, taps_per_phase=taps_per_phase, desired_msb=pfb_msb, qvec=qvec, qvec_coef=qvec_coef)
     print("Filter MSB = {}".format(chan.fil_msb))
@@ -981,8 +990,6 @@ def gen_animation():
     chan_obj.gen_animation()
 
 def find_best_terms():
-    # M = [4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384]
-    # M = 2 ** np.arange(2, 7)
     chan_obj = Channelizer(M=16, taps_per_phase=taps_per_phase, gen_2X=True, qvec=qvec, qvec_coef=qvec_coef)
     K_terms, msb_terms = chan_obj.gen_fil_params(8, 32)
 
@@ -1156,7 +1163,7 @@ def gen_tap_plots(M_list):
     for M in M_list:
         chan_obj = Channelizer(M=M, taps_per_phase=taps_per_phase, gen_2X=True, desired_msb=desired_msb, qvec=qvec, qvec_coef=qvec_coef)
         # chan_obj.plot_psd_single(savefig=True)
-        gen_taps(M, Mmax, gen_2X=True, taps_per_phase=taps_per_phase, pfb_msb=desired_msb)
+        gen_taps(M, max_M, gen_2X=True, taps_per_phase=taps_per_phase, pfb_msb=desired_msb)
         print(chan_obj.pfb_msb)
         tap_title = 'taps psd M {}'.format(M)
         # get adjacent bins and plot suppression value.
@@ -1165,6 +1172,12 @@ def gen_tap_plots(M_list):
         if M > 256:
             fft_size=16384 * 4
         chan_obj.plot_psd(fft_size, taps=None, freq_vector=None, title=tap_title, savefig=True, pwr_pts=six_db, freq_pts=freq_pts)
+        gc.collect()
+
+def gen_tap_vec(M_list):
+    for M in M_list:
+        chan_obj = Channelizer(M=M, taps_per_phase=taps_per_phase, gen_2X=True, desired_msb=desired_msb, qvec=qvec, qvec_coef=qvec_coef)
+        chan_obj.output_tap_vec()
 
 def get_args():
 
@@ -1179,8 +1192,6 @@ def get_args():
     parser.add_argument('-i', '--rtl_sim_input', nargs='+', help='Generate tones based on list of tone frequencies (Normalized Discrete Freq range -1 -> 1)', required=False)
     parser.add_argument('-t', '--generate_taps', action='store_true', help='Generates tap files for all valid FFT Sizes : [8, 16, 32, 64, 128, 256, 512, 1024, 2048]')
     parser.add_argument('-o', '--opt_taps', action='store_true', help='Returns optimized filter parameters all valid FFT Sizes : [8, 16, 32, 64, 128, 256, 512, 1024, 2048]')
-
-
     args = parser.parse_args()
 
     if args.rtl_chan_outfile is not None:
@@ -1198,6 +1209,8 @@ def get_args():
 
     if args.generate_taps:
         gen_tap_plots(M_list)
+        gen_tap_vec(M_list)
+
 
     if args.opt_taps:
         populate_fil_table()
