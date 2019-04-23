@@ -32,8 +32,8 @@ namespace uhd {
  *
  */
 class UHD_RFNOC_API pfbchan_block_ctrl :
-	public uhd::rfnoc::source_block_ctrl_base,
-	public uhd::rfnoc::sink_block_ctrl_base
+    public uhd::rfnoc::source_block_ctrl_base,
+    public uhd::rfnoc::sink_block_ctrl_base
 {
 public:
     UHD_RFNOC_BLOCK_OBJECT(pfbchan_block_ctrl)

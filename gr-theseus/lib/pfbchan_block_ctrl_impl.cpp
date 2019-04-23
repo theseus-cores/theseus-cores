@@ -45,21 +45,19 @@ static const int qvec_coef[2] = {25, 24};
 static const int max_fft_size = 2048;
 static const int qvec[2] = {16, 15};
 
-static const boost::uint32_t RB_NUM_TAPS = 128;
-static const boost::uint32_t SR_FFT_SIZE = 129;
-static const boost::uint32_t SR_RELOAD = 130;
-static const boost::uint32_t SR_RELOAD_TLAST = 131;
-static const boost::uint32_t SR_CONFIG = 132;
-
 class pfbchan_block_ctrl_impl : public pfbchan_block_ctrl
 {
 public:
 
     UHD_RFNOC_BLOCK_CONSTRUCTOR(pfbchan_block_ctrl)
     {
-        _n_taps = uint32_t(user_reg_read64(RB_NUM_TAPS));
+        _n_taps = uint32_t(user_reg_read64("RB_NUM_TAPS"));
         UHD_ASSERT_THROW(_n_taps);
-        UHD_LOG_DEBUG(unique_id(), "Loading PFB M/2 Channelizer with max " << _n_taps << " taps.");
+        UHD_LOG_DEBUG(unique_id(), "Found PFB M/2 Channelizer max " << _n_taps << " taps.");
+
+        // Save the RELOAD addresses so we dont need to re-query
+        SR_RELOAD = uint32_t(_tree->access<size_t>(_root_path / "registers" / "sr" / "SR_RELOAD").get());
+        SR_RELOAD_LAST = uint32_t(_tree->access<size_t>(_root_path / "registers" / "sr" / "SR_RELOAD_LAST").get());
 
         // Initialize subscriber for fft_size
         // Set default to 64
@@ -74,6 +72,8 @@ public:
 private:
     size_t _n_taps;
     size_t _fft_size;
+    uint32_t SR_RELOAD;
+    uint32_t SR_RELOAD_LAST;
 
     void set_taps(const int fft_size)
     {
@@ -108,15 +108,14 @@ private:
         }
 
         UHD_VAR(taps_fi.size());
-        // sr_read(RB_NUM_TAPS)
         uint32_t num_taps_read;
-        num_taps_read = user_reg_read32(RB_NUM_TAPS);
+        num_taps_read = user_reg_read32("RB_NUM_TAPS");
         printf("num_taps = %d\n", (int) num_taps_read);
         for (size_t i = 0; i < taps_fi.size() - 1; i++) {
             sr_write(SR_RELOAD, boost::uint32_t(taps_fi[i]));
             printf("tap[%d] = %d\n", (int) i, (int) boost::uint32_t(taps_fi[i]));
         }
-        sr_write(SR_RELOAD_TLAST, boost::uint32_t(taps_fi.back()));
+        sr_write(SR_RELOAD_LAST, boost::uint32_t(taps_fi.back()));
         printf("final tap = %d\n", (int) boost::uint32_t(taps_fi.back()));
         printf("set_taps() done\n");
     }

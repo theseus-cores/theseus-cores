@@ -132,7 +132,9 @@ module noc_block_channelizer #(
   localparam SR_USER_REG_BASE = 128;
   localparam RB_NUM_TAPS = 128;
   localparam SR_FFT_SIZE = 129;
+  localparam RB_FFT_SIZE = 129;
   localparam SR_AVG_LEN = 130;
+  localparam RB_AVG_LEN = 130;
   localparam SR_RELOAD = 131;
   localparam SR_RELOAD_LAST = 132;
   localparam NUM_TAPS = 65536;
@@ -180,8 +182,8 @@ module noc_block_channelizer #(
   always @(posedge ce_clk) begin
     case(rb_addr)
       RB_NUM_TAPS : rb_data <= {NUM_TAPS};
-      SR_FFT_SIZE : rb_data <= {20'd0, fft_size};
-      SR_AVG_LEN : rb_data <= {23'd0, avg_len};
+      RB_FFT_SIZE : rb_data <= {20'd0, fft_size};
+      RB_AVG_LEN : rb_data <= {23'd0, avg_len};
       default : rb_data <= 64'h0BADC0DE0BADC0DE;
     endcase
   end
