@@ -12,11 +12,11 @@ It requires more resources than a more optimal resampler would need. Also keep i
 
 **Parameters**
 
-NUM_CHAINS: [default=1] Number of independent DUCDDC chains to instantiate
-DUC_NUM_HB: [default=2] Number of half-band interpolators in the DUC
-DUC_CIC_MAX_INTERP: [default=16] Maximum interpolation factor for DUC
-DDC_NUM_HB: [default=2] Number of half-band decimators in the DDC
-DDC_CIC_MAX_DECIM: [default=16] Maximum decimation factor for the DDC
+- NUM_CHAINS: [default=1] Number of independent DUCDDC chains to instantiate
+- DUC_NUM_HB: [default=2] Number of half-band interpolators in the DUC
+- DUC_CIC_MAX_INTERP: [default=16] Maximum interpolation factor for DUC
+- DDC_NUM_HB: [default=2] Number of half-band decimators in the DDC
+- DDC_CIC_MAX_DECIM: [default=16] Maximum decimation factor for the DDC
 
 ## noc_block_ddc_1_to_n.v
 
@@ -34,6 +34,6 @@ A workaround is to follow each DDC channel output with an *independent* 1-channe
 
 **Parameters**
 
-NUM_CHAINS: [default=4] Number of DDCs to instantiate (this represents the number of channels)
-NUM_HB: [default=2] Number of half-band decimators in the DDC; this applies to all DDCs.
-CIC_MAX_DECIM: [default=16] Maximum decimation factor for the DDC; this applies to all DDCs.
+- NUM_CHAINS: [default=4] Number of DDCs to instantiate (this represents the number of channels)
+- NUM_HB: [default=2] Number of half-band decimators in the DDC; this applies to all DDCs.
+- CIC_MAX_DECIM: [default=16] Maximum decimation factor for the DDC; this applies to all DDCs.
