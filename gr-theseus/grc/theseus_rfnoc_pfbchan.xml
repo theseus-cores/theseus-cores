@@ -8,15 +8,15 @@
     $block_index,
     $device_index,
 )
-self.$(id).set_arg("fft_size", $fft_size)
+self.$(id).set_arg("fft_size", $num_chan)
 </make>
 
-  <callback>set_arg("fft_size", $fft_size)</callback>
+  <callback>set_arg("fft_size", $num_chan)</callback>
 
   <param>
-     <name>FFT Size</name>
-     <key>fft_size</key>
-     <value>128</value>
+     <name>Number of Channels</name>
+     <key>num_chan</key>
+     <value>8</value>
      <type>int</type>
   </param>
 
@@ -46,24 +46,17 @@ self.$(id).set_arg("fft_size", $fft_size)
     <tab>RFNoC Config</tab>
   </param>
 
-  <param>
-    <name>Force Vector Length</name>
-    <key>grvlen</key>
-    <value>1</value>
-    <type>int</type>
-  </param>
-
   <sink>
     <name>in</name>
     <type>complex</type>
-    <vlen>$grvlen</vlen>
+    <vlen>1</vlen>
     <domain>rfnoc</domain>
   </sink>
 
   <source>
     <name>out</name>
     <type>complex</type>
-    <vlen>$grvlen</vlen>
+    <vlen>$num_chan</vlen>
     <domain>rfnoc</domain>
   </source>
 </block>
