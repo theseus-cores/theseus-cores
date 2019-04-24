@@ -1,0 +1,38 @@
+# Block Definitions
+
+- block: axi_fifo_loopback
+  hints:
+    - slota
+    - default
+
+- block: axi_fifo_loopback
+
+- block: ddc
+  parameters:
+    NUM_CHAINS: 2
+    NOC_ID: 64'hDDC0_0000_0000_0002
+  hints:
+    - ddc2
+
+- block: duc
+  parameters:
+    NUM_CHAINS: 2
+    NOC_ID: 64'hD0C0_0000_0000_0002
+  hints:
+    - duc2
+
+- block: ducddc
+  parameters:
+    NUM_CHAINS: 1
+    NOC_ID: 64'hD0C0_DDC0_0000_0001
+    DUC_NUM_HB: 1
+    DUC_CIC_MAX_INTERP: 8
+    DDC_NUM_HB: 1
+    DDC_CIC_MAX_DECIM: 8
+
+- block: ddc_1_to_n
+  parameters:
+    NOC_ID: 64'hDDC0_1020_2000_0000
+    NUM_CHAINS: 2
+    NUM_HB: 2
+    CIC_MAX_DECIM: 32
