@@ -45,6 +45,8 @@ module noc_block_channelizer #(
 
   wire        clear_tx_seqnum;
 
+
+
   noc_shell #(
     .NOC_ID(NOC_ID),
     .STR_SINK_FIFOSIZE(STR_SINK_FIFOSIZE))
@@ -92,7 +94,7 @@ module noc_block_channelizer #(
   wire [127:0] s_axis_data_tuser;
 
 
-  assign s_axis_data_tuser = {3'b000, eob_tag & s_axis_data_tlast, 12'd0, 16'd0, m_axis_data_tuser[79:64], next_dst_sid, 64'd0};
+  // assign s_axis_data_tuser = {3'b000, eob_tag & s_axis_data_tlast, 12'd0, 16'd0, m_axis_data_tuser[79:64], next_dst_sid, 64'd0};
   axi_wrapper #(
     .SIMPLE_MODE(0),
     .RESIZE_OUTPUT_PACKET(0))
@@ -137,6 +139,8 @@ module noc_block_channelizer #(
   localparam RB_AVG_LEN = 130;
   localparam SR_RELOAD = 131;
   localparam SR_RELOAD_LAST = 132;
+  localparam SR_PKT_SIZE = 133;
+  localparam RB_PKT_SIZE = 133;
   localparam NUM_TAPS = 65536;
 
   // Control Source Unused
@@ -150,6 +154,18 @@ module noc_block_channelizer #(
   wire  m_axis_reload_tready;
     //(* keep = “true”, dont_touch = “true”, mark_debug = “true” *)
   wire m_axis_reload_tlast;
+
+  wire [15:0] payload_length;
+  cvita_hdr_encoder cvita_hdr_encoder (
+   .pkt_type(2'd0), .eob(1'b0), .has_time(1'b0),
+   .seqnum(12'd0), .payload_length(payload_length), .dst_sid(next_dst_sid), .src_sid(src_sid),
+   .vita_time(64'd0),
+   .header(s_axis_data_tuser));
+
+   setting_reg #(.my_addr(SR_PKT_SIZE), .awidth(8), .width(16), .at_reset(256))
+   set_payload_length_inst (
+   .clk(ce_clk), .rst(ce_rst),
+   .strobe(set_stb), .addr(set_addr), .in(set_data), .out(payload_length), .changed());
 
   // Settings registers
   //
@@ -184,6 +200,7 @@ module noc_block_channelizer #(
       RB_NUM_TAPS : rb_data <= {NUM_TAPS};
       RB_FFT_SIZE : rb_data <= {20'd0, fft_size};
       RB_AVG_LEN : rb_data <= {23'd0, avg_len};
+      RB_PKT_SIZE : rb_data <= {16'd0, payload_length};
       default : rb_data <= 64'h0BADC0DE0BADC0DE;
     endcase
   end
@@ -244,29 +261,29 @@ set_coeff (
   .o_tvalid(m_axis_reload_tvalid),
   .o_tready(m_axis_reload_tready));
 
-  channelizer_top channelizer_top
-  (
-      .clk(ce_clk),
-      .sync_reset(ce_rst),
+channelizer_top channelizer_top
+(
+    .clk(ce_clk),
+    .sync_reset(ce_rst),
 
-      .fft_size(fft_size),
-      .avg_len(avg_len),
-      .eob_tag(eob_tag),
+    .fft_size(fft_size),
+    .avg_len(avg_len),
+    .eob_tag(eob_tag),
 
-      .s_axis_tdata(m_axis_data_tdata),
-      .s_axis_tvalid(m_axis_data_tvalid),
-      .s_axis_tready(m_axis_data_tready),
+    .s_axis_tdata(m_axis_data_tdata),
+    .s_axis_tvalid(m_axis_data_tvalid),
+    .s_axis_tready(m_axis_data_tready),
 
-      .s_axis_reload_tdata(m_axis_reload_tdata),
-      .s_axis_reload_tlast(m_axis_reload_tlast),
-      .s_axis_reload_tvalid(m_axis_reload_tvalid),
-      .s_axis_reload_tready(m_axis_reload_tready),
+    .s_axis_reload_tdata(m_axis_reload_tdata),
+    .s_axis_reload_tlast(m_axis_reload_tlast),
+    .s_axis_reload_tvalid(m_axis_reload_tvalid),
+    .s_axis_reload_tready(m_axis_reload_tready),
 
-      .m_axis_tdata(s_axis_data_tdata),
-      .m_axis_tuser(),
-      .m_axis_tvalid(s_axis_data_tvalid),
-      .m_axis_tlast(s_axis_data_tlast),
-      .m_axis_tready(s_axis_data_tready)
-  );
+    .m_axis_tdata(s_axis_data_tdata),
+    .m_axis_tuser(),
+    .m_axis_tvalid(s_axis_data_tvalid),
+    .m_axis_tlast(s_axis_data_tlast),
+    .m_axis_tready(s_axis_data_tready)
+);
 
 endmodule
