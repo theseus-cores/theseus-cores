@@ -48,23 +48,23 @@ In summary, FPGA cores provided here:
 
 #### CMake
 
+Software building is handled through cmake. Make sure to call cmake from the top-level (theseus-cores/build), not from subdirectories (e.g., gr-theseus/build, etc).
+
 Feature flags are exposed via CMake to enable UHD or Gnuradio software builds:
 
 - ENABLE_UHD: Turns on the build of uhd-theseus
 - ENABLE_GNURADIO: Turns on the build of gr-theseus
 
-For example, the following cmake process will build and install all software
-source code to a prefix of `/home/user/prefix/gnuradio` (this assumes a
-pybombs prefix is initialized and includes the uhd, gnuradio, and gr-ettus
-repos):
+For example, the following cmake process will build and install all software (starting in the top-level theseus-cores directory:
 
 ```
 mkdir build
 cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=/home/user/prefix -DENABLE_UHD=ON -DENABLE_GNURADIO=ON
+cmake .. -DENABLE_UHD=ON -DENABLE_GNURADIO=ON
 make
 make install
 ```
+
 
 #### Pybombs
 
