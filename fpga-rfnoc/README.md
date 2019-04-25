@@ -73,3 +73,17 @@ A workaround is to follow each DDC channel output with an *independent* 1-channe
 - NUM_CHAINS: [default=4] Number of DDCs to instantiate (this represents the number of channels)
 - NUM_HB: [default=2] Number of half-band decimators in the DDC; this applies to all DDCs.
 - CIC_MAX_DECIM: [default=16] Maximum decimation factor for the DDC; this applies to all DDCs.
+
+## m2_channelizer/noc_block_channelizer.v
+
+**Summary**
+
+The M/2 channelizer (i.e., "pfbchan") implements the polyphase channelizer based on the [GRCon 2017 presentation](https://pubs.gnuradio.org/index.php/grcon/article/view/18).
+
+The output rate of an M/2 channelizer is 2x the input sample rate for each channel, which allows for a far sharper passband rolloff and perfect reconstruction of output subchannels. The channelizer may use a selectable number of channels at run time by programming different taps into the FPGA core (8, 16, 32, 64, 128, 256, 1024, 2048). See python code and software for details.
+
+As implemented now (4/24/2019), the channelizer does not yet *downselect* channels in the FPGA to reduce output data rate as needed. Furthermore, all channels are interleaved and need to be reconstructed on the output. The gr-theseus gnuradio flowgraph example demonstrates a simple de-interleaving process using vector outputs in a flowgraph.
+
+**Parameters**
+
+No parameters available yet -- TODO: implement generate options to reduce/increase resource usage based on desired channelizer size.

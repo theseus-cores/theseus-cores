@@ -42,7 +42,7 @@ All FPGA code is provided in `fpga-src` where possible. However the top-level en
 In summary, FPGA cores provided here:
    - **DUC-DDC** ([detailed description](./fpga-rfnoc/README.md#dsp-utilsnoc_block_ducddcv)): A "hacked" rational resampler, consisting of a DUC and a DDC back-to-back.
    - **1-to-N DDC** ([detailed description](./fpga-rfnoc/README.md#dsp-utilsnoc_block_ddc_1_to_n)): Parameterized instantiations of "N" independent DDCs, where each DDC is connected to the *first* channel (a very basic channelizer).
-   - **M/2 Channelizer** ([detailed description](./fpga-rfnoc/README.md#dsp-utilsnoc_block_channelizer): A [polyphase channelizer](https://pubs.gnuradio.org/index.php/grcon/article/view/18), where each channel outputs 2x sample rate and is compatible with perfect-reconstruction.
+   - **M/2 Channelizer** ([detailed description](./fpga-rfnoc/README.md#m2_channelizernoc_block_channelizerv)): A [polyphase channelizer](https://pubs.gnuradio.org/index.php/grcon/article/view/18), where each channel outputs 2x sample rate and is compatible with perfect-reconstruction.
 
 ## Software Builds (from source)
 
