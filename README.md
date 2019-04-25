@@ -31,19 +31,22 @@ The uhd-theseus project is designed to be compatible with a project that
 - **gr-theseus**: Gnuradio plugins to access RFNoC blocks from gnuradio companion
 and inside a gnuradio flowgraph.
 
-## FPGA Builds and Testbenches
+## FPGA Cores
 
-FPGA code in the `fpga-src` folder is a "wild west", as it is designed to be
-basic standalone code with minimal pre-requirements. See each project
-individually for details.
+All FPGA code is provided in `fpga-src` where possible. However the top-level entry-point for RFNoC users would be `fpga-rfnoc`, which provides RFNoC hooks/wrappers around the core FPGA code. Review the fpga-rfnoc [README](./fpga-rfnoc/README.md) instructions for:
+  - Instructions how to build a relevant FPGA image
+  - Instructions how to run RFNoC testbenches
+  - [Examples YML builds](./fpga-rfnoc/examples)
+  - Description of the provided RFNoC blocks
 
-The testbenches in `fpga-rfnoc` may be run in an RFNoC simulation
-(`make xsim`). The testbenches are designed to be "self-checking" so they will
-run to completion and indicate success or failure. However, consistent with
-the RFNoC workflow, testbenches may also be run with `make xsim GUI=1` to
-bring up the Vivado waveform viewer for debugging.
+In summary, FPGA cores provided here:
+   - **DUC-DDC** ([detailed description](./fpga-rfnoc/README.md#dsp-utilsnoc_block_ducddcv)): A "hacked" rational resampler, consisting of a DUC and a DDC back-to-back.
+   - **1-to-N DDC** ([detailed description](./fpga-rfnoc/README.md#dsp-utilsnoc_block_ddc_1_to_n)): Parameterized instantiations of "N" independent DDCs, where each DDC is connected to the *first* channel (a very basic channelizer).
+   - **M/2 Channelizer** ([detailed description](./fpga-rfnoc/README.md#dsp-utilsnoc_block_channelizer): A [polyphase channelizer](https://pubs.gnuradio.org/index.php/grcon/article/view/18), where each channel outputs 2x sample rate and is compatible with perfect-reconstruction.
 
 ## Software Builds (from source)
+
+#### CMake
 
 Feature flags are exposed via CMake to enable UHD or Gnuradio software builds:
 
@@ -63,9 +66,15 @@ make
 make install
 ```
 
-The `theseus-cores` pybombs recipe provides a build using pybombs... For example, inside a pybombs prefix, run: `pybombs install theseus-cores`
+#### Pybombs
 
-(TODO: Move theseus-cores.lwr recipe in gr-etcetera and CGRAN)
+The `theseus-cores` pybombs recipe provides a build using pybombs. For example, inside a pybombs prefix, run: `pybombs install theseus-cores`
+
+To install a fresh prefix via pybombs, tested on Ubuntu 18.04 and 16.04:
+1. Install and update [pybombs](https://github.com/gnuradio/pybombs) using pip
+2. Update pybombs recipe repos (specifically gr-recipes, gr-etcetera, and ettus)
+3. Install a clean rfnoc prefix: `pybombs prefix init <prefix-name> -R rfnoc`
+4. Install theseus-cores into this prefix: `pybombs install theseus-cores`
 
 ## Licensing
 
@@ -77,3 +86,8 @@ The theseus-cores repo combines several sub-projects, including both FPGA and so
 - fpga-rfnoc: MIT
 
 While UHD and Gnuradio software components are distributed under GPLv3 to maintain compatiblity with their corresponding libraries, we have decided to release the FPGA code under the more permissive MIT license.
+
+## Contributors
+
+- EJ Kreinar (ejkreinar@gmail.com)
+- Phil Vallance
