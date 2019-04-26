@@ -30,6 +30,7 @@ LIB_IP_DIR = $(BASE_DIR)/../lib/ip
 IP_DIR = $(LIB_IP_DIR)
 SIM_DIR = $(abspath ./)
 
+CHAN_RFNOC_DIR = $(abspath ../../m2_channelizer)
 CHAN_IP_DIR = $(abspath ../../../fpga-src/axi_m2_channelizer/ip)
 CHAN_SRC_DIR = $(abspath ../../../fpga-src/axi_m2_channelizer/src/verilog)
 
@@ -49,13 +50,15 @@ $(LIB_IP_CHANNELIZER_XFFT_SRCS))
 #-------------------------------------------------
 # Define only one toplevel module
 SIM_TOP = noc_block_channelizer_tb
+SIM_RUNTIME_US = 20000
 #
+# $(SIM_DIR)/chan_rfnoc_sim.vh \
 # Add test bench, user design under test, and
 # additional user created files
 SIM_SRCS = $(abspath ./noc_block_channelizer_tb.sv \
+$(SIM_DIR)/chan_rfnoc_sim.vh \
 $(SIM_DIR)/sig_tones_input.bin \
 $(SIM_DIR)/M_8_taps.bin \
-$(SIM_DIR)/chan_rfnoc_sim.vh \
 $(CHAN_SRC_DIR)/dp_block_read_first_ram.v \
 $(CHAN_SRC_DIR)/dp_block_write_first_ram.v \
 $(CHAN_SRC_DIR)/axi_fifo_2.v \
@@ -85,7 +88,7 @@ $(CHAN_SRC_DIR)/input_buffer.v \
 $(CHAN_SRC_DIR)/pfb_2x_16iw_16ow_32tps.v \
 $(SIM_DIR)/grc_word_writer.sv \
 $(CHAN_SRC_DIR)/channelizer_top.v \
-$(CHAN_SRC_DIR)/noc_block_channelizer.v \
+$(CHAN_RFNOC_DIR)/noc_block_channelizer.v \
 )
 
 # MODELSIM_USER_DO = $(abspath wave.do)

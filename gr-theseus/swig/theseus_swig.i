@@ -16,7 +16,10 @@
 #include "ettus/device3.h"
 #include "ettus/rfnoc_block_impl.h"
 #include "theseus/theseus_generic.h"
+#include "theseus/pfbchan.h"
 %}
 
 %include "theseus/theseus_generic.h"
 GR_SWIG_BLOCK_MAGIC2(theseus, theseus_generic);
+%include "theseus/pfbchan.h"
+GR_SWIG_BLOCK_MAGIC2(theseus, pfbchan);

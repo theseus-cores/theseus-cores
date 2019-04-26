@@ -585,6 +585,7 @@ u_fifo
     .s_axis_tready(),
 
     .almost_full(almost_full),
+
     .m_axis_tvalid(m_axis_tvalid),
     .m_axis_tdata(m_axis_tdata_s),
     .m_axis_tlast(m_axis_tlast),

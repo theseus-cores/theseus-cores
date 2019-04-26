@@ -23,5 +23,7 @@
 install(FILES
     api.h
     theseus_generic.h
+    pfbchan.h
+    pfbchan_block_ctrl.hpp
     DESTINATION ${INCLUDE_DIR}/gr-theseus
 )

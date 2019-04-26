@@ -110,20 +110,20 @@ endif(APPLE)
 ########################################################################
 # Find gnuradio build dependencies
 ########################################################################
-find_package(CppUnit)
+# find_package(CppUnit)
 find_package(Doxygen)
 
 # Search for GNU Radio and its components and versions. Add any
 # components required to the list of GR_REQUIRED_COMPONENTS (in all
 # caps such as FILTER or FFT) and change the version to the minimum
 # API compatible version required.
-set(GR_REQUIRED_COMPONENTS RUNTIME)
+set(GR_REQUIRED_COMPONENTS FFT RUNTIME)
 find_package(Gnuradio "3.7.2" REQUIRED)
 list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_SOURCE_DIR}/cmake/Modules)
 
-if(NOT CPPUNIT_FOUND)
-    message(FATAL_ERROR "CppUnit required to compile gr-theseus")
-endif()
+# if(NOT CPPUNIT_FOUND)
+#     message(FATAL_ERROR "CppUnit required to compile gr-theseus")
+# endif()
 
 ########################################################################
 # Setup doxygen option
@@ -145,13 +145,13 @@ include_directories(
     ${CMAKE_BINARY_DIR}/lib
     ${CMAKE_BINARY_DIR}/include
     ${Boost_INCLUDE_DIRS}
-    ${CPPUNIT_INCLUDE_DIRS}
+    # ${CPPUNIT_INCLUDE_DIRS}
     ${GNURADIO_ALL_INCLUDE_DIRS}
 )
 
 link_directories(
     ${Boost_LIBRARY_DIRS}
-    ${CPPUNIT_LIBRARY_DIRS}
+    # ${CPPUNIT_LIBRARY_DIRS}
     ${GNURADIO_RUNTIME_LIBRARY_DIRS}
 )
 
@@ -165,6 +165,10 @@ IF(ettus_FOUND)
 	link_directories(${ETTUS_LIBRARIES})
 	message(" * LIBS = ${ETTUS_LIBRARIES}")
 ENDIF(ettus_FOUND)
+
+# Set component parameters
+set(GR_PFB_CHANNELIZER_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include CACHE INTERNAL "" FORCE)
+set(GR_PFB_CHANNELIZER_SWIG_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/swig CACHE INTERNAL "" FORCE)
 
 ########################################################################
 # Create uninstall target
