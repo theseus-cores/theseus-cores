@@ -16,7 +16,7 @@ Many of the noc blocks have configurable parameters. It is recommended to build 
 
 To build an RFNOC FPGA image with components from the "dsp-utils" subproject, you can use refer to the example YML file [examples/basic-dsp-utils.yml](examples/basic-dsp-utils.yml).
 
-1. Clone the uhd-fpga repo
+1. Clone the uhd-fpga repo (as of April 2019, ettus/uhd-fpga needs a patch on master to be compatible with FPGA builds from the theseus-cores repo. Clone uhd-fpga from the theseus-cores fork here: `git clone -b choose-any-oot-folder https://github.com/theseus-cores/fpga.git`)
 2. Change directory into `uhd-fpga/usrp3/tools/scripts`
 3. Run the UHD image builder: `./uhd_image_builder.py -d x300 -t X300_RFNOC_HG -y <prefix-src>/theseus-cores/fpga-rfnoc/examples/basic-dsp-utils.yml -I <prefix-src>/theseus-cores/fpga-rfnoc/dsp-utils`
 
