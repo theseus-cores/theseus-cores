@@ -1,23 +1,16 @@
 title: theseus-cores
-
 brief: Open source FPGA cores for digital signal processing
-
 tags:
   - FPGA
   - RFNoC
   - channelizer
-
 author:
   - EJ Kreinar <ejkreinar@gmail.com>
-
 dependencies:
   - UHD (>= 3.13)
   - gnuradio (>= 3.7.0)
-
 repo: https://gitlab.com/theseus-cores/theseus-cores.git
-
 stable_release: HEAD
-
 ---
 
 **Theseus Cores**: Open source FPGA cores for digital signal processing and software defined radio, "batteries included".
