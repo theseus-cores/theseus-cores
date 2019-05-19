@@ -32,11 +32,23 @@ namespace gr {
     {
      private:
          size_t d_fft_size;
-         gr::thread::mutex d_mutex; // mutex to protect set/work access
 
      public:
       pfbchan_impl(const gr::ettus::device3::sptr &dev, const int block_select, const int device_select);
       ~pfbchan_impl();
+
+      // virtual int general_work(
+      //     int noutput_items,
+      //     gr_vector_int &ninput_items,
+      //     gr_vector_const_void_star &input_items,
+      //     gr_vector_void_star &output_items
+      //  );
+      virtual bool start();
+
+      virtual void work_rx_u(
+          int noutput_items,
+          gr_vector_void_star &output_items
+      );
     };
 
   } // namespace theseus
