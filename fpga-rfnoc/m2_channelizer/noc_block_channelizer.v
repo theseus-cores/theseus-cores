@@ -269,6 +269,7 @@ channelizer_top channelizer_top
     .fft_size(fft_size),
     .avg_len(avg_len),
     .eob_tag(eob_tag),
+    .payload_length(payload_length),
 
     .s_axis_tdata(m_axis_data_tdata),
     .s_axis_tvalid(m_axis_data_tvalid),
@@ -278,6 +279,13 @@ channelizer_top channelizer_top
     .s_axis_reload_tlast(m_axis_reload_tlast),
     .s_axis_reload_tvalid(m_axis_reload_tvalid),
     .s_axis_reload_tready(m_axis_reload_tready),
+
+    // down selection FIFO interface
+    .s_axis_select_tvalid(s_axis_select_tvalid),
+    .s_axis_select_tdata(s_axis_select_tdata),
+    .s_axis_select_tlast(s_axis_select_tlast),
+    .s_axis_select_tready(s_axis_select_tready),
+
 
     .m_axis_tdata(s_axis_data_tdata),
     .m_axis_tuser(),
