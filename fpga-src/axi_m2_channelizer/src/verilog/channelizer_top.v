@@ -13,11 +13,11 @@ module channelizer_top#(
     parameter DATA_WIDTH = 32)
 (
     input clk,
-    input sync_reset,
+    (* mark_debug = "true" *) input sync_reset,
 
-    input s_axis_tvalid,
-    input [31:0] s_axis_tdata,
-    output s_axis_tready,
+    (* mark_debug = "true" *) input s_axis_tvalid,
+    (* mark_debug = "true" *) input [31:0] s_axis_tdata,
+    (* mark_debug = "true" *) output s_axis_tready,
 
     input s_axis_reload_tvalid,
     input [31:0] s_axis_reload_tdata,
@@ -25,6 +25,7 @@ module channelizer_top#(
     output s_axis_reload_tready,
 
     input [11:0] fft_size,
+    input [15:0] payload_length,
     input [8:0] avg_len,
     output eob_tag,
 
@@ -50,12 +51,12 @@ localparam FFT_2048 = 2048;
 
 reg [4:0] nfft, next_nfft;
 reg [11:0] fft_size_s;
-wire event_frame_started;
-wire event_tlast_unexpected;
-wire event_tlast_missing;
-wire event_status_channel_halt;
-wire event_data_in_channel_halt;
-wire event_data_out_channel_halt;  // reset signals
+(* mark_debug = "true" *) wire event_frame_started;
+(* mark_debug = "true" *) wire event_tlast_unexpected;
+(* mark_debug = "true" *) wire event_tlast_missing;
+// (* mark_debug = "true" *) wire event_status_channel_halt;
+(* mark_debug = "true" *) wire event_data_in_channel_halt;
+// (* mark_debug = "true" *) wire event_data_out_channel_halt;  // reset signals
 
 reg async_reset, async_reset_d1;
 reg reset_int,  next_reset_int;
@@ -64,34 +65,52 @@ reg [4:0] reset_cnt, next_reset_cnt;
 localparam [4:0] RESET_ZEROS = 5'd0;
 localparam [4:0] RESET_HIGH_CNT = 5'b01000;  // buffer signals
 
-wire buffer_tvalid;
+// Buffer signals
+(* mark_debug = "true" *) wire buffer_tvalid;
 wire [DATA_WIDTH - 1:0] buffer_tdata;
-wire buffer_tlast;
-wire [10:0] buffer_phase;
-wire buffer_tready;  // pfb signals
-wire pfb_tvalid;
+(* mark_debug = "true" *) wire buffer_tlast;
+(* mark_debug = "true" *) wire [10:0] buffer_phase;
+(* mark_debug = "true" *) wire buffer_tready;  // pfb signals
+
+// pfb signals
+(* mark_debug = "true" *) wire pfb_tvalid;
 wire [DATA_WIDTH - 1:0] pfb_tdata;
-wire pfb_tlast;
-wire [10:0] pfb_phase;
-wire [10:0] circ_phase;
-wire pfb_tready;  // circular buffer signals
-wire circ_tvalid;
+(* mark_debug = "true" *) wire pfb_tlast;
+(* mark_debug = "true" *) wire [10:0] pfb_phase;
+(* mark_debug = "true" *) wire pfb_tready;  // circular buffer signals
+
+// circular shift signals
+(* mark_debug = "true" *) wire circ_tvalid;
+(* mark_debug = "true" *) wire [10:0] circ_phase;
 wire [DATA_WIDTH - 1:0] circ_tdata;
 wire [DATA_WIDTH - 1:0] circ_tdata_s;
-wire circ_tlast;  // signal circ_phase : std_logic_vector(10 downto 0);
-wire circ_tready;  // fft data signals
-wire fft_tvalid;
+(* mark_debug = "true" *) wire circ_tlast;  // signal circ_phase : std_logic_vector(10 downto 0);
+(* mark_debug = "true" *) wire circ_tready;  // fft data signals
+
+// fft signals
+(* mark_debug = "true" *)  wire fft_tvalid;
 wire [DATA_WIDTH - 1:0] fft_tdata;
 wire [DATA_WIDTH - 1:0] fft_tdata_s;
-wire [23:0] fft_tuser;
-wire fft_tlast;
-wire fft_tready;  // fft config signals.
-reg fft_config_tvalid, next_fft_config_tvalid;
-wire fft_config_tready;
-wire [15:0] fft_config_tdata;  // fft status signals
-wire m_axis_tvalid_s;
-wire [31:0] m_axis_tdata_s;
-wire [23:0] m_axis_tuser_s;
+(* mark_debug = "true" *) wire [23:0] fft_tuser;
+(* mark_debug = "true" *) wire fft_tlast;
+(* mark_debug = "true" *) wire fft_tready;  // fft config signals.
+(* mark_debug = "true" *) reg fft_config_tvalid, next_fft_config_tvalid;
+(* mark_debug = "true" *) wire fft_config_tready;
+(* mark_debug = "true" *) wire [15:0] fft_config_tdata;  // fft status signals
+
+// exp shift signals
+(* mark_debug = "true" *) wire shift_tvalid;
+(* mark_debug = "true" *) wire [31:0] shift_tdata;
+(* mark_debug = "true" *) wire shift_tready;
+(* mark_debug = "true" *) wire shift_tlast;
+(* mark_debug = "true" *) wire [23:0] shift_tuser;
+
+// output signals
+(* mark_debug = "true" *) wire m_axis_tvalid_s;
+(* mark_debug = "true" *) wire [31:0] m_axis_tdata_s;
+(* mark_debug = "true" *) wire m_axis_tready_s;
+(* mark_debug = "true" *) wire m_axis_tlast_s;
+(* mark_debug = "true" *) wire [23:0] m_axis_tuser_s;
 
 wire [7:0] m_axis_status_tdata;
 wire m_axis_status_tvalid;
@@ -105,12 +124,13 @@ reg config_state, next_config_state;
 
   // FFT FWD/INV is bit 8 / nfft is bits 4 downto 0
   assign m_axis_tvalid = m_axis_tvalid_s;
+  assign m_axis_tready_s = m_axis_tready;
   assign m_axis_tdata = m_axis_tdata_s;
   assign m_axis_tuser = m_axis_tuser_s;
+  assign m_axis_tlast = m_axis_tlast_s;
   assign fft_config_tdata = {11'b00000000000,nfft};
   assign fft_tdata = {fft_tdata_s[15:0],fft_tdata_s[31:16]};
   assign circ_tdata = {circ_tdata_s[15:0],circ_tdata_s[31:16]};
-  assign s_axis_reload_tready = 1'b1;
 
 
 always @*
@@ -308,14 +328,40 @@ exp_shifter u_shifter(
     .fft_size(fft_size_s),
     .avg_len(avg_len),
 
-    .m_axis_tvalid(m_axis_tvalid_s),
-    .m_axis_tdata(m_axis_tdata_s),
-    .m_axis_tuser(m_axis_tuser_s),
-    .m_axis_tlast(m_axis_tlast),
+    .m_axis_tvalid(shift_tvalid),
+    .m_axis_tdata(shift_tdata),
+    .m_axis_tuser(shift_tuser),
+    .m_axis_tlast(shift_tlast),
 
     .eob_tag(eob_tag),
-    .m_axis_tready(m_axis_tready)
+    .m_axis_tready(shift_tready)
 );
+
+
+count_cycle_cw16_65 #(
+    .DATA_WIDTH(DATA_WIDTH),
+    .TUSER_WIDTH(24))
+u_final_cnt
+(
+    .clk(clk),
+    .sync_reset(reset_int),
+
+    .s_axis_tvalid(shift_tvalid),
+    .s_axis_tdata(shift_tdata),
+    .cnt_limit(payload_length),
+    .s_axis_tuser(shift_tuser),
+    .s_axis_tlast(shift_tlast),
+    .s_axis_tready(shift_tready),
+
+    .m_axis_tvalid(m_axis_tvalid_s),
+    .m_axis_tdata(m_axis_tdata_s),
+    .m_axis_final_cnt(m_axis_tlast_s),
+    .m_axis_tuser(m_axis_tuser_s),
+    .count(),
+    .m_axis_tlast(),
+    .m_axis_tready(m_axis_tready_s)
+);
+
 
 `ifdef SIM_BIN_WRITE
 
@@ -346,7 +392,7 @@ exp_shifter u_shifter(
     assign buffer_st_tdata = {21'd0, buffer_phase, buffer_tdata};
     assign pfb_st_tdata = {21'd0, pfb_phase, pfb_tdata};
     assign fft_st_tdata = {8'd0, fft_tuser, fft_tdata};
-    assign exp_st_tdata = {8'd0, m_axis_tuser_s, m_axis_tdata_s};
+    assign exp_st_tdata = {8'd0, shift_tuser, shift_tdata};
     assign circ_st_tdata = circ_tdata_s;
 
     assign buffer_take = buffer_tvalid & buffer_tready;

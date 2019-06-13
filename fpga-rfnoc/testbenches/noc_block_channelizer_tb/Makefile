@@ -69,6 +69,7 @@ $(CHAN_SRC_DIR)/axi_fifo_51.v \
 $(CHAN_SRC_DIR)/axi_fifo_80.v \
 $(CHAN_SRC_DIR)/count_cycle_cw16_8.v \
 $(CHAN_SRC_DIR)/count_cycle_cw16_18.v \
+$(CHAN_SRC_DIR)/count_cycle_cw16_65.v \
 $(CHAN_SRC_DIR)/slicer_48_13.v \
 $(CHAN_SRC_DIR)/dsp48_cic_M256_N1_R1_iw5_0_corr.v \
 $(CHAN_SRC_DIR)/dsp48_cic_M256_N1_R1_iw5_0.v \

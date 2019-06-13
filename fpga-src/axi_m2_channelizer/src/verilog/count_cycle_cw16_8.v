@@ -66,7 +66,7 @@ assign take_data = s_axis_tvalid & tready_s & !sync_reset;
 assign s_axis_tready = tready_s;
 assign final_cnt = (count_s == 0) ? 1'b1 : 1'b0;
 assign cnt_reset_0 = (cnt_nib0_d0[7:0] == 0 && cnt_nib1[7:0] == 0) ? 1'b1 : 1'b0;
-assign cnt_reset = (cnt_nib0[7:0] == 0 && cnt_nib1[7:0] == 0) ? 1'b1 : 1'b0;
+assign cnt_reset = (cnt_nib0[7:0] == 0 && next_cnt_nib1[7:0] == 0) ? 1'b1 : 1'b0;
 
 assign count_s = {cnt_nib1[7:0], cnt_nib0_d0};
 assign count = m_fifo_tdata[DATA_WIDTH + 15:DATA_WIDTH];
@@ -130,7 +130,7 @@ end
 
 axi_fifo_18 #(
     .DATA_WIDTH(DATA_WIDTH + 17),
-    .ALMOST_FULL_THRESH(4),
+    .ALMOST_FULL_THRESH(5),
     .ADDR_WIDTH(3))
 u_fifo
 (
