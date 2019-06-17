@@ -35,29 +35,29 @@ module circ_buffer#(
 localparam ADDR_WIDTH = FFT_SIZE_WIDTH - 1;
 localparam ADDR_MSB = ADDR_WIDTH - 1;
 
-(* mark_debug = "true" *) reg we0, next_we0;
-(* mark_debug = "true" *) reg we1, next_we1;
+reg we0, next_we0;
+reg we1, next_we1;
 
-(* mark_debug = "true" *) reg full0, next_full0;
-(* mark_debug = "true" *) reg full1, next_full1;
+reg full0, next_full0;
+reg full1, next_full1;
 
-(* mark_debug = "true" *) reg [ADDR_MSB:0] wr_half;
-(* mark_debug = "true" *) reg [ADDR_WIDTH:0] wr_full;
+reg [ADDR_MSB:0] wr_half;
+reg [ADDR_WIDTH:0] wr_full;
 
-(* mark_debug = "true" *) reg [ADDR_MSB:0] wr_full_slice, wr_full_m1;
-(* mark_debug = "true" *) reg [ADDR_MSB:0] wr_ptr0, next_wr_ptr0;
-(* mark_debug = "true" *) reg [ADDR_MSB:0] wr_ptr1, next_wr_ptr1;
-(* mark_debug = "true" *) reg [ADDR_MSB:0] rd_ptr0, next_rd_ptr0;
-(* mark_debug = "true" *) reg [ADDR_MSB:0] rd_ptr1, next_rd_ptr1;
+reg [ADDR_MSB:0] wr_full_slice, wr_full_m1;
+reg [ADDR_MSB:0] wr_ptr0, next_wr_ptr0;
+reg [ADDR_MSB:0] wr_ptr1, next_wr_ptr1;
+reg [ADDR_MSB:0] rd_ptr0, next_rd_ptr0;
+reg [ADDR_MSB:0] rd_ptr1, next_rd_ptr1;
 
-(* mark_debug = "true" *) reg [ADDR_MSB:0] rd_ptr0_d0, rd_ptr0_d1, rd_ptr0_d2;
-(* mark_debug = "true" *) reg [ADDR_MSB:0] rd_ptr1_d0, rd_ptr1_d1, rd_ptr1_d2;
+reg [ADDR_MSB:0] rd_ptr0_d0, rd_ptr0_d1, rd_ptr0_d2;
+reg [ADDR_MSB:0] rd_ptr1_d0, rd_ptr1_d1, rd_ptr1_d2;
 
-(* mark_debug = "true" *) wire [ADDR_MSB:0] rd_addr0, rd_addr1;
-(* mark_debug = "true" *) wire [ADDR_MSB:0] wr_addr0, wr_addr1;
+wire [ADDR_MSB:0] rd_addr0, rd_addr1;
+wire [ADDR_MSB:0] wr_addr0, wr_addr1;
 
-(* mark_debug = "true" *) reg rd_side, next_rd_side;
-(* mark_debug = "true" *) reg wr_side, next_wr_side;
+reg rd_side, next_rd_side;
+reg wr_side, next_wr_side;
 
 reg rd_en, next_rd_en;
 wire [DATA_WIDTH - 1:0] rd_data0, rd_data1;
@@ -80,7 +80,7 @@ wire almost_full;
 wire take_data;
 
 localparam S_IDLE = 0, S_READ0 = 1, S_READ1 = 2;
-(* mark_debug = "true" *) reg [1:0] state, next_state;
+reg [1:0] state, next_state;
 
 assign wr_addr0 = wr_ptr0;
 assign wr_addr1 = wr_ptr1;

@@ -13,11 +13,11 @@ module channelizer_top#(
     parameter DATA_WIDTH = 32)
 (
     input clk,
-    (* mark_debug = "true" *) input sync_reset,
+    input sync_reset,
 
-    (* mark_debug = "true" *) input s_axis_tvalid,
-    (* mark_debug = "true" *) input [31:0] s_axis_tdata,
-    (* mark_debug = "true" *) output s_axis_tready,
+    input s_axis_tvalid,
+    input [31:0] s_axis_tdata,
+    output s_axis_tready,
 
     input s_axis_reload_tvalid,
     input [31:0] s_axis_reload_tdata,
@@ -51,12 +51,10 @@ localparam FFT_2048 = 2048;
 
 reg [4:0] nfft, next_nfft;
 reg [11:0] fft_size_s;
-(* mark_debug = "true" *) wire event_frame_started;
-(* mark_debug = "true" *) wire event_tlast_unexpected;
-(* mark_debug = "true" *) wire event_tlast_missing;
-// (* mark_debug = "true" *) wire event_status_channel_halt;
-(* mark_debug = "true" *) wire event_data_in_channel_halt;
-// (* mark_debug = "true" *) wire event_data_out_channel_halt;  // reset signals
+wire event_frame_started;
+wire event_tlast_unexpected;
+wire event_tlast_missing;
+wire event_data_in_channel_halt;
 
 reg async_reset, async_reset_d1;
 reg reset_int,  next_reset_int;
@@ -66,51 +64,51 @@ localparam [4:0] RESET_ZEROS = 5'd0;
 localparam [4:0] RESET_HIGH_CNT = 5'b01000;  // buffer signals
 
 // Buffer signals
-(* mark_debug = "true" *) wire buffer_tvalid;
+wire buffer_tvalid;
 wire [DATA_WIDTH - 1:0] buffer_tdata;
-(* mark_debug = "true" *) wire buffer_tlast;
-(* mark_debug = "true" *) wire [10:0] buffer_phase;
-(* mark_debug = "true" *) wire buffer_tready;  // pfb signals
+wire buffer_tlast;
+wire [10:0] buffer_phase;
+wire buffer_tready;  // pfb signals
 
 // pfb signals
-(* mark_debug = "true" *) wire pfb_tvalid;
+wire pfb_tvalid;
 wire [DATA_WIDTH - 1:0] pfb_tdata;
-(* mark_debug = "true" *) wire pfb_tlast;
-(* mark_debug = "true" *) wire [10:0] pfb_phase;
-(* mark_debug = "true" *) wire pfb_tready;  // circular buffer signals
+wire pfb_tlast;
+wire [10:0] pfb_phase;
+wire pfb_tready;  // circular buffer signals
 
 // circular shift signals
-(* mark_debug = "true" *) wire circ_tvalid;
-(* mark_debug = "true" *) wire [10:0] circ_phase;
+wire circ_tvalid;
+wire [10:0] circ_phase;
 wire [DATA_WIDTH - 1:0] circ_tdata;
 wire [DATA_WIDTH - 1:0] circ_tdata_s;
-(* mark_debug = "true" *) wire circ_tlast;  // signal circ_phase : std_logic_vector(10 downto 0);
-(* mark_debug = "true" *) wire circ_tready;  // fft data signals
+wire circ_tlast;  // signal circ_phase : std_logic_vector(10 downto 0);
+wire circ_tready;  // fft data signals
 
 // fft signals
-(* mark_debug = "true" *)  wire fft_tvalid;
+wire fft_tvalid;
 wire [DATA_WIDTH - 1:0] fft_tdata;
 wire [DATA_WIDTH - 1:0] fft_tdata_s;
-(* mark_debug = "true" *) wire [23:0] fft_tuser;
-(* mark_debug = "true" *) wire fft_tlast;
-(* mark_debug = "true" *) wire fft_tready;  // fft config signals.
-(* mark_debug = "true" *) reg fft_config_tvalid, next_fft_config_tvalid;
-(* mark_debug = "true" *) wire fft_config_tready;
-(* mark_debug = "true" *) wire [15:0] fft_config_tdata;  // fft status signals
+wire [23:0] fft_tuser;
+wire fft_tlast;
+wire fft_tready;  // fft config signals.
+reg fft_config_tvalid, next_fft_config_tvalid;
+wire fft_config_tready;
+wire [15:0] fft_config_tdata;  // fft status signals
 
 // exp shift signals
-(* mark_debug = "true" *) wire shift_tvalid;
-(* mark_debug = "true" *) wire [31:0] shift_tdata;
-(* mark_debug = "true" *) wire shift_tready;
-(* mark_debug = "true" *) wire shift_tlast;
-(* mark_debug = "true" *) wire [23:0] shift_tuser;
+wire shift_tvalid;
+wire [31:0] shift_tdata;
+wire shift_tready;
+wire shift_tlast;
+wire [23:0] shift_tuser;
 
 // output signals
-(* mark_debug = "true" *) wire m_axis_tvalid_s;
-(* mark_debug = "true" *) wire [31:0] m_axis_tdata_s;
-(* mark_debug = "true" *) wire m_axis_tready_s;
-(* mark_debug = "true" *) wire m_axis_tlast_s;
-(* mark_debug = "true" *) wire [23:0] m_axis_tuser_s;
+wire m_axis_tvalid_s;
+wire [31:0] m_axis_tdata_s;
+wire m_axis_tready_s;
+wire m_axis_tlast_s;
+wire [23:0] m_axis_tuser_s;
 
 wire [7:0] m_axis_status_tdata;
 wire m_axis_status_tvalid;

@@ -60,10 +60,10 @@ wire [10:0] fft_bin;
 reg signed [5:0] sub_out, next_sub_out;
 reg signed [6:0] shift_val;
 
-(* mark_debug = "true" *) wire [4:0] curr_shift;
-(* mark_debug = "true" *) wire almost_full;
-(* mark_debug = "true" *) wire take;
-(* mark_debug = "true" *) wire [23:0] m_axis_tuser_s;
+wire [4:0] curr_shift;
+wire almost_full;
+wire take;
+wire [23:0] m_axis_tuser_s;
 
 assign take = (s_axis_tvalid == 1'b1 && s_axis_tready_s == 1'b1) ? 1'b1 : 1'b0;
 assign s_axis_tready_s = (almost_full == 1'b0) ? 1'b1 : 1'b0;

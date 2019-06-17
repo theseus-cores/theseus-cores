@@ -155,7 +155,7 @@ module noc_block_channelizer #(
     //(* keep = “true”, dont_touch = “true”, mark_debug = “true” *)
   wire m_axis_reload_tlast;
 
-  (* mark_debug = "true" *) wire [15:0] payload_length;
+  wire [15:0] payload_length;
   cvita_hdr_encoder cvita_hdr_encoder (
    .pkt_type(2'd0), .eob(1'b0), .has_time(1'b0),
    .seqnum(12'd0), .payload_length(payload_length), .dst_sid(next_dst_sid), .src_sid(src_sid),

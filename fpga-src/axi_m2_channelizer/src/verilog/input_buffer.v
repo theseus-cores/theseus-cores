@@ -13,9 +13,9 @@ module input_buffer#(
 (
     input clk,
     input sync_reset,
-    (* mark_debug = "true" *) input s_axis_tvalid,
-    (* mark_debug = "true" *) input [DATA_WIDTH - 1:0] s_axis_tdata,
-    (* mark_debug = "true" *) output s_axis_tready,
+    input s_axis_tvalid,
+    input [DATA_WIDTH - 1:0] s_axis_tdata,
+    output s_axis_tready,
     input [FFT_SIZE_WIDTH - 1:0] fft_size,
     output m_axis_tvalid,
     output [DATA_WIDTH - 1:0] m_axis_tdata,
@@ -33,54 +33,54 @@ wire [PAD_IN_BITS-1:0] PAD_IN = {PAD_IN_BITS{1'b0}};
 wire [PAD_OUT_BITS-1:0] PAD_OUT = {PAD_OUT_BITS{1'b0}};
 
 // input count signals.
-(* mark_debug = "true" *) wire [15:0] cnt_limit_in;
-(* mark_debug = "true" *) wire [15:0] cnt_limit_out;
-(* mark_debug = "true" *) wire count_tvalid;
-(* mark_debug = "true" *) wire [DATA_WIDTH - 1:0] count_tdata;
-(* mark_debug = "true" *) wire final_cnt;
-(* mark_debug = "true" *) wire [15:0] count;
-(* mark_debug = "true" *) reg count_tready;
-(* mark_debug = "true" *) wire [ADDR_MSB:0] roll_over;
-(* mark_debug = "true" *) wire [ADDR_MSB:0] roll_over_m1;
-(* mark_debug = "true" *) reg [ADDR_WIDTH:0] roll_over_s;  // Ping Pong RAM signals.
+wire [15:0] cnt_limit_in;
+wire [15:0] cnt_limit_out;
+wire count_tvalid;
+wire [DATA_WIDTH - 1:0] count_tdata;
+wire final_cnt;
+wire [15:0] count;
+reg count_tready;
+wire [ADDR_MSB:0] roll_over;
+wire [ADDR_MSB:0] roll_over_m1;
+reg [ADDR_WIDTH:0] roll_over_s;  // Ping Pong RAM signals.
 
-(* mark_debug = "true" *) reg sec_pass0, next_sec_pass0;
-(* mark_debug = "true" *) reg sec_pass1, next_sec_pass1;
+reg sec_pass0, next_sec_pass0;
+reg sec_pass1, next_sec_pass1;
 
-(* mark_debug = "true" *) wire [ADDR_WIDTH - 1:0] wr_addr0, wr_addr1;
-(* mark_debug = "true" *) wire [ADDR_WIDTH - 1:0] rd_addr0, rd_addr1;
+wire [ADDR_WIDTH - 1:0] wr_addr0, wr_addr1;
+wire [ADDR_WIDTH - 1:0] rd_addr0, rd_addr1;
 
-(* mark_debug = "true" *) reg [ADDR_WIDTH:0] wr_ptr0, next_wr_ptr0;
-(* mark_debug = "true" *) reg [ADDR_WIDTH:0] wr_ptr0_inv, next_wr_ptr0_inv;
-(* mark_debug = "true" *) reg [ADDR_WIDTH:0] wr_ptr1_inv, next_wr_ptr1_inv;
-(* mark_debug = "true" *) reg [ADDR_WIDTH:0] wr_ptr1, next_wr_ptr1;
-(* mark_debug = "true" *) reg [ADDR_WIDTH:0] rd_ptr0, next_rd_ptr0;
-(* mark_debug = "true" *) reg [ADDR_WIDTH:0] rd_ptr1, next_rd_ptr1;
+reg [ADDR_WIDTH:0] wr_ptr0, next_wr_ptr0;
+reg [ADDR_WIDTH:0] wr_ptr0_inv, next_wr_ptr0_inv;
+reg [ADDR_WIDTH:0] wr_ptr1_inv, next_wr_ptr1_inv;
+reg [ADDR_WIDTH:0] wr_ptr1, next_wr_ptr1;
+reg [ADDR_WIDTH:0] rd_ptr0, next_rd_ptr0;
+reg [ADDR_WIDTH:0] rd_ptr1, next_rd_ptr1;
 
-(* mark_debug = "true" *) reg [DATA_WIDTH - 1:0] wr_data, next_wr_data;
-(* mark_debug = "true" *) reg wr_side, next_wr_side;
-(* mark_debug = "true" *) reg rd_side, next_rd_side;
-(* mark_debug = "true" *) wire [DATA_WIDTH - 1:0] rd_data0, rd_data1;
-(* mark_debug = "true" *) reg rd_en, next_rd_en;
-(* mark_debug = "true" *) reg we0, next_we0;
-(* mark_debug = "true" *) reg we1, next_we1;
-(* mark_debug = "true" *) wire full0, full1;  // read state type
+reg [DATA_WIDTH - 1:0] wr_data, next_wr_data;
+reg wr_side, next_wr_side;
+reg rd_side, next_rd_side;
+wire [DATA_WIDTH - 1:0] rd_data0, rd_data1;
+reg rd_en, next_rd_en;
+reg we0, next_we0;
+reg we1, next_we1;
+wire full0, full1;  // read state type
 
 localparam S_IDLE=0, S_READ0=1, S_READ1=2;
-(* mark_debug = "true" *) reg [1:0] state, next_state;
+reg [1:0] state, next_state;
 
-(* mark_debug = "true" *) reg start_sig, next_start_sig;  // start count
+reg start_sig, next_start_sig;  // start count
 // delay signals to offset for 3 cycle latency through the RAMs.
-(* mark_debug = "true" *) reg [2:0] rd_en_d, rd_side_d, start_sig_d;  // signal rd_mux, next_rd_mux : std_logic;
-(* mark_debug = "true" *) reg [DATA_WIDTH - 1:0] rd_tdata, next_rd_tdata;
-(* mark_debug = "true" *) reg rd_tvalid, next_rd_tvalid;
-(* mark_debug = "true" *) reg rd_start, next_rd_start;
-(* mark_debug = "true" *) wire rd_tready;
-(* mark_debug = "true" *) wire almost_full;
-(* mark_debug = "true" *) reg rd0_finish, next_rd0_finish, rd1_finish, next_rd1_finish;
+reg [2:0] rd_en_d, rd_side_d, start_sig_d;  // signal rd_mux, next_rd_mux : std_logic;
+reg [DATA_WIDTH - 1:0] rd_tdata, next_rd_tdata;
+reg rd_tvalid, next_rd_tvalid;
+reg rd_start, next_rd_start;
+wire rd_tready;
+wire almost_full;
+reg rd0_finish, next_rd0_finish, rd1_finish, next_rd1_finish;
 
-(* mark_debug = "true" *) wire [15:0] phase_s;
-(* mark_debug = "true" *) wire write0, write1;
+wire [15:0] phase_s;
+wire write0, write1;
 
 assign rd_tready = ~almost_full;
 assign roll_over = roll_over_s[ADDR_MSB:0];
