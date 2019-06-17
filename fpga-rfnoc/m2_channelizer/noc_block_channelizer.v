@@ -162,7 +162,7 @@ module noc_block_channelizer #(
    .vita_time(64'd0),
    .header(s_axis_data_tuser));
 
-   setting_reg #(.my_addr(SR_PKT_SIZE), .awidth(8), .width(16), .at_reset(256))
+   setting_reg #(.my_addr(SR_PKT_SIZE), .awidth(8), .width(16), .at_reset(767))
    set_payload_length_inst (
    .clk(ce_clk), .rst(ce_rst),
    .strobe(set_stb), .addr(set_addr), .in(set_data), .out(payload_length), .changed());
@@ -269,6 +269,7 @@ channelizer_top channelizer_top
     .fft_size(fft_size),
     .avg_len(avg_len),
     .eob_tag(eob_tag),
+    .payload_length(payload_length),
 
     .s_axis_tdata(m_axis_data_tdata),
     .s_axis_tvalid(m_axis_data_tvalid),

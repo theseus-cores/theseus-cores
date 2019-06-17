@@ -267,12 +267,6 @@ private:
         {
             ret_val[i] = ret_val[i] / sum_b;
         }
-        // take real part of b.
-        //
-
-        // b = np.fft.ifft(A)
-        // b = (np.fft.fftshift(b)).real
-        // b /= np.sum(b)
         delete d_fwdfft;
     }
 

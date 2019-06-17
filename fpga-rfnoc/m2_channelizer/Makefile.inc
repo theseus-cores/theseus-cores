@@ -28,6 +28,7 @@ axi_fifo_51.v \
 axi_fifo_80.v \
 count_cycle_cw16_8.v \
 count_cycle_cw16_18.v \
+count_cycle_cw16_65.v \
 slicer_48_13.v \
 dsp48_cic_M256_N1_R1_iw5_0_corr.v \
 dsp48_cic_M256_N1_R1_iw5_0.v \

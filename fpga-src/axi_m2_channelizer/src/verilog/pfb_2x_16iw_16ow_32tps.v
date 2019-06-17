@@ -228,7 +228,7 @@ begin
     end
 end
 
-//tlast_proc 
+//tlast_proc
 always @*
 begin
     next_tlast_d[6:0] = {tlast_d[5:0], s_axis_tlast};
@@ -438,7 +438,7 @@ dp_block_read_first_ram #(
   .DATA_WIDTH(32),
   .ADDR_WIDTH(11))
 sample_delay (
-  .clk(clk), 
+  .clk(clk),
   .wea(tvalid_d[0]),
   .addra(phase_mux_d[0][10:0]),
   .dia(input_sig_d1),
@@ -451,10 +451,10 @@ dp_block_read_first_ram #(
   .DATA_WIDTH(32),
   .ADDR_WIDTH(13))
 sample_ram_0 (
-  .clk(clk), 
-  .wea(tvalid_d[6]), 
+  .clk(clk),
+  .wea(tvalid_d[6]),
   .addra(wr_addr_d[2][12:0]),
-  .dia(sig_d3), 
+  .dia(sig_d3),
   .addrb(rd_addr[12:0]),
   .dob(delay[0])
 );
@@ -466,10 +466,10 @@ generate
           .DATA_WIDTH(32),
           .ADDR_WIDTH(13))
         sample_ram_inst (
-          .clk(clk), 
-          .wea(tvalid_d[6]), 
-          .addra(wr_addr_d[i*3+2][12:0]), 
-          .dia(delay[i-1]), 
+          .clk(clk),
+          .wea(tvalid_d[6]),
+          .addra(wr_addr_d[i*3+2][12:0]),
+          .dia(delay[i-1]),
           .addrb(rd_addr_d[i-1][12:0]),
           .dob(delay[i])
         );
@@ -515,7 +515,7 @@ dsp48_pfb_mac_0 pfb_mac_i_start (
   .ce(tvalid_d[6]),
   .a(taps[0]),
   .b(delay[0][31:16]),
-  .pcout(pcouti[0]), 
+  .pcout(pcouti[0]),
   .p()
 );
 
@@ -523,9 +523,9 @@ dsp48_pfb_mac_0 pfb_mac_i_start (
 dsp48_pfb_mac_0 pfb_mac_q_start (
   .clk(clk),
   .ce(tvalid_d[6]),
-  .a(taps[0]), 
+  .a(taps[0]),
   .b(delay[0][15:0]),
-  .pcout(pcoutq[0]), 
+  .pcout(pcoutq[0]),
   .p()
 );
 
