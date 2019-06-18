@@ -71,8 +71,8 @@ assign take_data = s_axis_tvalid & tready_s & !sync_reset;
 assign s_axis_tready = tready_s;
 assign new_cnt = (take_data & (startup | start_sig));
 assign final_cnt = (count_s == cnt_limit) ? 1'b1 : 1'b0;
-assign cnt_reset_0 = (cnt_nib0_d0[7:0] == mask0 && cnt_nib1[7:0] == mask1) ? 1'b1 : 1'b0;
-assign cnt_reset = (cnt_nib0[7:0] == mask0 && cnt_nib1[7:0] == mask1) ? 1'b1 : 1'b0;
+assign cnt_reset_0 = (cnt_nib0_d0 == mask0 && cnt_nib1[7:0] == mask1) ? 1'b1 : 1'b0;
+assign cnt_reset = (cnt_nib0[7:0] == mask0 && next_cnt_nib1[7:0] == mask1) ? 1'b1 : 1'b0;
 
 assign count_s = {cnt_nib1[7:0], cnt_nib0_d0};
 assign count = m_fifo_tdata[DATA_WIDTH + 15:DATA_WIDTH];
