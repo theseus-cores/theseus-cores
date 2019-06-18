@@ -77,23 +77,17 @@ wire [DATA_WIDTH - 1:0] buffer_tdata;
 wire buffer_tlast;
 wire [10:0] buffer_phase;
 wire buffer_tready;  // pfb signals
-
-// pfb signals
 wire pfb_tvalid;
 wire [DATA_WIDTH - 1:0] pfb_tdata;
 wire pfb_tlast;
 wire [10:0] pfb_phase;
-wire pfb_tready;  // circular buffer signals
-
-// circular shift signals
-wire circ_tvalid;
 wire [10:0] circ_phase;
+wire pfb_tready;  // circular buffer signals
+wire circ_tvalid;
 wire [DATA_WIDTH - 1:0] circ_tdata;
 wire [DATA_WIDTH - 1:0] circ_tdata_s;
 wire circ_tlast;  // signal circ_phase : std_logic_vector(10 downto 0);
 wire circ_tready;  // fft data signals
-
-// fft signals
 wire fft_tvalid;
 wire [DATA_WIDTH - 1:0] fft_tdata;
 wire [DATA_WIDTH - 1:0] fft_tdata_s;
@@ -112,7 +106,6 @@ wire shift_tlast,
 wire shift_tready,
 wire shift_eob_tag,
 
-// output signals
 wire m_axis_tvalid_s;
 wire [31:0] m_axis_tdata_s;
 wire [23:0] m_axis_tuser_s;
@@ -131,12 +124,12 @@ assign m_axis_tdata = m_axis_tdata_s;
 assign m_axis_tuser = m_axis_tuser_s;
 assign m_axis_tlast = m_axis_tlast_s;
 
-  // FFT FWD/INV is bit 8 / nfft is bits 4 downto 0
-  assign fft_config_tdata = {11'b00000000000,nfft};
-  assign fft_tdata = {fft_tdata_s[15:0],fft_tdata_s[31:16]};
-  assign circ_tdata = {circ_tdata_s[15:0],circ_tdata_s[31:16]};
-  assign s_axis_reload_tready = 1'b1;
+assign fft_config_tdata = {11'b00000000000,nfft};
+assign fft_tdata = {fft_tdata_s[15:0],fft_tdata_s[31:16]};
+assign circ_tdata = {circ_tdata_s[15:0],circ_tdata_s[31:16]};
+assign s_axis_reload_tready = 1'b1;
 
+//
 
 always @*
 begin
@@ -335,7 +328,6 @@ exp_shifter u_shifter(
     .m_axis_tdata(shift_tdata),
     .m_axis_tuser(shift_tuser),
     .m_axis_tlast(shift_tlast),
-
 
     .eob_tag(shift_eob_tag),
     .m_axis_tready(shift_tready)
