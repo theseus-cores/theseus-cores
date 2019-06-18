@@ -19,6 +19,7 @@
  */
 
 #include <stdio.h>
+#include <math.h>
 #include <vector>
 #include <uhd/convert.hpp>
 
@@ -55,9 +56,18 @@ public:
         UHD_ASSERT_THROW(_n_taps);
         UHD_LOG_DEBUG(unique_id(), "Found PFB M/2 Channelizer max " << _n_taps << " taps.");
 
-        // Save the RELOAD addresses so we dont need to re-query
+        // Save the addresses so we dont need to re-query
         SR_RELOAD = uint32_t(_tree->access<size_t>(_root_path / "registers" / "sr" / "SR_RELOAD").get());
         SR_RELOAD_LAST = uint32_t(_tree->access<size_t>(_root_path / "registers" / "sr" / "SR_RELOAD_LAST").get());
+        SR_CHANNELMASK = uint32_t(_tree->access<size_t>(_root_path / "registers" / "sr" / "SR_CHANNELMASK").get());
+        SR_CHANNELMASK_LAST = uint32_t(_tree->access<size_t>(_root_path / "registers" / "sr" / "SR_CHANNELMASK_LAST").get());
+
+        // Initialize the channel mask
+        _n_mask = ceil(((float) _n_taps)/32.0);
+        _channel_mask.clear();
+        for (int ii = 0; ii < _n_mask; ii++) {
+            _channel_mask.push_back(0xFFFFFFFF);
+        }
 
         // Initialize subscriber for fft_size
         // Set default to 64
@@ -69,11 +79,60 @@ public:
         ;
     }
 
+    void set_channels(const std::vector<uint32_t> channels)
+    {
+        // If channels vector is empty, enable all channels and return
+        if (channels.empty()) {
+            _channel_mask.clear();
+            for (int ii = 0; ii < _n_mask; ii++) {
+                _channel_mask.push_back(0xFFFFFFFF);
+            }
+            return;
+        }
+
+        // First all channels
+        _channel_mask.clear();
+        for (int ii = 0; ii < _n_mask; ii++) {
+            _channel_mask.push_back(0);
+        }
+
+        // OR the channels we want
+        int chan, idx, shift;
+        for (int ii = 0; ii < channels.size(); ii++){
+            chan = channels[ii];
+            if (chan > _n_taps) {
+                UHD_LOGGER_WARNING(unique_id()) << boost::format(
+                    "Cannot enable channel %d. Only %d max channels"
+                ) % chan % _n_taps;
+            }
+            idx = floor(((float) chan)/32.0);
+            shift = chan - (idx*32);
+            _channel_mask[idx] |= (1 << shift);
+            UHD_LOG_TRACE(unique_id(), boost::format("Enabling channel %d: (Idx %d / Shift %d)") % chan % idx % shift);
+        }
+
+        // Write empty
+        write_channel_mask();
+    }
+
 private:
     size_t _n_taps;
     size_t _fft_size;
     uint32_t SR_RELOAD;
     uint32_t SR_RELOAD_LAST;
+    uint32_t SR_CHANNELMASK;
+    uint32_t SR_CHANNELMASK_LAST;
+    size_t _n_mask;
+    std::vector<uint32_t> _channel_mask;
+
+    void write_channel_mask(){
+        for (int ii = 0; ii < _n_mask-1; ii++){
+            UHD_LOG_TRACE(unique_id(), boost::format("Writing Channel Mask [%d]: %08X") % ii % _channel_mask[ii]);
+            sr_write(SR_CHANNELMASK, _channel_mask[ii]);
+        }
+        UHD_LOG_TRACE(unique_id(), boost::format("Writing Channel Mask [%d]: %08X") % _channel_mask.size() % _channel_mask.back());
+        sr_write(SR_CHANNELMASK_LAST, _channel_mask.back());
+    }
 
     void set_taps(const int fft_size)
     {
@@ -116,6 +175,9 @@ private:
         sr_write(SR_RELOAD_LAST, boost::uint32_t(taps_fi.back()));
         // UHD_LOG_TRACE(unique_id(), "final tap = %d\n", (int) boost::uint32_t(taps_fi.back()));
         // UHD_LOG_TRACE(unique_id(), "set_taps() done\n");
+
+        // Write the channel mask
+        write_channel_mask();
     }
 
     void
