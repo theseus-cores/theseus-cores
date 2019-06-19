@@ -91,7 +91,6 @@ private:
                 % taps_fi.size() % _n_taps));
         }
 
-        printf("taps size = %d\n", (int) taps_fi.size());
         for (size_t i = 0; i < taps_fi.size(); i++) {
             if (taps_fi[i] > 16777215  || taps_fi[i] < -16777216) {
                 throw uhd::value_error(str(
@@ -102,7 +101,6 @@ private:
             }
         }
 
-        UHD_VAR(taps_fi.size());
         if (taps_fi.size() < _n_taps) {
             taps_fi.resize(_n_taps, 0);
         }
@@ -110,14 +108,14 @@ private:
         UHD_VAR(taps_fi.size());
         uint32_t num_taps_read;
         num_taps_read = user_reg_read32("RB_NUM_TAPS");
-        printf("num_taps = %d\n", (int) num_taps_read);
+        UHD_LOG_TRACE(unique_id(), boost::format("num_taps = %d") % (int) num_taps_read);
         for (size_t i = 0; i < taps_fi.size() - 1; i++) {
             sr_write(SR_RELOAD, boost::uint32_t(taps_fi[i]));
-            printf("tap[%d] = %d\n", (int) i, (int) boost::uint32_t(taps_fi[i]));
+            // UHD_LOG_TRACE(unique_id(), "tap[%d] = %d\n", (int) i, (int) boost::uint32_t(taps_fi[i]));
         }
         sr_write(SR_RELOAD_LAST, boost::uint32_t(taps_fi.back()));
-        printf("final tap = %d\n", (int) boost::uint32_t(taps_fi.back()));
-        printf("set_taps() done\n");
+        // UHD_LOG_TRACE(unique_id(), "final tap = %d\n", (int) boost::uint32_t(taps_fi.back()));
+        // UHD_LOG_TRACE(unique_id(), "set_taps() done\n");
     }
 
     void
@@ -375,9 +373,6 @@ private:
             {
                 output_vector.push_back(0);
             }
-        }
-        for (size_t i=0; i<output_vector.size(); i++){
-            printf("output_vector[%d] = %d\n", i, output_vector[i]);
         }
     }
 
