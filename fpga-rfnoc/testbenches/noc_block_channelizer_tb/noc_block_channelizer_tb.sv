@@ -23,6 +23,7 @@ module noc_block_channelizer_tb();
   localparam SPP = 16; // Samples per packet
   localparam [31:0] FFT_SIZE = 32'd8;
   localparam [31:0] AVG_LEN = 32'd16;
+  localparam [31:0] PKT_SIZE = 32'd3000;
 
   /********************************************************
   ** Verification
@@ -35,6 +36,7 @@ module noc_block_channelizer_tb();
     int in_file;
     int fd_int;
     int fd_coeffs;
+    int fd_mask;
     int file_size;
     int num_words;
     int temp;
@@ -91,6 +93,7 @@ module noc_block_channelizer_tb();
         int file_idx;
         tb_streamer.write_reg(sid_noc_block_channelizer, noc_block_channelizer.SR_FFT_SIZE, FFT_SIZE);
         tb_streamer.write_reg(sid_noc_block_channelizer, noc_block_channelizer.SR_AVG_LEN, AVG_LEN);
+        tb_streamer.write_reg(sid_noc_block_channelizer, noc_block_channelizer.SR_PKT_SIZE, PKT_SIZE);
         for (int i=0; i<file_size; i++) begin //file_size
               file_idx = $ftell(fd_coeffs);
               num_read = $fread(memory, fd_coeffs, file_idx, 1);
@@ -111,7 +114,49 @@ module noc_block_channelizer_tb();
     `TEST_CASE_DONE(1);
 
     /********************************************************
-    ** Test 5 -- Test Channelizer
+    ** Test 5 -- Load Channel Mask
+    ********************************************************/
+    `TEST_CASE_START("Load Coefficients");
+    fd_mask = $fopen("M_8_mask.bin", "r");
+    $display("current file position = %d", $ftell(fd_coeffs));
+    temp = $fseek(fd_coeffs, 0, `SEEK_END);
+    file_size = $ftell(fd_coeffs) >> 2;  // this is in bytes / 4.
+    offset = $fseek(fd_coeffs, 0, `SEEK_SET);
+    $display("Mask - Current file position = %d", $ftell(fd_coeffs));
+    $display("Mask : FileDescr = %d", fd_coeffs);
+    $display("Mask File Size : %d", file_size);
+    // seek back to the beginning of the file.
+    offset = $fseek(fd_coeffs, 0, `SEEK_SET);
+    $display("Mask - Current file position = %d", $ftell(fd_coeffs));
+    // tb_streamer.read_reg(sid_noc_block_channelizer, RB_NOC_ID, readback);
+    // $display("Read Frame Detect NOC ID: %16x", readback);
+    /* Set filter coefficients via reload bus */
+    begin
+        int num_read;
+        reg [31:0] data32;
+        reg [31:0] memory;
+        int file_idx;
+        for (int i=0; i<file_size; i++) begin //file_size
+              file_idx = $ftell(fd_coeffs);
+              num_read = $fread(memory, fd_mask, file_idx, 1);
+              if (i % 1000 == 0 && i != 0) begin
+                $display("MASK - Current file position = %d", $ftell(fd_coeffs) / 4 - 1);
+                $display("Current simulation time = %t",$time);
+                // $display("Wall time = %s",$system("date"));
+                $display("");
+              end
+              if (i == file_size-1) begin
+                tb_streamer.write_reg(sid_noc_block_channelizer, noc_block_channelizer.SR_MASK_RELOAD_LAST, memory);
+              end else begin
+                tb_streamer.write_reg(sid_noc_block_channelizer, noc_block_channelizer.SR_MASK_RELOAD, memory);
+              end
+        end
+    end
+
+    `TEST_CASE_DONE(1);
+
+    /********************************************************
+    ** Test 6 -- Test Channelizer
     ********************************************************/
     // Sending an impulse will readback the FIR filter coefficients
     `TEST_CASE_START("Test Channelizer");

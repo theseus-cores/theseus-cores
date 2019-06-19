@@ -71,45 +71,62 @@ reg async_reset, async_reset_d1;
 reg reset_int,  next_reset_int;
 reg [4:0] reset_cnt, next_reset_cnt;
 
+// internal payload_length register
+reg [15:0] payload_length_s, payload_length_m1;
 
 wire buffer_tvalid;
 wire [DATA_WIDTH - 1:0] buffer_tdata;
 wire buffer_tlast;
 wire [10:0] buffer_phase;
-wire buffer_tready;  // pfb signals
+wire buffer_tready;
+// pfb signals
 wire pfb_tvalid;
 wire [DATA_WIDTH - 1:0] pfb_tdata;
 wire pfb_tlast;
 wire [10:0] pfb_phase;
 wire [10:0] circ_phase;
-wire pfb_tready;  // circular buffer signals
+wire pfb_tready;
+
+// circular buffer signals
 wire circ_tvalid;
 wire [DATA_WIDTH - 1:0] circ_tdata;
 wire [DATA_WIDTH - 1:0] circ_tdata_s;
 wire circ_tlast;  // signal circ_phase : std_logic_vector(10 downto 0);
-wire circ_tready;  // fft data signals
+wire circ_tready;
+
+// fft data signals
 wire fft_tvalid;
 wire [DATA_WIDTH - 1:0] fft_tdata;
 wire [DATA_WIDTH - 1:0] fft_tdata_s;
 wire [23:0] fft_tuser;
 wire fft_tlast;
-wire fft_tready;  // fft config signals.
+wire fft_tready;
+
+// fft config signals.
 reg fft_config_tvalid, next_fft_config_tvalid;
 wire fft_config_tready;
 wire [15:0] fft_config_tdata;  // fft status signals
 
 // exp shift signals
 wire shift_tvalid;
-wire [31:0] shift_tdata,
-wire [23:0] shift_tuser,
-wire shift_tlast,
-wire shift_tready,
-wire shift_eob_tag,
+wire [DATA_WIDTH - 1:0] shift_tdata;
+wire [23:0] shift_tuser;
+wire shift_tlast;
+wire shift_tready;
+wire shift_eob_tag;
+
+// down select signals
+wire down_sel_tvalid;
+wire [DATA_WIDTH-1:0] down_sel_tdata;
+wire [23:0] down_sel_tuser;
+wire down_sel_tlast;
+wire down_sel_tready;
 
 wire m_axis_tvalid_s;
-wire [31:0] m_axis_tdata_s;
+wire [DATA_WIDTH-1:0] m_axis_tdata_s;
 wire [23:0] m_axis_tuser_s;
 wire m_axis_tlast_s;
+wire m_axis_tready_s;
 
 wire [7:0] m_axis_status_tdata;
 wire m_axis_status_tvalid;
@@ -117,48 +134,6 @@ wire m_axis_status_tready = 1'b1;
 
 localparam S_CONFIG = 0, S_IDLE = 1;
 reg config_state, next_config_state;
-
-`ifdef SIM_BIN_WRITE
-
-    localparam buffer_out = "buffer_output.bin";
-    localparam pfb_out = "pfb_output.bin";
-    localparam circ_out = "circ_output.bin";
-    localparam fft_out = "fft_output.bin";
-    localparam exp_out = "exp_output.bin";
-
-    integer buffer_descr, pfb_descr, circ_descr, fft_descr, exp_descr;
-
-    initial begin
-        buffer_descr = $fopen(buffer_out, "wb");
-        pfb_descr = $fopen(pfb_out, "wb");
-        circ_descr = $fopen(circ_out, "wb");
-        fft_descr = $fopen(fft_out, "wb");
-        exp_descr = $fopen(exp_out, "wb");
-    end
-
-    wire buffer_take, pfb_take, circ_take, fft_take, exp_take;
-
-    wire [63:0] buffer_st_tdata;
-    wire [63:0] pfb_st_tdata;
-    wire [63:0] fft_st_tdata;
-    wire [63:0] exp_st_tdata;
-    wire [31:0] circ_st_tdata;
-
-    assign buffer_st_tdata = {21'd0, buffer_phase, buffer_tdata};
-    assign pfb_st_tdata = {21'd0, pfb_phase, pfb_tdata};
-    assign fft_st_tdata = {8'd0, fft_tuser, fft_tdata};
-    assign exp_st_tdata = {8'd0, m_axis_tuser_s, m_axis_tdata_s};
-    assign circ_st_tdata = circ_tdata_s;
-
-    assign buffer_take = buffer_tvalid & buffer_tready;
-    assign pfb_take = pfb_tvalid & pfb_tready;
-
-    assign circ_take = circ_tvalid & circ_tready;
-    assign fft_take = fft_tvalid & fft_tready;
-    assign exp_take = m_axis_tvalid_s & m_axis_tready;
-
-`endif
-
 
 assign fft_config_tdata = {11'b00000000000,nfft};
 assign fft_tdata = {fft_tdata_s[15:0],fft_tdata_s[31:16]};
@@ -239,13 +214,15 @@ always @(posedge clk)
 begin
     async_reset <= !(sync_reset | reset_int);
     async_reset_d1 <= async_reset;
+    payload_length_s <= payload_length;
+    payload_length_m1 <= payload_length_s - 1;
 end
 
   // ensures that reset pulse is wide enough for all blocks.
 always @*
 begin
     next_reset_cnt = reset_cnt;
-    if (fft_size_s != fft_size) begin
+    if (fft_size_s != fft_size || payload_length_s != payload_length) begin
         next_reset_cnt = RESET_HIGH_CNT;
     end else if (reset_cnt != 0) begin
         next_reset_cnt = reset_cnt - 1;
@@ -276,121 +253,6 @@ u_input_buffer(
     .m_axis_final_cnt(buffer_tlast),
     .m_axis_tready(buffer_tready)
 );
-
-`ifdef SIM_BIN_WRITE
-    grc_word_writer #(
-        .LISTEN_ONLY(1),
-        .ARRAY_LENGTH(1024),
-        .NUM_BYTES(8)
-    )
-    u_buffer_wr
-    (
-    	.clk(clk),
-    	.sync_reset(reset_int),
-    	.enable(1'b1),
-
-    	.fd(buffer_descr),
-
-    	.valid(buffer_take),
-    	.word(buffer_st_tdata),
-
-    	.wr_file(1'b0),
-
-    	.rdy_i(1'b1),
-    	.rdy_o()
-    );
-
-    grc_word_writer #(
-        .LISTEN_ONLY(1),
-        .ARRAY_LENGTH(1024),
-        .NUM_BYTES(8)
-    )
-    u_pfb_wr
-    (
-    	.clk(clk),
-    	.sync_reset(reset_int),
-    	.enable(1'b1),
-
-    	.fd(pfb_descr),
-
-    	.valid(pfb_take),
-    	.word(pfb_st_tdata),
-
-    	.wr_file(1'b0),
-
-    	.rdy_i(1'b1),
-    	.rdy_o()
-    );
-
-    grc_word_writer #(
-        .LISTEN_ONLY(1),
-        .ARRAY_LENGTH(1024),
-        .NUM_BYTES(4)
-    )
-    u_circ_wr
-    (
-    	.clk(clk),
-    	.sync_reset(reset_int),
-    	.enable(1'b1),
-
-    	.fd(circ_descr),
-
-    	.valid(circ_take),
-    	.word(circ_st_tdata),
-
-    	.wr_file(1'b0),
-
-    	.rdy_i(1'b1),
-    	.rdy_o()
-    );
-
-    grc_word_writer #(
-        .LISTEN_ONLY(1),
-        .ARRAY_LENGTH(1024),
-        .NUM_BYTES(8)
-    )
-    u_fft_wr
-    (
-        .clk(clk),
-        .sync_reset(reset_int),
-        .enable(1'b1),
-
-        .fd(fft_descr),
-
-        .valid(fft_take),
-        .word(fft_st_tdata),
-
-        .wr_file(1'b0),
-
-        .rdy_i(1'b1),
-        .rdy_o()
-    );
-
-    grc_word_writer #(
-        .LISTEN_ONLY(1),
-        .ARRAY_LENGTH(1024),
-        .NUM_BYTES(8)
-    )
-    u_exp_wr
-    (
-        .clk(clk),
-        .sync_reset(reset_int),
-        .enable(1'b1),
-
-        .fd(exp_descr),
-
-        .valid(exp_take),
-        .word(exp_st_tdata),
-
-        .wr_file(1'b0),
-
-        .rdy_i(1'b1),
-        .rdy_o()
-    );
-
-
-`endif
-
 
 pfb_2x_16iw_16ow_32tps u_pfb(
     .clk(clk),
@@ -484,17 +346,19 @@ exp_shifter u_shifter(
     .m_axis_tready(shift_tready)
 );
 
-downselect u_downselect(
+downselect #(
+    .DATA_WIDTH(DATA_WIDTH))
+u_downselect(
     .clk(clk),
     .sync_reset(reset_int),
 
     .s_axis_tvalid(shift_tvalid),
     .s_axis_tdata(shift_tdata),
     .s_axis_tuser(shift_tuser),
+    .s_axis_tlast(shift_tlast),
     .s_axis_tready(shift_tready),
 
     .eob_tag(shift_eob_tag),
-    .payload_length(payload_length),
 
     // down selection FIFO interface
     .s_axis_select_tvalid(s_axis_select_tvalid),
@@ -502,11 +366,11 @@ downselect u_downselect(
     .s_axis_select_tlast(s_axis_select_tlast),
     .s_axis_select_tready(s_axis_select_tready),
 
-    .m_axis_tvalid(m_axis_tvalid_s),
-    .m_axis_tdata(m_axis_tdata_s),
-    .m_axis_tuser(m_axis_tuser_s),
-    .m_axis_tlast(m_axis_tlast_s)
-    .m_axis_tready(m_axis_tready),
+    .m_axis_tvalid(down_sel_tvalid),
+    .m_axis_tdata(down_sel_tdata),
+    .m_axis_tuser(down_sel_tuser),
+    .m_axis_tlast(down_sel_tlast),
+    .m_axis_tready(down_sel_tready),
 
     .eob_downselect(eob_tag)
 );
@@ -519,12 +383,12 @@ u_final_cnt
     .clk(clk),
     .sync_reset(reset_int),
 
-    .s_axis_tvalid(shift_tvalid),
-    .s_axis_tdata(shift_tdata),
-    .cnt_limit(payload_length),
-    .s_axis_tuser(shift_tuser),
-    .s_axis_tlast(shift_tlast),
-    .s_axis_tready(shift_tready),
+    .s_axis_tvalid(down_sel_tvalid),
+    .s_axis_tdata(down_sel_tdata),
+    .cnt_limit(payload_length_m1),
+    .s_axis_tuser(down_sel_tuser),
+    .s_axis_tlast(down_sel_tlast),
+    .s_axis_tready(down_sel_tready),
 
     .m_axis_tvalid(m_axis_tvalid_s),
     .m_axis_tdata(m_axis_tdata_s),
@@ -534,6 +398,212 @@ u_final_cnt
     .m_axis_tlast(),
     .m_axis_tready(m_axis_tready_s)
 );
+
+`ifdef SIM_BIN_WRITE
+
+    localparam buffer_out = "buffer_output.bin";
+    localparam pfb_out = "pfb_output.bin";
+    localparam circ_out = "circ_output.bin";
+    localparam fft_out = "fft_output.bin";
+    localparam exp_out = "exp_output.bin";
+    localparam down_select_out = "down_select_output.bin";
+    localparam final_out = "final_output.bin";
+
+    integer buffer_descr, pfb_descr, circ_descr, fft_descr, exp_descr, down_descr, final_descr;
+
+    initial begin
+        buffer_descr = $fopen(buffer_out, "wb");
+        pfb_descr = $fopen(pfb_out, "wb");
+        circ_descr = $fopen(circ_out, "wb");
+        fft_descr = $fopen(fft_out, "wb");
+        exp_descr = $fopen(exp_out, "wb");
+        down_descr = $fopen(down_select_out, "wb");
+        final_descr = $fopen(final_out, "wb");
+    end
+
+    wire buffer_take, pfb_take, circ_take, fft_take, exp_take, down_take, final_take;
+
+    wire [63:0] buffer_st_tdata;
+    wire [63:0] pfb_st_tdata;
+    wire [63:0] fft_st_tdata;
+    wire [31:0] circ_st_tdata;
+    wire [63:0] exp_st_tdata;
+    wire [63:0] down_st_tdata;
+    wire [63:0] final_st_tdata;
+
+    assign buffer_st_tdata = {21'd0, buffer_phase, buffer_tdata};
+    assign pfb_st_tdata = {21'd0, pfb_phase, pfb_tdata};
+    assign fft_st_tdata = {8'd0, fft_tuser, fft_tdata};
+    assign exp_st_tdata = {8'd0, shift_tuser, shift_tdata};
+    assign down_st_tdata = {8'd0, down_sel_tuser, down_sel_tdata};
+    assign final_st_tdata = {8'd0, m_axis_tuser_s, m_axis_tdata_s};
+
+    assign circ_st_tdata = circ_tdata_s;
+
+    assign buffer_take = buffer_tvalid & buffer_tready;
+    assign pfb_take = pfb_tvalid & pfb_tready;
+
+    assign circ_take = circ_tvalid & circ_tready;
+    assign fft_take = fft_tvalid & fft_tready;
+    assign exp_take = shift_tvalid & shift_tready;
+    assign down_take = down_sel_tvalid & down_sel_tready;
+    assign final_take = m_axis_tvalid_s & m_axis_tready_s;
+
+    grc_word_writer #(
+        .LISTEN_ONLY(1),
+        .ARRAY_LENGTH(1024),
+        .NUM_BYTES(8)
+    )
+    u_buffer_wr
+    (
+        .clk(clk),
+        .sync_reset(reset_int),
+        .enable(1'b1),
+
+        .fd(buffer_descr),
+
+        .valid(buffer_take),
+        .word(buffer_st_tdata),
+
+        .wr_file(1'b0),
+
+        .rdy_i(1'b1),
+        .rdy_o()
+        );
+
+    grc_word_writer #(
+        .LISTEN_ONLY(1),
+        .ARRAY_LENGTH(1024),
+        .NUM_BYTES(8)
+    )
+    u_pfb_wr
+    (
+        .clk(clk),
+        .sync_reset(reset_int),
+        .enable(1'b1),
+
+        .fd(pfb_descr),
+
+        .valid(pfb_take),
+        .word(pfb_st_tdata),
+
+        .wr_file(1'b0),
+
+        .rdy_i(1'b1),
+        .rdy_o()
+    );
+
+    grc_word_writer #(
+        .LISTEN_ONLY(1),
+        .ARRAY_LENGTH(1024),
+        .NUM_BYTES(4)
+    )
+    u_circ_wr
+    (
+        .clk(clk),
+        .sync_reset(reset_int),
+        .enable(1'b1),
+
+        .fd(circ_descr),
+
+        .valid(circ_take),
+        .word(circ_st_tdata),
+
+        .wr_file(1'b0),
+
+        .rdy_i(1'b1),
+        .rdy_o()
+    );
+
+    grc_word_writer #(
+        .LISTEN_ONLY(1),
+        .ARRAY_LENGTH(1024),
+        .NUM_BYTES(8)
+        )
+    u_fft_wr
+    (
+        .clk(clk),
+        .sync_reset(reset_int),
+        .enable(1'b1),
+
+        .fd(fft_descr),
+
+        .valid(fft_take),
+        .word(fft_st_tdata),
+
+        .wr_file(1'b0),
+
+        .rdy_i(1'b1),
+        .rdy_o()
+        );
+
+    grc_word_writer #(
+        .LISTEN_ONLY(1),
+        .ARRAY_LENGTH(1024),
+        .NUM_BYTES(8)
+        )
+    u_exp_wr
+    (
+        .clk(clk),
+        .sync_reset(reset_int),
+        .enable(1'b1),
+
+        .fd(exp_descr),
+
+        .valid(exp_take),
+        .word(exp_st_tdata),
+
+        .wr_file(1'b0),
+
+        .rdy_i(1'b1),
+        .rdy_o()
+        );
+
+    grc_word_writer #(
+        .LISTEN_ONLY(1),
+        .ARRAY_LENGTH(1024),
+        .NUM_BYTES(8)
+        )
+    u_downselect_wr
+    (
+        .clk(clk),
+        .sync_reset(reset_int),
+        .enable(1'b1),
+
+        .fd(down_descr),
+
+        .valid(down_take),
+        .word(down_st_tdata),
+
+        .wr_file(1'b0),
+
+        .rdy_i(1'b1),
+        .rdy_o()
+        );
+
+    grc_word_writer #(
+        .LISTEN_ONLY(1),
+        .ARRAY_LENGTH(1024),
+        .NUM_BYTES(8)
+        )
+    u_final_wr
+    (
+        .clk(clk),
+        .sync_reset(reset_int),
+        .enable(1'b1),
+
+        .fd(final_descr),
+
+        .valid(final_take),
+        .word(final_st_tdata),
+
+        .wr_file(1'b0),
+
+        .rdy_i(1'b1),
+        .rdy_o()
+        );
+
+`endif
 
 
 endmodule

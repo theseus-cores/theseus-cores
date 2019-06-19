@@ -512,6 +512,29 @@ class Channelizer(object):
         print(len(vec))
         write_binary_file(vec, file_name, 'i', big_endian=True)
 
+    def gen_mask_vec(self, percent_active=.5):
+        np.random.seed(10)
+        num_bins = int(self.M * percent_active)
+        values = np.random.choice(a=self.M, size=num_bins, replace=False)
+        values = np.sort(values)
+        # map this vector to 32 bit words  -- there are 64 words in 2048 bit vector.
+        bit_vector = [0] * 2048
+        for value in values:
+            bit_vector[value] = 1
+
+        words = np.reshape(bit_vector, (-1, 32))
+        words = np.fliplr(words)
+        return fp_utils.list_to_uint(words)
+
+    def gen_mask_file(self, file_name=None):
+        """
+            Helper function that generates a single file used for programming the internal ram
+        """
+        vec = np.array(self.gen_mask_vec())
+        print(len(vec))
+        write_binary_file(vec, file_name, 'I', big_endian=True)
+
+
     def gen_pf_bank(self):
         """
             Generates appropriate form of the polyphase filter bank to be used in the
@@ -1146,7 +1169,7 @@ def process_synth_out(file_name, row_offset=600):
 
 
     i_sig = i_sig.float
-    q_sig = q_sig.float
+    q_si1g = q_sig.float
 
     comp_sig = i_sig + 1j * q_sig
     if len(comp_sig) < 2000:
@@ -1156,6 +1179,13 @@ def process_synth_out(file_name, row_offset=600):
 
     plot_spec_sig(comp_sig, title='Synthesizer PSD Output', w_time=True, y_min=-100, y_max=None, plot_on=False, savefig=True)
     print("Synthesis Output Produced")
+
+def gen_mask_files(M_list):
+    path = sim_path
+    for M in M_list:
+        chan_obj = Channelizer(M=M, taps_per_phase=taps_per_phase, gen_2X=True, desired_msb=desired_msb, qvec=qvec, qvec_coef=qvec_coef)
+        file_name = path + 'M_{}_mask.bin'.format(M)
+        chan_obj.gen_mask_file(file_name)
 
 
 def gen_tap_plots(M_list):
@@ -1189,8 +1219,9 @@ def get_args():
     parser = ArgumentParser(description='Channelizer CLI -- Used to generate RTL code, input stimulus, and process output of RTL simulation.')
     parser.add_argument('-c', '--rtl_chan_outfile', type=str, help='Process RTL output file specified by input string -- can use \'default\' as input ')
     # parser.add_argument('-s', '--rtl_synth_outfile', type=str, help='Process RTL output file specified by input string -- can use \'default\' as input ')
-    parser.add_argument('-i', '--rtl_sim_input', nargs='+', help='Generate tones based on list of tone frequencies (Normalized Discrete Freq range -1 -> 1)', required=False)
+    parser.add_argument('-i', '--rtl_sim_input', nargs='+', help='Generate tones based on list of tone frequencies (Normalized Discrete Freq range -1 -> 1) example list .25 .5 ', required=False)
     parser.add_argument('-t', '--generate_taps', action='store_true', help='Generates tap files for all valid FFT Sizes : [8, 16, 32, 64, 128, 256, 512, 1024, 2048]')
+    parser.add_argument('-m', '--generate_masks', action='store_true', help='Generate Mask files for all valid FFT Sizes : [8, 16, 32, 64, 128, 256, 512, 1024, 2048]')
     parser.add_argument('-o', '--opt_taps', action='store_true', help='Returns optimized filter parameters all valid FFT Sizes : [8, 16, 32, 64, 128, 256, 512, 1024, 2048]')
     args = parser.parse_args()
 
@@ -1211,6 +1242,8 @@ def get_args():
         gen_tap_plots(M_list)
         gen_tap_vec(M_list)
 
+    if args.generate_masks:
+        gen_mask_files(M_list)
 
     if args.opt_taps:
         populate_fil_table()

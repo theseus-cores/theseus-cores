@@ -510,6 +510,7 @@ def gen_rand_data(seed=42, num_bits=1000, dtype=np.int):
 
 def ret_a_val(vec, format_str):
 
+    vec = np.array(vec)
     a_val = vec.astype(int)
     if format_str == 'f':
         a_val = vec.astype(np.float32)
