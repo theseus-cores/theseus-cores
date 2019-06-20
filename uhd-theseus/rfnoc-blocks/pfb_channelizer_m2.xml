@@ -24,15 +24,15 @@
     </setreg>
     <setreg>
       <name>SR_CHANNELMASK</name>
-      <address>133</address>
-    </setreg>
-    <setreg>
-      <name>SR_CHANNELMASK_LAST</name>
       <address>134</address>
     </setreg>
     <setreg>
-      <name>SR_PKT_SIZE</name>
+      <name>SR_CHANNELMASK_LAST</name>
       <address>135</address>
+    </setreg>
+    <setreg>
+      <name>SR_PKT_SIZE</name>
+      <address>133</address>
     </setreg>
 
     <readback>
@@ -49,7 +49,7 @@
     </readback>
     <setreg>
       <name>RB_PKT_SIZE</name>
-      <address>135</address>
+      <address>133</address>
     </setreg>
   </registers>
   <!-- Registers -->
