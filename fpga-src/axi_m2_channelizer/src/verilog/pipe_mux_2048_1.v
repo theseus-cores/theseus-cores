@@ -312,6 +312,7 @@ module pipe_mux_2048_1
 (* KEEP = "TRUE" *) reg [10:0] sel_d2_2;
 (* KEEP = "TRUE" *) reg [10:0] sel_d2_3;
 (* KEEP = "TRUE" *) reg [10:0] sel_d3_0;
+(* KEEP = "TRUE" *) reg [10:0] sel_d4;
 reg valid_d0;
 reg valid_d1;
 reg valid_d2;
@@ -614,7 +615,7 @@ reg [2047:0] input_word_d;
 
 assign output_word = mux_d3_0;
 assign valid_o = valid_d4;
-assign sel_o = sel_d3_0;
+assign sel_o = sel_d4;
 
 integer ii;
 
@@ -1223,6 +1224,7 @@ always @(posedge clk) begin
     sel_d2_2 <= sel_d1_31;
     sel_d2_3 <= sel_d1_31;
     sel_d3_0 <= sel_d2_3;
+    sel_d4 <= sel_d3_0;
 end
 
 

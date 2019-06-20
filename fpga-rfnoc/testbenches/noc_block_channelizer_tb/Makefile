@@ -59,6 +59,7 @@ SIM_SRCS = $(abspath ./noc_block_channelizer_tb.sv \
 $(SIM_DIR)/chan_rfnoc_sim.vh \
 $(SIM_DIR)/sig_tones_input.bin \
 $(SIM_DIR)/M_8_taps.bin \
+$(SIM_DIR)/M_8_mask.bin \
 $(CHAN_SRC_DIR)/dp_block_read_first_ram.v \
 $(CHAN_SRC_DIR)/dp_block_write_first_ram.v \
 $(CHAN_SRC_DIR)/axi_fifo_2.v \

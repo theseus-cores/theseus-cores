@@ -55,21 +55,19 @@ localparam FFT_512 = 512;
 localparam FFT_1024 = 1024;
 localparam FFT_2048 = 2048;
 
-localparam [4:0] RESET_ZEROS = 5'd0;
-localparam [4:0] RESET_HIGH_CNT = 5'b01000;  // buffer signals
-
 reg [4:0] nfft, next_nfft;
 reg [11:0] fft_size_s;
 wire event_frame_started;
 wire event_tlast_unexpected;
 wire event_tlast_missing;
-wire event_status_channel_halt;
 wire event_data_in_channel_halt;
-wire event_data_out_channel_halt;  // reset signals
 
 reg async_reset, async_reset_d1;
 reg reset_int,  next_reset_int;
 reg [4:0] reset_cnt, next_reset_cnt;
+
+localparam [4:0] RESET_ZEROS = 5'd0;
+localparam [4:0] RESET_HIGH_CNT = 5'b01000;  // buffer signals
 
 // internal payload_length register
 reg [15:0] payload_length_s, payload_length_m1;
@@ -79,6 +77,7 @@ wire [DATA_WIDTH - 1:0] buffer_tdata;
 wire buffer_tlast;
 wire [10:0] buffer_phase;
 wire buffer_tready;
+
 // pfb signals
 wire pfb_tvalid;
 wire [DATA_WIDTH - 1:0] pfb_tdata;
@@ -122,11 +121,12 @@ wire [23:0] down_sel_tuser;
 wire down_sel_tlast;
 wire down_sel_tready;
 
+// output signals
 wire m_axis_tvalid_s;
-wire [DATA_WIDTH-1:0] m_axis_tdata_s;
-wire [23:0] m_axis_tuser_s;
-wire m_axis_tlast_s;
+wire [31:0] m_axis_tdata_s;
 wire m_axis_tready_s;
+wire m_axis_tlast_s;
+wire [23:0] m_axis_tuser_s;
 
 wire [7:0] m_axis_status_tdata;
 wire m_axis_status_tvalid;
@@ -135,12 +135,15 @@ wire m_axis_status_tready = 1'b1;
 localparam S_CONFIG = 0, S_IDLE = 1;
 reg config_state, next_config_state;
 
+assign m_axis_tvalid = m_axis_tvalid_s;
+assign m_axis_tready_s = m_axis_tready;
+assign m_axis_tdata = m_axis_tdata_s;
+assign m_axis_tuser = m_axis_tuser_s;
+assign m_axis_tlast = m_axis_tlast_s;
 assign fft_config_tdata = {11'b00000000000,nfft};
 assign fft_tdata = {fft_tdata_s[15:0],fft_tdata_s[31:16]};
 assign circ_tdata = {circ_tdata_s[15:0],circ_tdata_s[31:16]};
-assign s_axis_reload_tready = 1'b1;
 
-//
 
 always @*
 begin

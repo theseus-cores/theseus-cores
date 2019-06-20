@@ -41,7 +41,8 @@ module downselect
 localparam [2047:0] ZEROS = 2048'd0;
 
 // downselection registers.
-reg [2047:0] select_reg, next_select_reg;
+reg [2047:0] select_reg = 2048'd0;
+reg [2047:0] next_select_reg = 2048'd0;
 reg [5:0] select_addr, next_select_addr;
 reg select_take_d1;
 reg [31:0] select_dina, next_select_dina;
@@ -52,8 +53,10 @@ reg load_done, next_load_done, load_done_d1;
 
 reg [4:0] take_d;
 reg [5:0] tlast_d;
-reg [DATA_WIDTH-1:0] tdata_d[0:6];
-reg [23:0] tuser_d[0:6];
+reg [5:0] eob_tag_d;
+reg [DATA_WIDTH-1:0] tdata_d[0:5];
+reg [23:0] tuser_d[0:5];
+wire [24:0] tuser_s, m_axis_tuser_s;
 reg push, next_push;
 
 wire mask_value;
@@ -70,6 +73,10 @@ assign select_take = s_axis_select_tvalid & select_tready;
 assign take_data = s_axis_tvalid & ~almost_full & load_done_d1;
 assign s_axis_tready = ~almost_full & load_done_d1;
 assign curr_channel = s_axis_tuser[10:0];
+assign s_axis_select_tready = 1'b1;
+assign tuser_s = {eob_tag_d[5], tuser_d[5]};
+assign eob_downselect = m_axis_tuser_s[24];
+assign m_axis_tuser = m_axis_tuser_s[23:0];
 
 always @(posedge clk, posedge sync_reset)
 begin
@@ -94,18 +101,19 @@ integer n;
 always @(posedge clk)
 begin
     select_reg <= next_select_reg;
+    select_take_d1 <= select_take;
     load_done_d1 <= load_done;
 
     take_d <= {take_d[3:0], take_data};
     tlast_d <= {tlast_d[4:0], s_axis_tlast};
+    eob_tag_d <= {eob_tag_d[4:0], eob_tag};
 
-    tdata_d[0] = s_axis_tdata;
-    tuser_d[0] = s_axis_tuser;
+    tdata_d[0] <= s_axis_tdata;
+    tuser_d[0] <= s_axis_tuser;
     for (n=1;n<6; n=n+1) begin
         tdata_d[n] <= tdata_d[n-1];
         tuser_d[n] <= tuser_d[n-1];
     end
-
 end
 
 
@@ -207,9 +215,9 @@ end
 // selection logic.
 always @*
 begin
-    next_push <= 1'b0;
+    next_push = 1'b0;
     if (take_d[4] == 1'b1 && mask_value == 1'b1) begin  // output fifo is not full and not loading new select_reg.
-        next_push <= 1'b1;
+        next_push = 1'b1;
     end
 end
 
@@ -232,21 +240,21 @@ pipe_mux_2048_1 u_pipe_mux
 axi_fifo_51 #(
     .DATA_WIDTH(32),
     .ALMOST_FULL_THRESH(20),
-    .TUSER_WIDTH(24),
+    .TUSER_WIDTH(25),
     .ADDR_WIDTH(5))
 u_fifo(
     .clk(clk),
     .sync_reset(sync_reset),
     .s_axis_tvalid(push),
-    .s_axis_tdata(tdata_d[6]),
-    .s_axis_tlast(tlast_d[6]),
-    .s_axis_tuser(tuser_d[6]),
+    .s_axis_tdata(tdata_d[5]),
+    .s_axis_tlast(tlast_d[5]),
+    .s_axis_tuser(tuser_s),
     .s_axis_tready(),
     .almost_full(almost_full),
     .m_axis_tvalid(m_axis_tvalid),
     .m_axis_tdata(m_axis_tdata),
     .m_axis_tlast(m_axis_tlast),
-    .m_axis_tuser(m_axis_tuser),
+    .m_axis_tuser(m_axis_tuser_s),
     .m_axis_tready(m_axis_tready));
 
 endmodule
