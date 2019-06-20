@@ -34,6 +34,10 @@
       <name>SR_CHANNELMASK_LAST</name>
       <address>134</address>
     </setreg>
+    <setreg>
+      <name>SR_PKT_SIZE</name>
+      <address>135</address>
+    </setreg>
 
     <readback>
       <name>RB_NUM_TAPS</name>
@@ -52,8 +56,8 @@
       <address>133</address>
     </readback>
   </registers>
-
   <!-- Registers -->
+
   <args>
     <arg>
       <name>fft_size</name>
