@@ -77,20 +77,23 @@ public:
             })
             .set(64)
         ;
+
+        set_channels();
     }
 
-    void set_channels(const std::vector<uint32_t> channels)
+    void set_channels(const std::vector<uint32_t> channels = std::vector<uint32_t>())
     {
-        // If channels vector is empty, enable all channels and return
+        // If channels vector is empty (default), enable all channels and return
         if (channels.empty()) {
             _channel_mask.clear();
             for (int ii = 0; ii < _n_mask; ii++) {
                 _channel_mask.push_back(0xFFFFFFFF);
             }
+            write_channel_mask();
             return;
         }
 
-        // First all channels
+        // First set all channels to 0
         _channel_mask.clear();
         for (int ii = 0; ii < _n_mask; ii++) {
             _channel_mask.push_back(0);
@@ -111,7 +114,7 @@ public:
             UHD_LOG_TRACE(unique_id(), boost::format("Enabling channel %d: (Idx %d / Shift %d)") % chan % idx % shift);
         }
 
-        // Write empty
+        // Write channels
         write_channel_mask();
     }
 
