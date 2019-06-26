@@ -9,6 +9,7 @@
     $device_index,
 )
 self.$(id).set_arg("fft_size", $num_chan)
+self.$(id).set_arg("pkt_size", $pkt_size)
 </make>
 
   <callback>set_arg("fft_size", $num_chan)</callback>
@@ -17,6 +18,12 @@ self.$(id).set_arg("fft_size", $num_chan)
      <name>Number of Channels</name>
      <key>num_chan</key>
      <value>8</value>
+     <type>int</type>
+  </param>
+  <param>
+     <name>Output Packet Size</name>
+     <key>pkt_size</key>
+     <value>767</value>
      <type>int</type>
   </param>
 
