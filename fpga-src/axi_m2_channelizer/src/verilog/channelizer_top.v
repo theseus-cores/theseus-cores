@@ -117,18 +117,14 @@ wire m_axis_status_tready = 1'b1;
 localparam S_CONFIG = 0, S_IDLE = 1;
 reg config_state, next_config_state;
 
-// `ifdef XILINX_SIMULATOR
-// `endif
-
-  // FFT FWD/INV is bit 8 / nfft is bits 4 downto 0
-  assign m_axis_tvalid = m_axis_tvalid_s;
-  assign m_axis_tready_s = m_axis_tready;
-  assign m_axis_tdata = m_axis_tdata_s;
-  assign m_axis_tuser = m_axis_tuser_s;
-  assign m_axis_tlast = m_axis_tlast_s;
-  assign fft_config_tdata = {11'b00000000000,nfft};
-  assign fft_tdata = {fft_tdata_s[15:0],fft_tdata_s[31:16]};
-  assign circ_tdata = {circ_tdata_s[15:0],circ_tdata_s[31:16]};
+assign m_axis_tvalid = m_axis_tvalid_s;
+assign m_axis_tready_s = m_axis_tready;
+assign m_axis_tdata = m_axis_tdata_s;
+assign m_axis_tuser = m_axis_tuser_s;
+assign m_axis_tlast = m_axis_tlast_s;
+assign fft_config_tdata = {11'b00000000000,nfft};
+assign fft_tdata = {fft_tdata_s[15:0],fft_tdata_s[31:16]};
+assign circ_tdata = {circ_tdata_s[15:0],circ_tdata_s[31:16]};
 
 
 always @*
@@ -368,8 +364,9 @@ u_final_cnt
     localparam circ_out = "circ_output.bin";
     localparam fft_out = "fft_output.bin";
     localparam exp_out = "chan_output.bin";
+    localparam count_out = "count_output.bin";
 
-    integer buffer_descr, pfb_descr, circ_descr, fft_descr, exp_descr;
+    integer buffer_descr, pfb_descr, circ_descr, fft_descr, exp_descr, count_descr;
 
     initial begin
         buffer_descr = $fopen(buffer_out, "wb");
@@ -377,20 +374,23 @@ u_final_cnt
         circ_descr = $fopen(circ_out, "wb");
         fft_descr = $fopen(fft_out, "wb");
         exp_descr = $fopen(exp_out, "wb");
+        count_descr = $fopen(count_out, "wb");
     end
 
-    wire buffer_take, pfb_take, circ_take, fft_take, exp_take;
+    wire buffer_take, pfb_take, circ_take, fft_take, exp_take, count_take;
 
     wire [63:0] buffer_st_tdata;
     wire [63:0] pfb_st_tdata;
     wire [63:0] fft_st_tdata;
     wire [63:0] exp_st_tdata;
+    wire [63:0] count_st_tdata;
     wire [31:0] circ_st_tdata;
 
     assign buffer_st_tdata = {21'd0, buffer_phase, buffer_tdata};
     assign pfb_st_tdata = {21'd0, pfb_phase, pfb_tdata};
     assign fft_st_tdata = {8'd0, fft_tuser, fft_tdata};
     assign exp_st_tdata = {8'd0, shift_tuser, shift_tdata};
+    assign count_st_tdata = {7'd0, m_axis_tlast_s, m_axis_tuser_s, m_axis_tdata_s};
     assign circ_st_tdata = circ_tdata_s;
 
     assign buffer_take = buffer_tvalid & buffer_tready;
@@ -398,7 +398,8 @@ u_final_cnt
 
     assign circ_take = circ_tvalid & circ_tready;
     assign fft_take = fft_tvalid & fft_tready;
-    assign exp_take = m_axis_tvalid_s & m_axis_tready;
+    assign exp_take = shift_tvalid & shift_tready;
+    assign count_take = m_axis_tvalid_s & m_axis_tready_s;
 
     grc_word_writer #(
         .LISTEN_ONLY(1),
@@ -503,6 +504,28 @@ u_final_cnt
 
         .valid(exp_take),
         .word(exp_st_tdata),
+
+        .wr_file(1'b0),
+
+        .rdy_i(1'b1),
+        .rdy_o()
+        );
+
+    grc_word_writer #(
+        .LISTEN_ONLY(1),
+        .ARRAY_LENGTH(1024),
+        .NUM_BYTES(8)
+        )
+    u_count_wr
+    (
+        .clk(clk),
+        .sync_reset(reset_int),
+        .enable(1'b1),
+
+        .fd(count_descr),
+
+        .valid(count_take),
+        .word(count_st_tdata),
 
         .wr_file(1'b0),
 
