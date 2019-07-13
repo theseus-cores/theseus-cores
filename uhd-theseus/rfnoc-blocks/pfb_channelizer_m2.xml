@@ -22,6 +22,10 @@
       <name>SR_RELOAD_LAST</name>
       <address>132</address>
     </setreg>
+    <setreg>
+      <name>SR_PKT_SIZE</name>
+      <address>133</address>
+    </setreg>
 
     <readback>
       <name>RB_NUM_TAPS</name>
@@ -35,6 +39,10 @@
       <name>RB_AVG_LEN</name>
       <address>130</address>
     </readback>
+    <readback>
+      <name>RB_PKT_SIZE</name>
+      <address>133</address>
+    </readback>
   </registers>
 
   <!-- Registers -->
@@ -44,6 +52,12 @@
       <type>int</type>
       <value>128</value>
       <action>SR_WRITE("SR_FFT_SIZE", $fft_size)</action>
+    </arg>
+    <arg>
+      <name>pkt_size</name>
+      <type>int</type>
+      <value>767</value>
+      <action>SR_WRITE("SR_PKT_SIZE", $pkt_size)</action>
     </arg>
   </args>
 
