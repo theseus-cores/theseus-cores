@@ -64,7 +64,7 @@
     <arg>
       <name>pkt_size</name>
       <type>int</type>
-      <value>767</value>
+      <value>255</value>
       <action>SR_WRITE("SR_PKT_SIZE", $pkt_size)</action>
     </arg>
   </args>
