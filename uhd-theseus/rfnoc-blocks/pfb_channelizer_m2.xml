@@ -23,10 +23,6 @@
       <address>132</address>
     </setreg>
     <setreg>
-      <name>SR_PKT_SIZE</name>
-      <address>133</address>
-    </setreg>
-    <setreg>
       <name>SR_CHANNELMASK</name>
       <address>133</address>
     </setreg>
