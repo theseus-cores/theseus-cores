@@ -49,7 +49,7 @@
     </readback>
     <readback>
       <name>RB_PKT_SIZE</name>
-      <address>133</address>
+      <address>135</address>
     </readback>
   </registers>
   <!-- Registers -->
