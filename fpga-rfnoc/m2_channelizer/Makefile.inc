@@ -33,7 +33,6 @@ slicer_48_13.v \
 dsp48_cic_M256_N1_R1_iw5_0_corr.v \
 dsp48_cic_M256_N1_R1_iw5_0.v \
 dsp48_comb_M256_N1_iw5_0.v \
-dsp48_integrator_section_0.v \
 dsp48_output_add.v \
 dsp48_pfb_mac_0.v \
 dsp48_pfb_mac.v \
@@ -47,5 +46,7 @@ exp_shifter.v \
 input_buffer.v \
 pfb_2x_16iw_16ow_32tps.v \
 chan_rfnoc_sim.vh \
+pipe_mux_2048_1.v \
+downselect.v \
 channelizer_top.v \
 )
