@@ -23,7 +23,7 @@ self.$(id).set_arg("pkt_size", $pkt_size)
   <param>
      <name>Output Packet Size</name>
      <key>pkt_size</key>
-     <value>767</value>
+     <value>255</value>
      <type>int</type>
   </param>
 
@@ -63,7 +63,7 @@ self.$(id).set_arg("pkt_size", $pkt_size)
   <source>
     <name>out</name>
     <type>complex</type>
-    <vlen>$num_chan</vlen>
-    <domain>rfnoc</domain>
+    <vlen>1</vlen>
+    <nports>$num_chan</nports>
   </source>
 </block>

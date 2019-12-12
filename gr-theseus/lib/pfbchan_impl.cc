@@ -61,7 +61,7 @@ namespace gr {
             ::uhd::stream_args_t("fc32", "sc16"),
             ::uhd::stream_args_t("fc32", "sc16"))
     {
-        gr::block::set_min_noutput_items(256);
+      
     }
 
     /*
@@ -193,54 +193,74 @@ namespace gr {
         gr_vector_void_star &output_items
     ) {
       // Temporarily channel copy from rfnoc_block_impl
-      // TODO: Implement the channel deinterleaving output
 
       assert(_rx.streamers.size() == 1);
 
-      // In every loop iteration, this will point to the relevant buffer
+      size_t nchannels = output_items.size();
+      size_t nsamples = noutput_items*nchannels;
+
+      std::vector<gr_complex> buff_samples(nsamples);
       gr_vector_void_star buff_ptr(1);
+      buff_ptr[0] = &buff_samples;
 
-      for (size_t i = 0; i < _rx.streamers.size(); i++) {
-        buff_ptr[0] = output_items[i];
-        //size_t num_vectors_to_recv = std::min(_rx.streamers[i]->get_max_num_samps() / _rx.vlen, size_t(noutput_items));
-        size_t num_vectors_to_recv = noutput_items;
-        size_t num_samps = _rx.streamers[i]->recv(
-            buff_ptr,
-            num_vectors_to_recv * _rx.vlen,
-            _rx.metadata, 0.1, true
-        );
+      size_t num_samps = _rx.streamers[0]->recv(
+          buff_ptr,
+          nsamples,
+          _rx.metadata, 0.1, true
+      );
 
-        switch(_rx.metadata.error_code) {
-          case ::uhd::rx_metadata_t::ERROR_CODE_NONE:
-            break;
+      switch(_rx.metadata.error_code) {
+        case ::uhd::rx_metadata_t::ERROR_CODE_NONE:
+          break;
 
-          case ::uhd::rx_metadata_t::ERROR_CODE_TIMEOUT:
-            //its ok to timeout, perhaps the user is doing finite streaming
-            std::cout << "timeout on chan " << i << std::endl;
-            break;
+        case ::uhd::rx_metadata_t::ERROR_CODE_TIMEOUT:
+          //its ok to timeout, perhaps the user is doing finite streaming
+          std::cout << "timeout on streamer " << 0 << std::endl;
+          break;
 
-          case ::uhd::rx_metadata_t::ERROR_CODE_OVERFLOW:
-            // Not much we can do about overruns here
-            std::cout << "overrun on chan " << i << std::endl;
-            break;
+        case ::uhd::rx_metadata_t::ERROR_CODE_OVERFLOW:
+          // Not much we can do about overruns here
+          std::cout << "overrun on streamer " << 0 << std::endl;
+          break;
 
-          default:
-            std::cout << boost::format("RFNoC Streamer block received error %s (Code: 0x%x)")
-              % _rx.metadata.strerror() % _rx.metadata.error_code << std::endl;
+        default:
+          std::cout << boost::format("RFNoC Streamer block received error %s (Code: 0x%x)")
+            % _rx.metadata.strerror() % _rx.metadata.error_code << std::endl;
+      }
+
+      if (_rx.metadata.end_of_burst) {
+        // NOTE: Dont worry about tags, for now...
+        // for (size_t i = 0; i < output_items.size(); i++) {
+        //   add_item_tag(
+        //       i,
+        //       nitems_written(i) + (num_samps / _rx.vlen) - 1,
+        //       EOB_KEY, pmt::PMT_T
+        //   );
+        // }
+      }
+
+      if (num_samps != nsamples) {
+        // WHOA! Not good...
+        // TODO: Some error handling
+        std::cout << "WHOA! Couldnt get requested " << nsamples << " samples. Only returned " << num_samps << std::endl;
+      }
+
+      // Convert to vector of complex buffers
+      std::vector<gr_complex *> output_samples(nchannels);
+      for (size_t ii = 0; ii < nchannels; ii++){
+        output_samples[ii] = (gr_complex *) output_items[ii];
+      }
+
+      // Deinterleave channelizer output into specific channels
+      for (size_t ii = 0; ii < noutput_items; ii++){
+        for (size_t jj = 0; jj < nchannels; jj++) {
+          output_samples[jj][ii] = buff_samples[ii*jj+jj];
         }
+      }
 
-        if (_rx.metadata.end_of_burst) {
-          for (size_t i = 0; i < output_items.size(); i++) {
-            add_item_tag(
-                i,
-                nitems_written(i) + (num_samps / _rx.vlen) - 1,
-                EOB_KEY, pmt::PMT_T
-            );
-          }
-        }
-
-        produce(i, num_samps / _rx.vlen);
-      } /* end for (chans) */
+      for (size_t ii = 0; ii < nchannels; ii++){
+        produce(ii, noutput_items);
+      }
     }
 
   } /* namespace theseus */
