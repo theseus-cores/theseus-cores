@@ -32,6 +32,12 @@ self.$(id).set_channels($chan_idx)
      <value>255</value>
      <type>int</type>
   </param>
+  <param>
+     <name>Input Vector Length</name>
+     <key>vec_len_in</key>
+     <value>1</value>
+     <type>int</type>
+  </param>
 
   <param>
     <name>Block Select</name>
@@ -62,7 +68,7 @@ self.$(id).set_channels($chan_idx)
   <sink>
     <name>in</name>
     <type>complex</type>
-    <vlen>1</vlen>
+    <vlen>$vec_len_in</vlen>
     <domain>rfnoc</domain>
   </sink>
 
