@@ -54,6 +54,7 @@ public:
     UHD_RFNOC_BLOCK_CONSTRUCTOR(pfbchan_block_ctrl)
     {
         _n_taps = uint32_t(user_reg_read64("RB_NUM_TAPS"));
+        _max_fft = 2048;
         UHD_ASSERT_THROW(_n_taps);
         UHD_LOG_DEBUG(unique_id(), "Found PFB M/2 Channelizer max " << _n_taps << " taps.");
 
@@ -64,7 +65,7 @@ public:
         SR_CHANNELMASK_LAST = uint32_t(_tree->access<size_t>(_root_path / "registers" / "sr" / "SR_CHANNELMASK_LAST").get());
 
         // Initialize the channel mask
-        _n_mask = ceil(((float) _n_taps)/32.0);
+        _n_mask = ceil(((float) _max_fft)/32.0);
         _channel_mask.clear();
         for (int ii = 0; ii < _n_mask; ii++) {
             _channel_mask.push_back(0xFFFFFFFF);
@@ -122,6 +123,7 @@ public:
 private:
     size_t _n_taps;
     size_t _fft_size;
+    size_t _max_fft;
     uint32_t SR_RELOAD;
     uint32_t SR_RELOAD_LAST;
     uint32_t SR_CHANNELMASK;
@@ -131,10 +133,10 @@ private:
 
     void write_channel_mask(){
         for (int ii = 0; ii < _n_mask-1; ii++){
-            UHD_LOG_TRACE(unique_id(), boost::format("Writing Channel Mask [%d]: %08X") % ii % _channel_mask[ii]);
+            UHD_LOG_DEBUG(unique_id(), boost::format("Writing Channel Mask [%d]: %08X") % ii % _channel_mask[ii]);
             sr_write(SR_CHANNELMASK, _channel_mask[ii]);
         }
-        UHD_LOG_TRACE(unique_id(), boost::format("Writing Channel Mask [%d]: %08X") % _channel_mask.size() % _channel_mask.back());
+        UHD_LOG_DEBUG(unique_id(), boost::format("Writing Channel Mask [%d]: %08X") % _channel_mask.size() % _channel_mask.back());
         sr_write(SR_CHANNELMASK_LAST, _channel_mask.back());
     }
 
@@ -155,6 +157,16 @@ private:
         }
 
         for (size_t i = 0; i < taps_fi.size(); i++) {
+            if (taps_fi[i] > 16777215) {
+                UHD_LOG_DEBUG(unique_id(),
+                    boost::format("Coercing coeff %d: Value %d => %d") % i % taps_fi[i] % 16777215);
+                taps_fi[i] = 16777215;
+            }
+            if (taps_fi[i] < -16777216) {
+                UHD_LOG_DEBUG(unique_id(),
+                    boost::format("Coercing coeff %d: Value %d => %d") % i % taps_fi[i] % -16777216);
+                taps_fi[i] = -16777216;
+            }
             if (taps_fi[i] > 16777215  || taps_fi[i] < -16777216) {
                 throw uhd::value_error(str(
                     boost::format(
