@@ -49,6 +49,8 @@ namespace gr {
           int noutput_items,
           gr_vector_void_star &output_items
       );
+
+      virtual void set_channels(std::vector<uint32_t> channels);
     };
 
   } // namespace theseus

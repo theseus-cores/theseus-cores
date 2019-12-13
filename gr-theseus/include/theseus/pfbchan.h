@@ -52,6 +52,8 @@ namespace gr {
         const int block_select=-1,
         const int device_select=-1
         );
+
+      virtual void set_channels(std::vector<uint32_t> channels) = 0;
     };
   } // namespace pfb_channelizer
 } // namespace gr

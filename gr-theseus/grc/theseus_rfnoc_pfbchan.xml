@@ -6,19 +6,25 @@
   <make>theseus.pfbchan(
     self.device3,
     $block_index,
-    $device_index,
+    $device_index
 )
-self.$(id).set_arg("fft_size", $num_chan)
 self.$(id).set_arg("pkt_size", $pkt_size)
+self.$(id).set_channels($chan_idx)
 </make>
 
-  <callback>set_arg("fft_size", $num_chan)</callback>
+  <callback>self.$(id).set_channels($chan_idx)</callback>
 
   <param>
      <name>Number of Channels</name>
      <key>num_chan</key>
      <value>8</value>
      <type>int</type>
+  </param>
+  <param>
+     <name>Channel Indices</name>
+     <key>chan_idx</key>
+     <value>[0, 1]</value>
+     <type>int_vector</type>
   </param>
   <param>
      <name>Output Packet Size</name>
@@ -64,6 +70,6 @@ self.$(id).set_arg("pkt_size", $pkt_size)
     <name>out</name>
     <type>complex</type>
     <vlen>1</vlen>
-    <nports>$num_chan</nports>
+    <nports>len($chan_idx)</nports>
   </source>
 </block>
