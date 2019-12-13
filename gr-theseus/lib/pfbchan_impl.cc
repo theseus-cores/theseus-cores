@@ -188,7 +188,7 @@ namespace gr {
     void pfbchan_impl::set_channels(
         std::vector<uint32_t> channels
     ) {
-      get_block_ctrl_throw< ::uhd::rfnoc::pfbchan_block_ctrl >()->set_channels(channels);
+      get_block_ctrl_throw< ::uhd::theseus::pfbchan_block_ctrl >()->set_channels(channels);
     }
 
     /*********************************************************************

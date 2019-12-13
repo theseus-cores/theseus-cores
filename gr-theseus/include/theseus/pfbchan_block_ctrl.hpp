@@ -26,7 +26,7 @@
 #include <uhd/rfnoc/sink_block_ctrl_base.hpp>
 
 namespace uhd {
-    namespace rfnoc {
+    namespace theseus {
 
 /*! \brief Block controller for the PFB M/2 Channelizer RFNoC block.
  *

@@ -32,6 +32,7 @@
 #include <theseus/pfbchan_block_ctrl.hpp>
 
 using namespace uhd::rfnoc;
+using namespace uhd::theseus;
 
 static const float a1 = 0.254829592;
 static const float a2 = -0.284496736;
