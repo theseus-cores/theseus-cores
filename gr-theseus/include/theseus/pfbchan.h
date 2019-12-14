@@ -50,10 +50,12 @@ namespace gr {
       static sptr make(
         const gr::ettus::device3::sptr &dev,
         const int block_select=-1,
-        const int device_select=-1
+        const int device_select=-1,
+        const int num_channels=8,
+        const std::vector<uint32_t> active_channels=std::vector<uint32_t>()
         );
 
-      virtual void set_channels(std::vector<uint32_t> channels) = 0;
+      virtual void set_channels(uint32_t num_channels=8, std::vector<uint32_t> active_channels=std::vector<uint32_t>()) = 0;
     };
   } // namespace pfb_channelizer
 } // namespace gr

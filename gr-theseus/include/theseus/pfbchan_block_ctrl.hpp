@@ -38,7 +38,7 @@ class UHD_RFNOC_API pfbchan_block_ctrl :
 public:
     UHD_RFNOC_BLOCK_OBJECT(pfbchan_block_ctrl)
 
-    virtual void set_channels(const std::vector<uint32_t> channels = std::vector<uint32_t>()) = 0;
+    virtual void set_active_channels(const std::vector<uint32_t> channels = std::vector<uint32_t>()) = 0;
 
 }; /* class pfbchan_block_ctrl*/
 

@@ -6,13 +6,11 @@
   <make>theseus.pfbchan(
     self.device3,
     $block_index,
-    $device_index
+    $device_index,
+    $num_chan,
+    $chan_idx
 )
-self.$(id).set_arg("pkt_size", $pkt_size)
-self.$(id).set_channels($chan_idx)
 </make>
-
-  <callback>self.$(id).set_channels($chan_idx)</callback>
 
   <param>
      <name>Number of Channels</name>

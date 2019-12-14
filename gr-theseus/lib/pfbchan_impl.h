@@ -31,10 +31,15 @@ namespace gr {
     class pfbchan_impl : public pfbchan, public gr::ettus::rfnoc_block_impl
     {
      private:
-         size_t d_fft_size;
+        size_t d_fft_size;
+        size_t d_num_channels;
+        size_t d_target_pkt_size;
+        std::vector<uint32_t> d_active_channels;
+
+        size_t d_idx;
 
      public:
-      pfbchan_impl(const gr::ettus::device3::sptr &dev, const int block_select, const int device_select);
+      pfbchan_impl(const gr::ettus::device3::sptr &dev, const int block_select, const int device_select, const int num_channels, const std::vector<uint32_t> active_channels);
       ~pfbchan_impl();
 
       // virtual int general_work(
@@ -50,7 +55,7 @@ namespace gr {
           gr_vector_void_star &output_items
       );
 
-      virtual void set_channels(std::vector<uint32_t> channels);
+      virtual void set_channels(uint32_t num_channels, std::vector<uint32_t> active_channels);
     };
 
   } // namespace theseus

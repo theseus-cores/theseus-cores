@@ -54,7 +54,6 @@ public:
     UHD_RFNOC_BLOCK_CONSTRUCTOR(pfbchan_block_ctrl)
     {
         _n_taps = uint32_t(user_reg_read64("RB_NUM_TAPS"));
-        _max_fft = 2048;
         UHD_ASSERT_THROW(_n_taps);
         UHD_LOG_DEBUG(unique_id(), "Found PFB M/2 Channelizer max " << _n_taps << " taps.");
 
@@ -65,7 +64,7 @@ public:
         SR_CHANNELMASK_LAST = uint32_t(_tree->access<size_t>(_root_path / "registers" / "sr" / "SR_CHANNELMASK_LAST").get());
 
         // Initialize the channel mask
-        _n_mask = ceil(((float) _max_fft)/32.0);
+        _n_mask = ceil(((float) max_fft_size)/32.0);
         _channel_mask.clear();
         for (int ii = 0; ii < _n_mask; ii++) {
             _channel_mask.push_back(0xFFFFFFFF);
@@ -80,10 +79,10 @@ public:
             .set(64)
         ;
 
-        set_channels();
+        set_active_channels();
     }
 
-    void set_channels(const std::vector<uint32_t> channels = std::vector<uint32_t>())
+    void set_active_channels(const std::vector<uint32_t> channels = std::vector<uint32_t>())
     {
         // If channels vector is empty (default), enable all channels and return
         if (channels.empty()) {
@@ -123,7 +122,6 @@ public:
 private:
     size_t _n_taps;
     size_t _fft_size;
-    size_t _max_fft;
     uint32_t SR_RELOAD;
     uint32_t SR_RELOAD_LAST;
     uint32_t SR_CHANNELMASK;
@@ -142,7 +140,7 @@ private:
 
     void set_taps(const int fft_size)
     {
-        UHD_LOG_DEBUG(unique_id(), "Setting taps to " << fft_size);
+        UHD_LOG_INFO(unique_id(), "Writing PFB Channelizer taps for " << fft_size << " channels (may take some time)...");
         gr_vector_float taps;
         tap_equation(fft_size, taps);
         int desired_msb = 40;  //TODO: replace internal constant
@@ -192,8 +190,8 @@ private:
         // UHD_LOG_TRACE(unique_id(), "final tap = %d\n", (int) boost::uint32_t(taps_fi.back()));
         // UHD_LOG_TRACE(unique_id(), "set_taps() done\n");
 
-        // Write the channel mask
-        write_channel_mask();
+        // // Write the channel mask
+        // write_channel_mask();
     }
 
     void

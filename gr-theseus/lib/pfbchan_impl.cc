@@ -34,14 +34,18 @@ namespace gr {
     pfbchan::make(
         const gr::ettus::device3::sptr &dev,
         const int block_select,
-        const int device_select
+        const int device_select,
+        const int num_channels,
+        const std::vector<uint32_t> active_channels
     )
     {
         return gnuradio::get_initial_sptr(
             new pfbchan_impl(
                 dev,
                 block_select,
-                device_select
+                device_select,
+                num_channels,
+                active_channels
             )
         );
     }
@@ -52,7 +56,9 @@ namespace gr {
     pfbchan_impl::pfbchan_impl(
         const gr::ettus::device3::sptr &dev,
         const int block_select,
-        const int device_select
+        const int device_select,
+        const int num_channels,
+        const std::vector<uint32_t> active_channels
     )
       : gr::ettus::rfnoc_block("pfbchannelizer"),
         gr::ettus::rfnoc_block_impl(
@@ -61,7 +67,7 @@ namespace gr {
             ::uhd::stream_args_t("fc32", "sc16"),
             ::uhd::stream_args_t("fc32", "sc16"))
     {
-      
+      set_channels(num_channels, active_channels);
     }
 
     /*
@@ -186,9 +192,29 @@ namespace gr {
     }
 
     void pfbchan_impl::set_channels(
-        std::vector<uint32_t> channels
+        uint32_t num_channels, std::vector<uint32_t> active_channels
     ) {
-      get_block_ctrl_throw< ::uhd::theseus::pfbchan_block_ctrl >()->set_channels(channels);
+      assert(active_channels.empty() || num_channels == active_channels.size());
+
+      // std::cout << "Setting channels. " << num_channels << " total, " << active_channels.size() << " active" << std::endl;
+
+      d_num_channels = num_channels;
+      d_active_channels = active_channels;
+
+      // Calculate desired packet size
+      // Aim for even multiple of num_outputs
+      size_t max_packet_size = 256;
+      size_t num_outputs = d_active_channels.size();
+      d_target_pkt_size = int(max_packet_size / num_outputs) * num_outputs;
+      if (d_target_pkt_size == 0) d_target_pkt_size = max_packet_size;
+
+      // TODO: Inform gnuradio of packet sizes?
+
+      // Save and set
+      get_block_ctrl_throw< ::uhd::theseus::pfbchan_block_ctrl >()->set_arg("fft_size", d_num_channels);
+      get_block_ctrl_throw< ::uhd::theseus::pfbchan_block_ctrl >()->set_arg("pkt_size", d_target_pkt_size);
+      get_block_ctrl_throw< ::uhd::theseus::pfbchan_block_ctrl >()->set_active_channels(active_channels);
+      d_idx = 0;
     }
 
     /*********************************************************************
@@ -201,17 +227,19 @@ namespace gr {
       // Temporarily channel copy from rfnoc_block_impl
 
       assert(_rx.streamers.size() == 1);
+      assert(output_items.size() == d_active_channels.size());
 
+      // nsamples = Maximum possible number of samples we could grab and write
       size_t nchannels = output_items.size();
       size_t nsamples = noutput_items*nchannels;
 
-      std::vector<gr_complex> buff_samples(nsamples);
+      gr_complex buff_samples[d_target_pkt_size];
       gr_vector_void_star buff_ptr(1);
-      buff_ptr[0] = &buff_samples;
+      buff_ptr[0] = reinterpret_cast<void*> (&buff_samples[0]);
 
       size_t num_samps = _rx.streamers[0]->recv(
           buff_ptr,
-          nsamples,
+          d_target_pkt_size,
           _rx.metadata, 0.1, true
       );
 
@@ -245,28 +273,31 @@ namespace gr {
         // }
       }
 
-      if (num_samps != nsamples) {
-        // WHOA! Not good...
-        // TODO: Some error handling
-        std::cout << "WHOA! Couldnt get requested " << nsamples << " samples. Only returned " << num_samps << std::endl;
+      if (num_samps != d_target_pkt_size) {
+        std::cout << "WHOA! Couldnt get requested " << d_target_pkt_size << " samples. Only returned " << num_samps << std::endl;
       }
 
-      // Convert to vector of complex buffers
-      std::vector<gr_complex *> output_samples(nchannels);
-      for (size_t ii = 0; ii < nchannels; ii++){
-        output_samples[ii] = (gr_complex *) output_items[ii];
+
+      size_t itemsize = output_signature()->sizeof_stream_item(0);
+      const char *in = (const char *) buff_ptr[0];
+      char **outv = (char **) &output_items[0];
+
+      std::vector<int> produced(nchannels, 0);
+      for (int ii = 0; ii < num_samps; ii++){
+        // std::cout << "Deinterleaving: " << ii << " / Chan = " << d_idx << std::endl;
+        memcpy(outv[d_idx], in, itemsize);
+        produced[d_idx]++;
+        outv[d_idx] += itemsize;
+        in += itemsize;
+        d_idx++;
+        if (d_idx >= nchannels) d_idx = 0;
       }
 
-      // Deinterleave channelizer output into specific channels
-      for (size_t ii = 0; ii < noutput_items; ii++){
-        for (size_t jj = 0; jj < nchannels; jj++) {
-          output_samples[jj][ii] = buff_samples[ii*jj+jj];
-        }
+      for (int ii = 0; ii < nchannels; ii++){
+        // std::cout << "Producing Chan[" << ii << "]: "<< produced[ii] << std::endl;
+        produce(ii, produced[ii]);
       }
 
-      for (size_t ii = 0; ii < nchannels; ii++){
-        produce(ii, noutput_items);
-      }
     }
 
   } /* namespace theseus */
