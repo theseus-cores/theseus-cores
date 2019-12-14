@@ -202,10 +202,12 @@ namespace gr {
       d_active_channels = active_channels;
 
       // Calculate desired packet size
-      // Aim for even multiple of num_outputs
+      //  - Even multiple of num_outputs
+      //  - Must be Even! (not odd)
       size_t max_packet_size = 256;
       size_t num_outputs = d_active_channels.size();
       d_target_pkt_size = int(max_packet_size / num_outputs) * num_outputs;
+      if (d_target_pkt_size % 2 != 0) d_target_pkt_size -= num_outputs;
       if (d_target_pkt_size == 0) d_target_pkt_size = max_packet_size;
 
       // TODO: Inform gnuradio of packet sizes?

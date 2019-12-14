@@ -25,12 +25,6 @@
      <type>int_vector</type>
   </param>
   <param>
-     <name>Output Packet Size</name>
-     <key>pkt_size</key>
-     <value>255</value>
-     <type>int</type>
-  </param>
-  <param>
      <name>Input Vector Length</name>
      <key>vec_len_in</key>
      <value>1</value>
