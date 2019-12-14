@@ -49,6 +49,7 @@ add_library(gnuradio-theseus SHARED ${gr_theseus_sources} ${uhd_theseus_sources}
 target_link_libraries(gnuradio-theseus
   ${Boost_LIBRARIES}
   ${GNURADIO_ALL_LIBRARIES}
+  ${GNURADIO_FFT_LIBRARIES}
   ${ETTUS_LIBRARIES}
 )
 set_target_properties(gnuradio-theseus PROPERTIES DEFINE_SYMBOL "gnuradio_theseus_EXPORTS")
