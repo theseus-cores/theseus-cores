@@ -7,12 +7,10 @@
     self.device3,
     $block_index,
     $device_index,
+    $num_chan,
+    $chan_idx
 )
-self.$(id).set_arg("fft_size", $num_chan)
-self.$(id).set_arg("pkt_size", $pkt_size)
 </make>
-
-  <callback>set_arg("fft_size", $num_chan)</callback>
 
   <param>
      <name>Number of Channels</name>
@@ -21,9 +19,15 @@ self.$(id).set_arg("pkt_size", $pkt_size)
      <type>int</type>
   </param>
   <param>
-     <name>Output Packet Size</name>
-     <key>pkt_size</key>
-     <value>767</value>
+     <name>Channel Indices</name>
+     <key>chan_idx</key>
+     <value>[0, 1]</value>
+     <type>int_vector</type>
+  </param>
+  <param>
+     <name>Input Vector Length</name>
+     <key>vec_len_in</key>
+     <value>1</value>
      <type>int</type>
   </param>
 
@@ -56,14 +60,14 @@ self.$(id).set_arg("pkt_size", $pkt_size)
   <sink>
     <name>in</name>
     <type>complex</type>
-    <vlen>1</vlen>
+    <vlen>$vec_len_in</vlen>
     <domain>rfnoc</domain>
   </sink>
 
   <source>
     <name>out</name>
     <type>complex</type>
-    <vlen>$num_chan</vlen>
-    <domain>rfnoc</domain>
+    <vlen>1</vlen>
+    <nports>len($chan_idx)</nports>
   </source>
 </block>

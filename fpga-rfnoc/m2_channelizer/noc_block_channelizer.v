@@ -139,8 +139,10 @@ module noc_block_channelizer #(
   localparam RB_AVG_LEN = 130;
   localparam SR_RELOAD = 131;
   localparam SR_RELOAD_LAST = 132;
-  localparam SR_PKT_SIZE = 133;
-  localparam RB_PKT_SIZE = 133;
+  localparam SR_MASK_RELOAD = 133;
+  localparam SR_MASK_RELOAD_LAST = 134;
+  localparam SR_PKT_SIZE = 135;
+  localparam RB_PKT_SIZE = 135;
   localparam NUM_TAPS = 65536;
 
   // Control Source Unused
@@ -154,6 +156,12 @@ module noc_block_channelizer #(
   wire  m_axis_reload_tready;
     //(* keep = “true”, dont_touch = “true”, mark_debug = “true” *)
   wire m_axis_reload_tlast;
+  
+  wire [31:0] m_axis_select_tdata;
+  wire        m_axis_select_tvalid;
+  wire  m_axis_select_tready;
+    //(* keep = "true", dont_touch = "true", mark_debug = "true" *)
+  wire m_axis_select_tlast;
 
   wire [15:0] payload_length;
   cvita_hdr_encoder cvita_hdr_encoder (
@@ -208,6 +216,8 @@ module noc_block_channelizer #(
 
   /* Channelizer top level instantiation */
 
+// FFT Size Register
+//
 axi_setting_reg #(
     .ADDR(SR_FFT_SIZE),
     .WIDTH(12))
@@ -224,7 +234,7 @@ set_fft_size (
     .o_tready(1'b1)
 );
 
-
+// Average Length register
 axi_setting_reg #(
     .ADDR(SR_AVG_LEN),
     .WIDTH(9))
@@ -261,6 +271,26 @@ set_coeff (
   .o_tvalid(m_axis_reload_tvalid),
   .o_tready(m_axis_reload_tready));
 
+// Mask reload bus
+// (see Xilinx FIR Filter Compiler documentation)
+axi_setting_reg #(
+  .ADDR(SR_MASK_RELOAD),
+  .USE_ADDR_LAST(1),
+  .ADDR_LAST(SR_MASK_RELOAD_LAST),
+  .WIDTH(32),
+  .USE_FIFO(1),
+  .FIFO_SIZE(7))
+set_mask (
+  .clk(ce_clk),
+  .reset(ce_rst),
+  .set_stb(set_stb),
+  .set_addr(set_addr),
+  .set_data(set_data),
+  .o_tdata(m_axis_select_tdata),
+  .o_tlast(m_axis_select_tlast),
+  .o_tvalid(m_axis_select_tvalid),
+  .o_tready(m_axis_select_tready));
+
 channelizer_top channelizer_top
 (
     .clk(ce_clk),
@@ -279,6 +309,12 @@ channelizer_top channelizer_top
     .s_axis_reload_tlast(m_axis_reload_tlast),
     .s_axis_reload_tvalid(m_axis_reload_tvalid),
     .s_axis_reload_tready(m_axis_reload_tready),
+
+    // down selection FIFO interface
+    .s_axis_select_tvalid(m_axis_select_tvalid),
+    .s_axis_select_tdata(m_axis_select_tdata),
+    .s_axis_select_tlast(m_axis_select_tlast),
+    .s_axis_select_tready(m_axis_select_tready),
 
     .m_axis_tdata(s_axis_data_tdata),
     .m_axis_tuser(),

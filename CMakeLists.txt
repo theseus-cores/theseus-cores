@@ -8,6 +8,12 @@
 cmake_minimum_required(VERSION 2.8.2)
 project(theseus-cores)
 
+IF(EXISTS "${CMAKE_BINARY_DIR}/../conanbuildinfo.cmake")
+  include(${CMAKE_BINARY_DIR}/../conanbuildinfo.cmake)
+  conan_basic_setup()
+  conan_set_find_library_paths()
+ENDIF()
+
 ########################################################################
 # Install Dirs
 ########################################################################

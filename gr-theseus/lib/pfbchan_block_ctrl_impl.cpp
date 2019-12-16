@@ -19,6 +19,7 @@
  */
 
 #include <stdio.h>
+#include <math.h>
 #include <vector>
 #include <uhd/convert.hpp>
 
@@ -56,9 +57,18 @@ public:
         UHD_ASSERT_THROW(_n_taps);
         UHD_LOG_DEBUG(unique_id(), "Found PFB M/2 Channelizer max " << _n_taps << " taps.");
 
-        // Save the RELOAD addresses so we dont need to re-query
+        // Save the addresses so we dont need to re-query
         SR_RELOAD = uint32_t(_tree->access<size_t>(_root_path / "registers" / "sr" / "SR_RELOAD").get());
         SR_RELOAD_LAST = uint32_t(_tree->access<size_t>(_root_path / "registers" / "sr" / "SR_RELOAD_LAST").get());
+        SR_CHANNELMASK = uint32_t(_tree->access<size_t>(_root_path / "registers" / "sr" / "SR_CHANNELMASK").get());
+        SR_CHANNELMASK_LAST = uint32_t(_tree->access<size_t>(_root_path / "registers" / "sr" / "SR_CHANNELMASK_LAST").get());
+
+        // Initialize the channel mask
+        _n_mask = ceil(((float) max_fft_size)/32.0);
+        _channel_mask.clear();
+        for (int ii = 0; ii < _n_mask; ii++) {
+            _channel_mask.push_back(0xFFFFFFFF);
+        }
 
         // Initialize subscriber for fft_size
         // Set default to 64
@@ -68,6 +78,45 @@ public:
             })
             .set(64)
         ;
+
+        set_active_channels();
+    }
+
+    void set_active_channels(const std::vector<uint32_t> channels = std::vector<uint32_t>())
+    {
+        // If channels vector is empty (default), enable all channels and return
+        if (channels.empty()) {
+            _channel_mask.clear();
+            for (int ii = 0; ii < _n_mask; ii++) {
+                _channel_mask.push_back(0xFFFFFFFF);
+            }
+            write_channel_mask();
+            return;
+        }
+
+        // First set all channels to 0
+        _channel_mask.clear();
+        for (int ii = 0; ii < _n_mask; ii++) {
+            _channel_mask.push_back(0);
+        }
+
+        // OR the channels we want
+        int chan, idx, shift;
+        for (int ii = 0; ii < channels.size(); ii++){
+            chan = channels[ii];
+            if (chan > _n_taps) {
+                UHD_LOGGER_WARNING(unique_id()) << boost::format(
+                    "Cannot enable channel %d. Only %d max channels"
+                ) % chan % _n_taps;
+            }
+            idx = floor(((float) chan)/32.0);
+            shift = chan - (idx*32);
+            _channel_mask[idx] |= (1 << shift);
+            UHD_LOG_TRACE(unique_id(), boost::format("Enabling channel %d: (Idx %d / Shift %d)") % chan % idx % shift);
+        }
+
+        // Write channels
+        write_channel_mask();
     }
 
 private:
@@ -75,10 +124,23 @@ private:
     size_t _fft_size;
     uint32_t SR_RELOAD;
     uint32_t SR_RELOAD_LAST;
+    uint32_t SR_CHANNELMASK;
+    uint32_t SR_CHANNELMASK_LAST;
+    size_t _n_mask;
+    std::vector<uint32_t> _channel_mask;
+
+    void write_channel_mask(){
+        for (int ii = 0; ii < _n_mask-1; ii++){
+            UHD_LOG_DEBUG(unique_id(), boost::format("Writing Channel Mask [%d]: %08X") % ii % _channel_mask[ii]);
+            sr_write(SR_CHANNELMASK, _channel_mask[ii]);
+        }
+        UHD_LOG_DEBUG(unique_id(), boost::format("Writing Channel Mask [%d]: %08X") % _channel_mask.size() % _channel_mask.back());
+        sr_write(SR_CHANNELMASK_LAST, _channel_mask.back());
+    }
 
     void set_taps(const int fft_size)
     {
-        UHD_LOG_DEBUG(unique_id(), "Setting taps to " << fft_size);
+        UHD_LOG_INFO(unique_id(), "Writing PFB Channelizer taps for " << fft_size << " channels (may take some time)...");
         gr_vector_float taps;
         tap_equation(fft_size, taps);
         int desired_msb = 40;  //TODO: replace internal constant
@@ -93,6 +155,16 @@ private:
         }
 
         for (size_t i = 0; i < taps_fi.size(); i++) {
+            if (taps_fi[i] > 16777215) {
+                UHD_LOG_DEBUG(unique_id(),
+                    boost::format("Coercing coeff %d: Value %d => %d") % i % taps_fi[i] % 16777215);
+                taps_fi[i] = 16777215;
+            }
+            if (taps_fi[i] < -16777216) {
+                UHD_LOG_DEBUG(unique_id(),
+                    boost::format("Coercing coeff %d: Value %d => %d") % i % taps_fi[i] % -16777216);
+                taps_fi[i] = -16777216;
+            }
             if (taps_fi[i] > 16777215  || taps_fi[i] < -16777216) {
                 throw uhd::value_error(str(
                     boost::format(
@@ -106,9 +178,9 @@ private:
             taps_fi.resize(_n_taps, 0);
         }
 
-        UHD_VAR(taps_fi.size());
         uint32_t num_taps_read;
         num_taps_read = user_reg_read32("RB_NUM_TAPS");
+
         UHD_LOG_TRACE(unique_id(), boost::format("num_taps = %d") % (int) num_taps_read);
         for (size_t i = 0; i < taps_fi.size() - 1; i++) {
             sr_write(SR_RELOAD, boost::uint32_t(taps_fi[i]));
@@ -117,6 +189,9 @@ private:
         sr_write(SR_RELOAD_LAST, boost::uint32_t(taps_fi.back()));
         // UHD_LOG_TRACE(unique_id(), "final tap = %d\n", (int) boost::uint32_t(taps_fi.back()));
         // UHD_LOG_TRACE(unique_id(), "set_taps() done\n");
+
+        // // Write the channel mask
+        // write_channel_mask();
     }
 
     void

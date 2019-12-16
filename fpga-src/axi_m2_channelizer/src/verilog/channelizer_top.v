@@ -24,9 +24,15 @@ module channelizer_top#(
     input s_axis_reload_tlast,
     output s_axis_reload_tready,
 
+    // down selection FIFO interface
+    input s_axis_select_tvalid,
+    input [31:0] s_axis_select_tdata,
+    input s_axis_select_tlast,
+    output s_axis_select_tready,
+
     input [11:0] fft_size,
-    input [15:0] payload_length,
     input [8:0] avg_len,
+    input [15:0] payload_length,
     output eob_tag,
 
     output m_axis_tvalid,
@@ -63,45 +69,57 @@ reg [4:0] reset_cnt, next_reset_cnt;
 localparam [4:0] RESET_ZEROS = 5'd0;
 localparam [4:0] RESET_HIGH_CNT = 5'b01000;  // buffer signals
 
-// Buffer signals
+// internal payload_length register
+reg [15:0] payload_length_s, payload_length_m1;
+
 wire buffer_tvalid;
 wire [DATA_WIDTH - 1:0] buffer_tdata;
 wire buffer_tlast;
 wire [10:0] buffer_phase;
-wire buffer_tready;  // pfb signals
+wire buffer_tready;
 
 // pfb signals
 wire pfb_tvalid;
 wire [DATA_WIDTH - 1:0] pfb_tdata;
 wire pfb_tlast;
 wire [10:0] pfb_phase;
-wire pfb_tready;  // circular buffer signals
-
-// circular shift signals
-wire circ_tvalid;
 wire [10:0] circ_phase;
+wire pfb_tready;
+
+// circular buffer signals
+wire circ_tvalid;
 wire [DATA_WIDTH - 1:0] circ_tdata;
 wire [DATA_WIDTH - 1:0] circ_tdata_s;
 wire circ_tlast;  // signal circ_phase : std_logic_vector(10 downto 0);
-wire circ_tready;  // fft data signals
+wire circ_tready;
 
-// fft signals
+// fft data signals
 wire fft_tvalid;
 wire [DATA_WIDTH - 1:0] fft_tdata;
 wire [DATA_WIDTH - 1:0] fft_tdata_s;
 wire [23:0] fft_tuser;
 wire fft_tlast;
-wire fft_tready;  // fft config signals.
+wire fft_tready;
+
+// fft config signals.
 reg fft_config_tvalid, next_fft_config_tvalid;
 wire fft_config_tready;
 wire [15:0] fft_config_tdata;  // fft status signals
 
 // exp shift signals
 wire shift_tvalid;
-wire [31:0] shift_tdata;
-wire shift_tready;
-wire shift_tlast;
+wire [DATA_WIDTH - 1:0] shift_tdata;
 wire [23:0] shift_tuser;
+wire shift_tlast;
+wire shift_tready;
+wire shift_eob_tag;
+
+// down select signals
+wire down_sel_tvalid;
+wire [DATA_WIDTH-1:0] down_sel_tdata;
+wire [23:0] down_sel_tuser;
+wire down_sel_tlast;
+wire down_sel_tready;
 
 // output signals
 wire m_axis_tvalid_s;
@@ -199,13 +217,15 @@ always @(posedge clk)
 begin
     async_reset <= !(sync_reset | reset_int);
     async_reset_d1 <= async_reset;
+    payload_length_s <= payload_length;
+    payload_length_m1 <= payload_length_s - 1;
 end
 
   // ensures that reset pulse is wide enough for all blocks.
 always @*
 begin
     next_reset_cnt = reset_cnt;
-    if (fft_size_s != fft_size) begin
+    if (fft_size_s != fft_size || payload_length_s != payload_length) begin
         next_reset_cnt = RESET_HIGH_CNT;
     end else if (reset_cnt != 0) begin
         next_reset_cnt = reset_cnt - 1;
@@ -236,8 +256,6 @@ u_input_buffer(
     .m_axis_final_cnt(buffer_tlast),
     .m_axis_tready(buffer_tready)
 );
-
-
 
 pfb_2x_16iw_16ow_32tps u_pfb(
     .clk(clk),
@@ -327,10 +345,38 @@ exp_shifter u_shifter(
     .m_axis_tuser(shift_tuser),
     .m_axis_tlast(shift_tlast),
 
-    .eob_tag(eob_tag),
+    .eob_tag(shift_eob_tag),
     .m_axis_tready(shift_tready)
 );
 
+downselect #(
+    .DATA_WIDTH(DATA_WIDTH))
+u_downselect(
+    .clk(clk),
+    .sync_reset(reset_int),
+
+    .s_axis_tvalid(shift_tvalid),
+    .s_axis_tdata(shift_tdata),
+    .s_axis_tuser(shift_tuser),
+    .s_axis_tlast(shift_tlast),
+    .s_axis_tready(shift_tready),
+
+    .eob_tag(shift_eob_tag),
+
+    // down selection FIFO interface
+    .s_axis_select_tvalid(s_axis_select_tvalid),
+    .s_axis_select_tdata(s_axis_select_tdata),
+    .s_axis_select_tlast(s_axis_select_tlast),
+    .s_axis_select_tready(s_axis_select_tready),
+
+    .m_axis_tvalid(down_sel_tvalid),
+    .m_axis_tdata(down_sel_tdata),
+    .m_axis_tuser(down_sel_tuser),
+    .m_axis_tlast(down_sel_tlast),
+    .m_axis_tready(down_sel_tready),
+
+    .eob_downselect(eob_tag)
+);
 
 count_cycle_cw16_65 #(
     .DATA_WIDTH(DATA_WIDTH),
@@ -340,12 +386,12 @@ u_final_cnt
     .clk(clk),
     .sync_reset(reset_int),
 
-    .s_axis_tvalid(shift_tvalid),
-    .s_axis_tdata(shift_tdata),
-    .cnt_limit(payload_length),
-    .s_axis_tuser(shift_tuser),
-    .s_axis_tlast(shift_tlast),
-    .s_axis_tready(shift_tready),
+    .s_axis_tvalid(down_sel_tvalid),
+    .s_axis_tdata(down_sel_tdata),
+    .cnt_limit(payload_length_m1),
+    .s_axis_tuser(down_sel_tuser),
+    .s_axis_tlast(down_sel_tlast),
+    .s_axis_tready(down_sel_tready),
 
     .m_axis_tvalid(m_axis_tvalid_s),
     .m_axis_tdata(m_axis_tdata_s),
@@ -356,17 +402,17 @@ u_final_cnt
     .m_axis_tready(m_axis_tready_s)
 );
 
-
 `ifdef SIM_BIN_WRITE
 
     localparam buffer_out = "buffer_output.bin";
     localparam pfb_out = "pfb_output.bin";
     localparam circ_out = "circ_output.bin";
     localparam fft_out = "fft_output.bin";
-    localparam exp_out = "chan_output.bin";
-    localparam count_out = "count_output.bin";
+    localparam exp_out = "exp_output.bin";
+    localparam down_select_out = "down_select_output.bin";
+    localparam final_out = "final_output.bin";
 
-    integer buffer_descr, pfb_descr, circ_descr, fft_descr, exp_descr, count_descr;
+    integer buffer_descr, pfb_descr, circ_descr, fft_descr, exp_descr, down_descr, final_descr;
 
     initial begin
         buffer_descr = $fopen(buffer_out, "wb");
@@ -374,10 +420,11 @@ u_final_cnt
         circ_descr = $fopen(circ_out, "wb");
         fft_descr = $fopen(fft_out, "wb");
         exp_descr = $fopen(exp_out, "wb");
-        count_descr = $fopen(count_out, "wb");
+        down_descr = $fopen(down_select_out, "wb");
+        final_descr = $fopen(final_out, "wb");
     end
 
-    wire buffer_take, pfb_take, circ_take, fft_take, exp_take, count_take;
+    wire buffer_take, pfb_take, circ_take, fft_take, exp_take, down_take, final_take;
 
     wire [63:0] buffer_st_tdata;
     wire [63:0] pfb_st_tdata;
@@ -385,12 +432,17 @@ u_final_cnt
     wire [63:0] exp_st_tdata;
     wire [63:0] count_st_tdata;
     wire [31:0] circ_st_tdata;
+    wire [63:0] exp_st_tdata;
+    wire [63:0] down_st_tdata;
+    wire [63:0] final_st_tdata;
 
     assign buffer_st_tdata = {21'd0, buffer_phase, buffer_tdata};
     assign pfb_st_tdata = {21'd0, pfb_phase, pfb_tdata};
     assign fft_st_tdata = {8'd0, fft_tuser, fft_tdata};
     assign exp_st_tdata = {8'd0, shift_tuser, shift_tdata};
-    assign count_st_tdata = {7'd0, m_axis_tlast_s, m_axis_tuser_s, m_axis_tdata_s};
+    assign down_st_tdata = {8'd0, down_sel_tuser, down_sel_tdata};
+    assign final_st_tdata = {8'd0, m_axis_tuser_s, m_axis_tdata_s};
+
     assign circ_st_tdata = circ_tdata_s;
 
     assign buffer_take = buffer_tvalid & buffer_tready;
@@ -399,7 +451,8 @@ u_final_cnt
     assign circ_take = circ_tvalid & circ_tready;
     assign fft_take = fft_tvalid & fft_tready;
     assign exp_take = shift_tvalid & shift_tready;
-    assign count_take = m_axis_tvalid_s & m_axis_tready_s;
+    assign down_take = down_sel_tvalid & down_sel_tready;
+    assign final_take = m_axis_tvalid_s & m_axis_tready_s;
 
     grc_word_writer #(
         .LISTEN_ONLY(1),
@@ -516,16 +569,38 @@ u_final_cnt
         .ARRAY_LENGTH(1024),
         .NUM_BYTES(8)
         )
-    u_count_wr
+    u_downselect_wr
     (
         .clk(clk),
         .sync_reset(reset_int),
         .enable(1'b1),
 
-        .fd(count_descr),
+        .fd(down_descr),
 
-        .valid(count_take),
-        .word(count_st_tdata),
+        .valid(down_take),
+        .word(down_st_tdata),
+
+        .wr_file(1'b0),
+
+        .rdy_i(1'b1),
+        .rdy_o()
+        );
+
+    grc_word_writer #(
+        .LISTEN_ONLY(1),
+        .ARRAY_LENGTH(1024),
+        .NUM_BYTES(8)
+        )
+    u_final_wr
+    (
+        .clk(clk),
+        .sync_reset(reset_int),
+        .enable(1'b1),
+
+        .fd(final_descr),
+
+        .valid(final_take),
+        .word(final_st_tdata),
 
         .wr_file(1'b0),
 
@@ -534,5 +609,6 @@ u_final_cnt
         );
 
 `endif
+
 
 endmodule

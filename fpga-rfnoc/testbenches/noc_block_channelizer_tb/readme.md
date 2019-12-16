@@ -1,9 +1,19 @@
 
+## Export UHD_FPGA_DIR
+
+Point to desired pybombs prefix (e.g. ```uhd-fpga```) directory
+
 ## Generate Tap files.
 
 This only needs to be done once.  Frequency response plots will populate inside the python directory.
 
     python ./python/channelizer.py -t
+
+## Generate Mask files.
+
+This only needs to be done once.  The mask .bin files will poplulatoin in the noc_block_channelizer_tb directory.
+
+    python ./python/channelizer.py -m
 
 ## Generate Test Input.
 

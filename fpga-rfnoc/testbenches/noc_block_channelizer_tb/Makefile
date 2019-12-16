@@ -59,6 +59,7 @@ SIM_SRCS = $(abspath ./noc_block_channelizer_tb.sv \
 $(SIM_DIR)/chan_rfnoc_sim.vh \
 $(SIM_DIR)/sig_tones_input.bin \
 $(SIM_DIR)/M_8_taps.bin \
+$(SIM_DIR)/M_8_mask.bin \
 $(CHAN_SRC_DIR)/dp_block_read_first_ram.v \
 $(CHAN_SRC_DIR)/dp_block_write_first_ram.v \
 $(CHAN_SRC_DIR)/axi_fifo_2.v \
@@ -74,11 +75,12 @@ $(CHAN_SRC_DIR)/slicer_48_13.v \
 $(CHAN_SRC_DIR)/dsp48_cic_M256_N1_R1_iw5_0_corr.v \
 $(CHAN_SRC_DIR)/dsp48_cic_M256_N1_R1_iw5_0.v \
 $(CHAN_SRC_DIR)/dsp48_comb_M256_N1_iw5_0.v \
-$(CHAN_SRC_DIR)/dsp48_integrator_section_0.v \
 $(CHAN_SRC_DIR)/dsp48_output_add.v \
 $(CHAN_SRC_DIR)/dsp48_pfb_mac_0.v \
 $(CHAN_SRC_DIR)/dsp48_pfb_mac.v \
 $(CHAN_SRC_DIR)/dsp48_pfb_rnd.v \
+$(CHAN_SRC_DIR)/downselect.v \
+$(CHAN_SRC_DIR)/pipe_mux_2048_1.v \
 $(CHAN_SRC_DIR)/cic_M256_N1_R1_iw5_0_correction_sp_rom.v \
 $(CHAN_SRC_DIR)/cic_M256_N1_R1_iw5_0_offset_sp_rom.v \
 $(CHAN_SRC_DIR)/comb_M256_N1_iw5_0.v \
@@ -91,7 +93,7 @@ $(SIM_DIR)/grc_word_writer.sv \
 $(CHAN_SRC_DIR)/channelizer_top.v \
 $(CHAN_RFNOC_DIR)/noc_block_channelizer.v \
 )
-
+# $(info SIM_SRCS="$(SIM_SRCS)")
 # MODELSIM_USER_DO = $(abspath wave.do)
 
 #-------------------------------------------------
