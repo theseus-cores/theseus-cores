@@ -1,0 +1,5 @@
+'[Theseus Cores]':
+- Blocks:
+  - theseus_rfnoc_ducddc
+  - theseus_rfnoc_ddc_1_to_n
+  - theseus_rfnoc_pfbchan
