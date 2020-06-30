@@ -22,11 +22,12 @@
 This is the GNU Radio THESEUS module. Place your Python package
 description here (python/__init__.py).
 '''
+from __future__ import unicode_literals
 
 # import swig generated symbols into the theseus namespace
 try:
     # this might fail if the module is python-only
-    from theseus_swig import *
+    from .theseus_swig import *
 except ImportError:
     pass
 

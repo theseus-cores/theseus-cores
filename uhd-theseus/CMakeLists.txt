@@ -3,16 +3,13 @@
 # Project setup
 ########################################################################
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.2)
-IF(POLICY CMP0048)
-  CMAKE_POLICY(SET CMP0048 NEW) # Suppress Version warnings
-ENDIF(POLICY CMP0048)
 PROJECT(uhd-theseus CXX C)
 ENABLE_TESTING()
 
-find_package(UHD)
-
-#make sure our local CMake Modules path comes first
-list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_SOURCE_DIR}/cmake/Modules)
+find_package(UHD REQUIRED)
+if(NOT UHD_RFNOC_FOUND)
+    message(FATAL_ERROR "RFNoC not found.")
+endif(NOT UHD_RFNOC_FOUND)
 
 ########################################################################
 # UHD Dependency Minimum Versions
@@ -102,6 +99,6 @@ include_directories(
     ${Boost_INCLUDE_DIRS}
 )
 
-ADD_SUBDIRECTORY(include/theseus)
-ADD_SUBDIRECTORY(rfnoc-blocks)
-ADD_SUBDIRECTORY(lib)
+add_subdirectory(include/theseus)
+add_subdirectory(rfnoc-blocks)
+add_subdirectory(lib)
