@@ -28,39 +28,15 @@ stages:
   - cd fpga-rfnoc/testbenches
   - for d in ./*/ ; do (cd "$d" && pwd && make clean && ./runtestbench.sh); done
 
-build-uhd-master:
+build-uhd-3.15:
   stage: uhd
-  image: theseuscores/uhd:master-rfnoc-all
+  image: theseuscores/uhd:UHD-3.15.LTS-rfnoc-all
   script: *uhd-build
   only: *conditionals
 
-build-uhd-3.13:
-  stage: uhd
-  image: theseuscores/uhd:UHD-3.13-rfnoc-all
-  script: *uhd-build
-  only: *conditionals
-
-build-uhd-3.14:
-  stage: uhd
-  image: theseuscores/uhd:UHD-3.14-rfnoc-all
-  script: *uhd-build
-  only: *conditionals
-
-build-gnuradio-maint-uhd-master:
+build-gnuradio-maint-3.8-uhd-3.15:
   stage: gnuradio
-  image: theseuscores/gnuradio:maint-3.7-UHD-master-rfnoc
-  script: *gnuradio-build
-  only: *conditionals
-
-build-gnuradio-maint-uhd-3.13:
-  stage: gnuradio
-  image: theseuscores/gnuradio:maint-3.7-UHD-3.13-rfnoc
-  script: *gnuradio-build
-  only: *conditionals
-
-build-gnuradio-maint-uhd-3.14:
-  stage: gnuradio
-  image: theseuscores/gnuradio:maint-3.7-UHD-3.14-rfnoc
+  image: theseuscores/gnuradio:maint-3.8-UHD-3.15-rfnoc
   script: *gnuradio-build
   only: *conditionals
 
