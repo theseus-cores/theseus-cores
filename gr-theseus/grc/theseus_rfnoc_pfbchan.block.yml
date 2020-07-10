@@ -17,7 +17,7 @@ parameters:
     label: Input Vector Length
     dtype: int
     default: '1'
-    hide: ${ 'part' if vlen == 1 else 'none' }
+    hide: ${ 'part' if vec_len_in == 1 else 'none' }
 -   id: block_index
     label: Block Select
     category: RFNoC Config
