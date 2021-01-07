@@ -12,5 +12,5 @@ scipy>=1.5.3
 streamlit>=0.73.0
 filter>=0.0.0.20200724
 ipython>=7.19.0
-scikit_learn>=0.23.2
+scikit_learn==0.23.2
 ./chan_gen_tool/phy_tools
