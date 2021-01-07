@@ -70,7 +70,6 @@ assign s_axis_tready_s = (almost_full == 1'b0) ? 1'b1 : 1'b0;
 assign s_axis_tready = s_axis_tready_s;
 assign fft_bin = tuser_d[20][10:0];
 assign filter_whole = filter_d[12:8];
-// assign lookup = filter_d[7:0];
 
 assign eob_tag = m_axis_tuser_s[23];
 assign m_axis_tuser = m_axis_tuser_s;

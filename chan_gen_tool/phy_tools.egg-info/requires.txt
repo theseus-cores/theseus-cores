@@ -1,0 +1,16 @@
+ipdb
+mpmath
+pylatexenc
+numba
+scikit-learn
+numpy
+matplotlib
+scipy
+pandas
+dill
+ffmpeg
+plotly
+
+[streamlit]
+pkginfo
+streamlit
