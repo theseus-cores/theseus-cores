@@ -2,7 +2,7 @@ matplotlib>=3.3.3
 ipdb>=0.13.3
 numba>=0.52.0
 numpy>=1.19.2
-pkginfo==1.6.1
+pkginfo>=1.6.1
 plotly>=4.14.1
 mpmath>=1.1.0
 pandas>=1.1.5
@@ -13,4 +13,4 @@ streamlit>=0.73.0
 filter>=0.0.0.20200724
 ipython>=7.19.0
 scikit_learn>=0.23.2
-./chan_gen_tool/
+./chan_gen_tool/phy_tools
