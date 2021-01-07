@@ -13,4 +13,3 @@ streamlit>=0.73.0
 filter>=0.0.0.20200724
 ipython>=7.19.0
 scikit_learn>=0.23.2
-./
