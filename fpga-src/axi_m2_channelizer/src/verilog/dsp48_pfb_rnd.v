@@ -11,7 +11,7 @@ wire [47:0] p_s;
 reg p_d = 1'b0;
 
 
-assign p = p_s[38:23];
+assign p = p_s[39:24];
 
 always @(posedge clk)
 begin
@@ -35,7 +35,7 @@ DSP48E1 #(
     .USE_PATTERN_DETECT("NO_PATDET"), // Enable pattern detect ("PATDET" or "NO_PATDET")
     // Register Control Attributes: Pipeline Register Configuration
     .ACASCREG(1), // Number of pipeline stages between A/ACIN and ACOUT (0, 1 or 2)
-    .ADREG(1), // Number of pipeline stages for pre-adder (0 or 1)
+    .ADREG(0), // Number of pipeline stages for pre-adder (0 or 1)
     .ALUMODEREG(0), // Number of pipeline stages for ALUMODE (0 or 1)
     .AREG(1), // Number of pipeline stages for A (0, 1 or 2)
     .BCASCREG(1), // Number of pipeline stages between B/BCIN and BCOUT (0, 1 or 2)
@@ -81,8 +81,8 @@ dsp_48_inst (
     .RSTINMODE(1'b0), // 1-bit input: Reset input for INMODEREG
     // Data: 30-bit (each) input: Data Ports
     .A(30'd0), // 30-bit input: A data input
-    .B(18'd1), // 18-bit input: B data input
-    .C(48'd4194303), // 48-bit input: C data input
+    .B(18'd0), // 18-bit input: B data input
+    .C(48'd8388607), // 48-bit input: C data input
     .CARRYIN(p_d), // 1-bit input: Carry input signal
     .D(25'd0), // 25-bit input: D data input
     // Reset/Clock Enable: 1-bit (each) input: Reset/Clock Enable Inputs

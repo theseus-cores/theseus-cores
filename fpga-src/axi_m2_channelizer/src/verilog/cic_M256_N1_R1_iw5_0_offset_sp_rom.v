@@ -542,11 +542,12 @@ begin
     rom[511] = 1'b0;
 end
 
-
+// port a
 always @(posedge clk)
 begin
     addra_d <= addra;
     rom_pipea <= rom[addra_d];
     doa_d <= rom_pipea;
 end
+
 endmodule

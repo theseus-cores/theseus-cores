@@ -3,7 +3,6 @@
 // Author : PJV
 // File : input_buffer
 // Description : Input buffer to the M/2 Polyphase Channelizer bank.
-//      Buffer is hardcoded for a Maximum number of channels equal to 2048.
 //      Can be any power of 2 less than that.
 //
 //***************************************************************************--
@@ -26,11 +25,11 @@ module input_buffer#(
 
 localparam ADDR_WIDTH = FFT_SIZE_WIDTH - 2;
 localparam ADDR_MSB = ADDR_WIDTH - 1;
-localparam PAD_IN_BITS = 14 - ADDR_WIDTH;
-localparam PAD_OUT_BITS = 13 - ADDR_WIDTH;
+localparam PAD_IN_BITS = 16 - ADDR_WIDTH;
+localparam PAD_OUT_BITS = 15 - ADDR_WIDTH;
 
-wire [PAD_IN_BITS-1:0] PAD_IN = {PAD_IN_BITS{1'b0}};
-wire [PAD_OUT_BITS-1:0] PAD_OUT = {PAD_OUT_BITS{1'b0}};
+wire [PAD_IN_BITS-1:0] PAD_IN = {{PAD_IN_BITS{{1'b0}}}};
+wire [PAD_OUT_BITS-1:0] PAD_OUT = {{PAD_OUT_BITS{{1'b0}}}};
 
 // input count signals.
 wire [15:0] cnt_limit_in;
@@ -155,7 +154,7 @@ begin
     count_tready = 1'b0;
     next_we0 = 1'b0;
     next_we1 = 1'b0;
-    next_wr_data = {(((DATA_WIDTH - 1))-((0))+1){1'b0}};
+    next_wr_data = {{(((DATA_WIDTH - 1))-((0))+1){{1'b0}}}};
     next_wr_ptr0 = wr_ptr0;
     next_wr_ptr1 = wr_ptr1;
     next_wr_ptr0_inv = wr_ptr0_inv;
@@ -182,12 +181,12 @@ begin
                 count_tready = 1'b1;
                 next_wr_data = count_tdata;
                 if (final_cnt == 1'b1) begin
-                    next_wr_ptr1 = {1'b1,count[ADDR_MSB:0]};
-                    next_wr_ptr1_inv = {1'b1,roll_over & ( ~count[ADDR_MSB:0])};
+                    next_wr_ptr1 = {{1'b1,count[ADDR_MSB:0]}};
+                    next_wr_ptr1_inv = {{1'b1,roll_over & ( ~count[ADDR_MSB:0])}};
                     next_wr_side = 1'b0;
                 end else begin
-                    next_wr_ptr1 = {1'b0, count[ADDR_MSB:0]};
-                    next_wr_ptr1_inv = {1'b0, roll_over & ( ~count[ADDR_MSB:0])};
+                    next_wr_ptr1 = {{1'b0, count[ADDR_MSB:0]}};
+                    next_wr_ptr1_inv = {{1'b0, roll_over & ( ~count[ADDR_MSB:0])}};
                 end
             end
         end

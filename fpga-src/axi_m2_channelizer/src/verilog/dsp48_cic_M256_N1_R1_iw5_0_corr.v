@@ -29,7 +29,7 @@ DSP48E1 #(
     .USE_PATTERN_DETECT("NO_PATDET"), // Enable pattern detect ("PATDET" or "NO_PATDET")
     // Register Control Attributes: Pipeline Register Configuration
     .ACASCREG(2), // Number of pipeline stages between A/ACIN and ACOUT (0, 1 or 2)
-    .ADREG(1), // Number of pipeline stages for pre-adder (0 or 1)
+    .ADREG(0), // Number of pipeline stages for pre-adder (0 or 1)
     .ALUMODEREG(0), // Number of pipeline stages for ALUMODE (0 or 1)
     .AREG(2), // Number of pipeline stages for A (0, 1 or 2)
     .BCASCREG(2), // Number of pipeline stages between B/BCIN and BCOUT (0, 1 or 2)

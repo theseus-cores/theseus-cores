@@ -25,7 +25,7 @@ axi_fifo_3.v \
 axi_fifo_18.v \
 axi_fifo_19.v \
 axi_fifo_51.v \
-axi_fifo_80.v \
+axi_fifo_64.v \
 count_cycle_cw16_8.v \
 count_cycle_cw16_18.v \
 count_cycle_cw16_65.v \
@@ -33,7 +33,6 @@ slicer_48_13.v \
 dsp48_cic_M256_N1_R1_iw5_0_corr.v \
 dsp48_cic_M256_N1_R1_iw5_0.v \
 dsp48_comb_M256_N1_iw5_0.v \
-dsp48_output_add.v \
 dsp48_pfb_mac_0.v \
 dsp48_pfb_mac.v \
 dsp48_pfb_rnd.v \
@@ -42,11 +41,13 @@ cic_M256_N1_R1_iw5_0_offset_sp_rom.v \
 comb_M256_N1_iw5_0.v \
 cic_M256_N1_R1_iw5_0.v \
 circ_buffer.v \
-exp_shifter.v \
+exp_shifter_2048Mmax_16iw_256avg_len.v \
 input_buffer.v \
-pfb_2x_16iw_16ow_32tps.v \
+mem_ctrl_pfb_2x_2048Mmax_16iw_16ow_32tps.v \
+pfb_2x_2048Mmax_16iw_16ow_32tps_dp_rom.v \
+pfb_2x_2048Mmax_16iw_16ow_32tps.v \
 chan_rfnoc_sim.vh \
 pipe_mux_2048_1.v \
 downselect.v \
-channelizer_top.v \
+chan_top_2X_2048M_16iw_16ow_32tps.v \
 )

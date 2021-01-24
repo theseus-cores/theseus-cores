@@ -18,9 +18,8 @@ module axi_fifo_19
     
     input s_axis_tvalid,
     input [DATA_WIDTH-1:0] s_axis_tdata,
-    output s_axis_tready,
     input s_axis_tlast,
-
+    output s_axis_tready,
     output almost_full,
 
     output m_axis_tvalid,
@@ -53,7 +52,7 @@ wire empty;
 // control signals
 reg wr;
 reg rd;
-reg [1:0] occ_reg, next_occ_reg;
+reg [1:0] occ_reg = 2'b00, next_occ_reg;
 reg [FIFO_MSB:0] data_d0, data_d1, next_data_d0, next_data_d1;
 
 // control signals

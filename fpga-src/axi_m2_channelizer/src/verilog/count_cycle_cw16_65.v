@@ -36,6 +36,8 @@ localparam DATA_MSB = DATA_WIDTH - 1;
 localparam TUSER_MSB = TUSER_WIDTH - 1;
 reg [DATA_MSB:0] data_d0;
 reg [DATA_MSB:0] data_d1;
+reg [15:0] cnt_limit_d0;
+reg [15:0] cnt_limit_d1;
 reg [TUSER_MSB:0] tuser_d[0:1];
 reg [1:0] tlast_d;
 
@@ -45,7 +47,7 @@ wire almost_full;
 wire m_fifo_tvalid;
 wire [DATA_WIDTH + 16:0] m_fifo_tdata;
 wire m_fifo_tready;
-wire [23:0] m_fifo_tuser;
+wire [TUSER_MSB:0] m_fifo_tuser;
 wire m_fifo_tlast;
 reg [8:0] cnt_nib0, next_cnt_nib0;
 reg [8:0] cnt_nib1, next_cnt_nib1;
@@ -76,7 +78,7 @@ assign m_axis_tuser = m_fifo_tuser;
 assign tready_s = ~almost_full;
 assign take_data = s_axis_tvalid & tready_s & !sync_reset;
 assign s_axis_tready = tready_s;
-assign final_cnt = (count_s == cnt_limit) ? 1'b1 : 1'b0;
+assign final_cnt = (count_s == cnt_limit_d1) ? 1'b1 : 1'b0;
 assign cnt_reset_0 = (cnt_nib0_d0 == mask0 && cnt_nib1[7:0] == mask1) ? 1'b1 : 1'b0;
 assign cnt_reset = (cnt_nib0[7:0] == mask0 && next_cnt_nib1[7:0] == mask1) ? 1'b1 : 1'b0;
 
@@ -88,17 +90,17 @@ assign mask1 = cnt_limit[15:8];
 
 always @(posedge clk)
 begin
-	if (sync_reset) begin
+    if (sync_reset) begin
         reset_cnt <= 1'b0;
         cnt_nib0 <= 0;
         cnt_nib1 <= 0;
         startup <= 1'b1;
-	end else begin
+    end else begin
         reset_cnt <= next_reset_cnt;
         cnt_nib0 <= next_cnt_nib0;
         cnt_nib1 <= next_cnt_nib1;
         startup <= next_startup;
-	end
+    end
 end
 
 
@@ -107,6 +109,8 @@ always @(posedge clk)
 begin
     cnt_nib0_d0 <= cnt_nib0[7:0];
 
+    cnt_limit_d0 <= cnt_limit;
+    cnt_limit_d1 <= cnt_limit_d0;
     data_d0 <= s_axis_tdata;
     data_d1 <= data_d0;
     tuser_d[0] <= s_axis_tuser;
@@ -116,7 +120,6 @@ begin
     take_d0 <= take_data;
     take_d1 <= take_d0;
 end
-
 
 // input and count process;
 always @*

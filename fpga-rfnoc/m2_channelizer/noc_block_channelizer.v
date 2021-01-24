@@ -291,7 +291,7 @@ set_mask (
   .o_tvalid(m_axis_select_tvalid),
   .o_tready(m_axis_select_tready));
 
-channelizer_top channelizer_top
+chan_top_2x_2048M_16iw_16ow_32tps channelizer_top
 (
     .clk(ce_clk),
     .sync_reset(ce_rst),

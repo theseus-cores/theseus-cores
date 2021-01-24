@@ -30,6 +30,8 @@ module count_cycle_cw16_8 #(
 localparam DATA_MSB = DATA_WIDTH - 1;
 reg [DATA_MSB:0] data_d0;
 reg [DATA_MSB:0] data_d1;
+reg [15:0] cnt_limit_d0;
+reg [15:0] cnt_limit_d1;
 
 reg startup, next_startup;
 wire almost_full;
@@ -76,17 +78,17 @@ assign mask1 = cnt_limit[15:8];
 
 always @(posedge clk)
 begin
-	if (sync_reset) begin
+    if (sync_reset) begin
         reset_cnt <= 1'b0;
         cnt_nib0 <= {1'b0, mask0};
         cnt_nib1 <= {1'b0, mask1};
         startup <= 1'b1;
-	end else begin
+    end else begin
         reset_cnt <= next_reset_cnt;
         cnt_nib0 <= next_cnt_nib0;
         cnt_nib1 <= next_cnt_nib1;
         startup <= next_startup;
-	end
+    end
 end
 
 
@@ -95,12 +97,13 @@ always @(posedge clk)
 begin
     cnt_nib0_d0 <= cnt_nib0[7:0];
 
+    cnt_limit_d0 <= cnt_limit;
+    cnt_limit_d1 <= cnt_limit_d0;
     data_d0 <= s_axis_tdata;
     data_d1 <= data_d0;
     take_d0 <= take_data;
     take_d1 <= take_d0;
 end
-
 
 // input and count process;
 always @*

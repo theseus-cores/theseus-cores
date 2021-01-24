@@ -1,3 +1,0 @@
-# Channelizer Generation Tool
-
-

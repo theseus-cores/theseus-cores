@@ -36,10 +36,10 @@ DSP48E1 #(
     .SEL_PATTERN("PATTERN"), // Select pattern value ("PATTERN" or "C")
     .USE_PATTERN_DETECT("NO_PATDET"), // Enable pattern detect ("PATDET" or "NO_PATDET")
     // Register Control Attributes: Pipeline Register Configuration
-    .ACASCREG(1), // Number of pipeline stages between A/ACIN and ACOUT (0, 1 or 2)
+    .ACASCREG(0), // Number of pipeline stages between A/ACIN and ACOUT (0, 1 or 2)
     .ADREG(1), // Number of pipeline stages for pre-adder (0 or 1)
     .ALUMODEREG(0), // Number of pipeline stages for ALUMODE (0 or 1)
-    .AREG(1), // Number of pipeline stages for A (0, 1 or 2)
+    .AREG(0), // Number of pipeline stages for A (0, 1 or 2)
     .BCASCREG(0), // Number of pipeline stages between B/BCIN and BCOUT (0, 1 or 2)
     .BREG(0), // Number of pipeline stages for B (0, 1 or 2)
     .CARRYINREG(1), // Number of pipeline stages for CARRYIN (0 or 1)
@@ -78,17 +78,17 @@ dsp_48_inst (
     .CARRYINSEL(3'd0), // 3-bit input: Carry select input
     .CEINMODE(1'b1), // 1-bit input: Clock enable input for INMODEREG
     .CLK(clk), // 1-bit input: Clock input
-    .INMODE(5'd5), // 5-bit input: INMODE control input
+    .INMODE(5'd0), // 5-bit input: INMODE control input
     .OPMODE(7'd53), // 7-bit input: Operation mode input
     .RSTINMODE(1'b0), // 1-bit input: Reset input for INMODEREG
     // Data: 30-bit (each) input: Data Ports
     .A(a_s), // 30-bit input: A data input
-    .B(18'd1), // 18-bit input: B data input
+    .B(18'd0), // 18-bit input: B data input
     .C(48'd0), // 48-bit input: C data input
     .CARRYIN(a[0]), // 1-bit input: Carry input signal
     .D(d_s), // 25-bit input: D data input
     // Reset/Clock Enable: 1-bit (each) input: Reset/Clock Enable Inputs
-    .CEA1(1'b1), // 1-bit input: Clock enable input for 1st stage AREG
+    .CEA1(1'b0), // 1-bit input: Clock enable input for 1st stage AREG
     .CEA2(1'b0), // 1-bit input: Clock enable input for 2nd stage AREG
     .CEAD(1'b1), // 1-bit input: Clock enable input for ADREG
     .CEALUMODE(1'b1), // 1-bit input: Clock enable input for ALUMODERE
