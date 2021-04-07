@@ -35,12 +35,12 @@ module exp_shifter_2048Mmax_16iw_256avg_len#(
 
 wire s_axis_tready_s;  // delay signals
 
-reg [15:0] tdatai[0:23];
-reg [15:0] tdataq[0:23];
+reg [15:0] tdatai[0:3];
+reg [15:0] tdataq[0:3];
 
-reg [23:0] tuser_d[0:24];
-reg [24:0] tlast_d;
-reg [24:0] take_d;
+reg [23:0] tuser_d[0:4];
+reg [4:0] tlast_d;
+reg [4:0] take_d;
 
 wire [47:0] pcorr_i, pcorr_q;
 wire filter_tready;
@@ -68,21 +68,21 @@ wire [23:0] m_axis_tuser_s;
 assign take = (s_axis_tvalid == 1'b1 && s_axis_tready_s == 1'b1) ? 1'b1 : 1'b0;
 assign s_axis_tready_s = (almost_full == 1'b0) ? 1'b1 : 1'b0;
 assign s_axis_tready = s_axis_tready_s;
-assign fft_bin = tuser_d[21][10:0];
+assign fft_bin = tuser_d[1][10:0];
 assign filter_whole = filter_d[12:8];
 
 assign eob_tag = m_axis_tuser_s[23];
 assign m_axis_tuser = m_axis_tuser_s;
 assign fifo_tdata = {i_val, q_val};
 
-assign chan_0 = (fft_bin == 11'd0 && take_d[21] == 1'b1) ? 1'b1 : 1'b0;
+assign chan_0 = (fft_bin == 11'd0 && take_d[1] == 1'b1) ? 1'b1 : 1'b0;
 
 assign filter_tdata = s_axis_tuser[20:16];
 assign filter_tvalid = (take == 1'b1 && s_axis_tuser[10:0] == 11'd0) ? 1'b1 : 1'b0;
-assign curr_shift = tuser_d[21][20:16];
+assign curr_shift = tuser_d[1][20:16];
 
-assign pcorr_i = { {16{tdatai[23][15]}}, tdatai[23], {{16{tdatai[23][0]}}} };
-assign pcorr_q = { {16{tdataq[23][15]}}, tdataq[23], {{16{tdataq[23][0]}}} };
+assign pcorr_i = { {16{tdatai[3][15]}}, tdatai[3], {{16{tdatai[3][0]}}} };
+assign pcorr_q = { {16{tdataq[3][15]}}, tdataq[3], {{16{tdataq[3][0]}}} };
 
 
   // main clock process
@@ -103,22 +103,22 @@ end
 integer m;
 always @(posedge clk) begin
     shift_val <= $signed({{1{sub_out[5]}},sub_out}) - $signed(HEAD_ROOM);
-    take_d <= {take_d[23:0], take};
-    tlast_d <= {tlast_d[23:0], s_axis_tlast};
+    take_d <= {take_d[3:0], take};
+    tlast_d <= {tlast_d[3:0], s_axis_tlast};
 
     tdatai[0] <= s_axis_tdata[31:16];
     tdataq[0] <= s_axis_tdata[15:0];
-    for (m=1; m<24; m=m+1) begin
+    for (m=1; m<4; m=m+1) begin
         tdatai[m] <= tdatai[m-1];
         tdataq[m] <= tdataq[m-1];
     end
 
     tuser_d[0] <= {s_axis_tlast, s_axis_tuser[22:0]};
-    for (m=1; m<25; m=m+1) begin
+    for (m=1; m<5; m=m+1) begin
         tuser_d[m] <= tuser_d[m-1];
     end
 
-    filter_whole_d <= filter_whole;
+    filter_whole_d <= filter_whole + filter_d[7];
 end
 
 always @*
@@ -243,14 +243,14 @@ axi_fifo_51 #(
     .DATA_WIDTH(32),
     .ALMOST_FULL_THRESH(16),
     .TUSER_WIDTH(24),
-    .ADDR_WIDTH(6))
+    .ADDR_WIDTH(5))
 u_fifo(
     .clk(clk),
     .sync_reset(sync_reset),
-    .s_axis_tvalid(take_d[24]),
+    .s_axis_tvalid(take_d[4]),
     .s_axis_tdata(fifo_tdata),
-    .s_axis_tlast(tlast_d[24]),
-    .s_axis_tuser(tuser_d[24]),
+    .s_axis_tlast(tlast_d[4]),
+    .s_axis_tuser(tuser_d[4]),
     .s_axis_tready(),
     .almost_full(almost_full),
     .m_axis_tvalid(m_axis_tvalid),
