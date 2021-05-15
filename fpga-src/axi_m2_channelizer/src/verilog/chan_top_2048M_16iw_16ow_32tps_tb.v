@@ -21,9 +21,9 @@ function integer clog2;
  end
 endfunction
 
-localparam stimulus = "/home/phil/lts_gitclones/wavephy/wavephy/streamlit_app/tmp/sig_tones_2048.bin";
-localparam mask_file = "/home/phil/lts_gitclones/wavephy/wavephy/streamlit_app/tmp/M_2048_mask.bin";
-localparam output_file = "/home/phil/lts_gitclones/wavephy/wavephy/streamlit_app/tmp/chan_results.bin";
+localparam stimulus = "/app/pfb_channelizer_gen/tmp/sig_tones_2048.bin";
+localparam mask_file = "/app/pfb_channelizer_gen/tmp/M_2048_mask.bin";
+localparam output_file = "/app/pfb_channelizer_gen/tmp/chan_results.bin";
 
 integer input_descr, mask_descr, output_descr;
 

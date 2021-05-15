@@ -25,7 +25,7 @@ DSP48E1 #(
     .A_INPUT("DIRECT"), // Selects A input source, "DIRECT" (A port) or "CASCADE" (ACIN port)
     .B_INPUT("DIRECT"), // Selects B input source, "DIRECT" (B port) or "CASCADE" (BCIN port)
     .USE_DPORT("FALSE"), // Select D port usage (TRUE or FALSE)
-    .USE_MULT("MULTIPLY"), // Select multiplier usage ("MULTIPLY", "DYNAMIC", or "NONE")
+    .USE_MULT("NONE"), // Select multiplier usage ("MULTIPLY", "DYNAMIC", or "NONE")
     // Pattern Detector Attributes: Pattern Detection Configuration
     .AUTORESET_PATDET("NO_RESET"), // "NO_RESET", "RESET_MATCH", "RESET_NOT_MATCH"
     .MASK(48'h3fffffffffff), // 48-bit mask value for pattern detect (1=ignore)
@@ -36,7 +36,7 @@ DSP48E1 #(
     // Register Control Attributes: Pipeline Register Configuration
     .ACASCREG(1), // Number of pipeline stages between A/ACIN and ACOUT (0, 1 or 2)
     .ADREG(0), // Number of pipeline stages for pre-adder (0 or 1)
-    .ALUMODEREG(0), // Number of pipeline stages for ALUMODE (0 or 1)
+    .ALUMODEREG(1), // Number of pipeline stages for ALUMODE (0 or 1)
     .AREG(1), // Number of pipeline stages for A (0, 1 or 2)
     .BCASCREG(1), // Number of pipeline stages between B/BCIN and BCOUT (0, 1 or 2)
     .BREG(1), // Number of pipeline stages for B (0, 1 or 2)
@@ -44,9 +44,9 @@ DSP48E1 #(
     .CARRYINSELREG(1), // Number of pipeline stages for CARRYINSEL (0 or 1)
     .CREG(0), // Number of pipeline stages for C (0 or 1)
     .DREG(0), // Number of pipeline stages for D (0 or 1)
-    .INMODEREG(0), // Number of pipeline stages for INMODE (0 or 1)
+    .INMODEREG(1), // Number of pipeline stages for INMODE (0 or 1)
     .MREG(0), // Number of multiplier pipeline stages (0 or 1)
-    .OPMODEREG(0), // Number of pipeline stages for OPMODE (0 or 1)
+    .OPMODEREG(1), // Number of pipeline stages for OPMODE (0 or 1)
     .PREG(1), // Number of pipeline stages for P (0 or 1)
     .USE_SIMD("ONE48") // SIMD selection ("ONE48", "TWO24", "FOUR12")
 )
@@ -80,8 +80,8 @@ dsp_48_inst (
     .OPMODE(7'd28), // 7-bit input: Operation mode input
     .RSTINMODE(1'b0), // 1-bit input: Reset input for INMODEREG
     // Data: 30-bit (each) input: Data Ports
-    .A(30'd0), // 30-bit input: A data input
-    .B(18'd0), // 18-bit input: B data input
+    .A(30'd1), // 30-bit input: A data input
+    .B(18'd1), // 18-bit input: B data input
     .C(48'd8388607), // 48-bit input: C data input
     .CARRYIN(p_d), // 1-bit input: Carry input signal
     .D(25'd0), // 25-bit input: D data input

@@ -15,6 +15,7 @@ module chan_top_2x_2048M_16iw_16ow_32tps
     input sync_reset,
 
     input s_axis_tvalid,
+    // Note that the convention is Real is mapped to [2N-1:N] Imag is mapped [N-1:0], where N is sample size
     input [31:0] s_axis_tdata,
     output s_axis_tready,
 
@@ -35,6 +36,7 @@ module chan_top_2x_2048M_16iw_16ow_32tps
     output eob_tag,
 
     output m_axis_tvalid,
+    // Note that the convention is Real is mapped to [2N-1:N] Imag is mapped [N-1:0], where N is sample size
     output [31:0] m_axis_tdata,
     output [23:0] m_axis_tuser,
     output m_axis_tlast,
@@ -358,7 +360,7 @@ u_shifter(
     .m_axis_tready(shift_tready)
 );
 
-downselect #(
+downselect_2048 #(
     .DATA_WIDTH(32))
 u_downselect(
     .clk(clk),

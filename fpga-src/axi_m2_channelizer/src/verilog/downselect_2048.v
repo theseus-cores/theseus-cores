@@ -1,7 +1,7 @@
 //***************************************************************************--
 //
 // Author : PJV
-// File : downselect.v
+// File : downselect_2048.v
 // Description : Module performs downselection of channel based on a selection
 // mask set from a FIFO interface
 //
@@ -9,7 +9,7 @@
 
 // no timescale needed
 //
-module downselect
+module downselect_2048
 #(parameter DATA_WIDTH = 32)
 (
     input clk,

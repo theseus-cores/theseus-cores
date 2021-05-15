@@ -27,7 +27,7 @@ localparam ADDR_WIDTH = FFT_SIZE_WIDTH - 1;
 localparam ADDR_MSB = ADDR_WIDTH - 1;
 localparam PAD_BITS = 16 - ADDR_WIDTH;
 
-wire [PAD_BITS-1:0] PAD = {{PAD_BITS{{1'b0}}}};
+wire [PAD_BITS-1:0] PAD = {PAD_BITS{1'b0}};
 
 // input count signals.
 wire [15:0] cnt_limit_in;
@@ -80,9 +80,9 @@ wire write0, write1;
 
 assign rd_tready = ~almost_full;
 assign roll_over = roll_over_s[ADDR_MSB:0];
-assign roll_over_m1 = {{roll_over_s[ADDR_MSB:1],1'b0}};
-assign cnt_limit_in = {{PAD,roll_over}};
-assign cnt_limit_out = {{PAD,roll_over}};
+assign roll_over_m1 = {roll_over_s[ADDR_MSB:1],1'b0};
+assign cnt_limit_in = {PAD,roll_over};
+assign cnt_limit_out = {PAD,roll_over};
 assign full0 = (wr_ptr0_inv[ADDR_WIDTH] != rd_ptr0[ADDR_WIDTH] && rd0_finish == 1'b0) ? 1'b1 : 1'b0;
 assign full1 = (wr_ptr1_inv[ADDR_WIDTH] != rd_ptr1[ADDR_WIDTH] && rd1_finish == 1'b0) ? 1'b1 : 1'b0;
 assign phase = phase_s[ADDR_WIDTH:0];
@@ -136,9 +136,9 @@ always @(posedge clk) begin
     we0 <= next_we0;
     we1 <= next_we1;
     wr_data <= next_wr_data;
-    rd_en_d <= {{rd_en_d[1:0], rd_en}};
-    rd_side_d <= {{rd_side_d[1:0], rd_side}};
-    start_sig_d <= {{start_sig_d[1:0], start_sig}};
+    rd_en_d <= {rd_en_d[1:0], rd_en};
+    rd_side_d <= {rd_side_d[1:0], rd_side};
+    start_sig_d <= {start_sig_d[1:0], start_sig};
     roll_over_s <= fft_size - 1;
 end
 
@@ -147,7 +147,7 @@ begin
     count_tready = 1'b0;
     next_we0 = 1'b0;
     next_we1 = 1'b0;
-    next_wr_data = {{(((DATA_WIDTH - 1))-((0))+1){{1'b0}}}};
+    next_wr_data = {(((DATA_WIDTH - 1))-((0))+1){1'b0}};
     next_wr_ptr0 = wr_ptr0;
     next_wr_ptr1 = wr_ptr1;
     next_wr_ptr0_inv = wr_ptr0_inv;
@@ -160,12 +160,12 @@ begin
                 count_tready = 1'b1;
                 next_wr_data = count_tdata;
                 if (final_cnt == 1'b1) begin
-                    next_wr_ptr0 = {{1'b1,count[ADDR_MSB:0]}};
-                    next_wr_ptr0_inv = {{1'b1,roll_over & ( ~count[ADDR_MSB:0])}};
+                    next_wr_ptr0 = {1'b1,count[ADDR_MSB:0]};
+                    next_wr_ptr0_inv = {1'b1,roll_over & ( ~count[ADDR_MSB:0])};
                     next_wr_side = 1'b1;
                 end else begin
-                    next_wr_ptr0 = {{1'b0,count[ADDR_MSB:0]}};
-                    next_wr_ptr0_inv = {{1'b0,roll_over & ( ~count[ADDR_MSB:0])}};
+                    next_wr_ptr0 = {1'b0,count[ADDR_MSB:0]};
+                    next_wr_ptr0_inv = {1'b0,roll_over & ( ~count[ADDR_MSB:0])};
                 end
             end
         end else begin
@@ -174,12 +174,12 @@ begin
                 count_tready = 1'b1;
                 next_wr_data = count_tdata;
                 if (final_cnt == 1'b1) begin
-                    next_wr_ptr1 = {{1'b1,count[ADDR_MSB:0]}};
-                    next_wr_ptr1_inv = {{1'b1,roll_over & ( ~count[ADDR_MSB:0])}};
+                    next_wr_ptr1 = {1'b1,count[ADDR_MSB:0]};
+                    next_wr_ptr1_inv = {1'b1,roll_over & ( ~count[ADDR_MSB:0])};
                     next_wr_side = 1'b0;
                 end else begin
-                    next_wr_ptr1 = {{1'b0, count[ADDR_MSB:0]}};
-                    next_wr_ptr1_inv = {{1'b0, roll_over & ( ~count[ADDR_MSB:0])}};
+                    next_wr_ptr1 = {1'b0, count[ADDR_MSB:0]};
+                    next_wr_ptr1_inv = {1'b0, roll_over & ( ~count[ADDR_MSB:0])};
                 end
             end
         end
