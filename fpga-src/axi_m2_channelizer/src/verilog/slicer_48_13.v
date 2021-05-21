@@ -2,7 +2,7 @@
 /*****************************************************************************/
 //
 // Author      : Python Generated
-// File        : ../verilog/slicer_48_13.v
+// File        : ./tmp/slicer_48_13.v
 // Description : Generates a variable slicer module.
 //
 //

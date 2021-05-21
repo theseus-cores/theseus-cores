@@ -2,11 +2,11 @@
 //
 // Author : PJV
 // File : input_buffer
-// Description : Input buffer to the M/2 Polyphase Channelizer bank.
+// Description : Input buffer to the M Polyphase Channelizer bank.
 //      Can be any power of 2 less than that.
 //
 //***************************************************************************--
-module input_buffer#(
+module input_buffer_1x#(
     parameter DATA_WIDTH = 32,
     parameter FFT_SIZE_WIDTH = 12)
 (
@@ -23,13 +23,11 @@ module input_buffer#(
     input m_axis_tready
 );
 
-localparam ADDR_WIDTH = FFT_SIZE_WIDTH - 2;
+localparam ADDR_WIDTH = FFT_SIZE_WIDTH - 1;
 localparam ADDR_MSB = ADDR_WIDTH - 1;
-localparam PAD_IN_BITS = 16 - ADDR_WIDTH;
-localparam PAD_OUT_BITS = 15 - ADDR_WIDTH;
+localparam PAD_BITS = 16 - ADDR_WIDTH;
 
-wire [PAD_IN_BITS-1:0] PAD_IN = {PAD_IN_BITS{1'b0}};
-wire [PAD_OUT_BITS-1:0] PAD_OUT = {PAD_OUT_BITS{1'b0}};
+wire [PAD_BITS-1:0] PAD = {PAD_BITS{1'b0}};
 
 // input count signals.
 wire [15:0] cnt_limit_in;
@@ -42,9 +40,8 @@ reg count_tready;
 wire [ADDR_MSB:0] roll_over;
 wire [ADDR_MSB:0] roll_over_m1;
 reg [ADDR_WIDTH:0] roll_over_s;  // Ping Pong RAM signals.
+reg [FFT_SIZE_WIDTH-1:0] fft_size_m1;
 
-reg sec_pass0, next_sec_pass0;
-reg sec_pass1, next_sec_pass1;
 
 wire [ADDR_WIDTH - 1:0] wr_addr0, wr_addr1;
 wire [ADDR_WIDTH - 1:0] rd_addr0, rd_addr1;
@@ -84,8 +81,8 @@ wire write0, write1;
 assign rd_tready = ~almost_full;
 assign roll_over = roll_over_s[ADDR_MSB:0];
 assign roll_over_m1 = {roll_over_s[ADDR_MSB:1],1'b0};
-assign cnt_limit_in = {PAD_IN,roll_over};
-assign cnt_limit_out = {PAD_OUT,roll_over,1'b1};
+assign cnt_limit_in = {PAD,roll_over};
+assign cnt_limit_out = {PAD,roll_over};
 assign full0 = (wr_ptr0_inv[ADDR_WIDTH] != rd_ptr0[ADDR_WIDTH] && rd0_finish == 1'b0) ? 1'b1 : 1'b0;
 assign full1 = (wr_ptr1_inv[ADDR_WIDTH] != rd_ptr1[ADDR_WIDTH] && rd1_finish == 1'b0) ? 1'b1 : 1'b0;
 assign phase = phase_s[ADDR_WIDTH:0];
@@ -99,8 +96,6 @@ assign write1 = (wr_side == 1'b1 && count_tready == 1'b1 && count_tvalid == 1'b1
 // main clock process
 always @(posedge clk, posedge sync_reset) begin
     if (sync_reset == 1'b1) begin
-        sec_pass0 <= 1'b0;
-        sec_pass1 <= 1'b0;
         wr_ptr0 <= 0;
         wr_ptr1 <= 0;
         wr_ptr0_inv <= 0;
@@ -118,8 +113,6 @@ always @(posedge clk, posedge sync_reset) begin
         rd0_finish <= 1'b0;
         rd1_finish <= 1'b0;
     end else begin
-        sec_pass0 <= next_sec_pass0;
-        sec_pass1 <= next_sec_pass1;
         wr_ptr0 <= next_wr_ptr0;
         wr_ptr1 <= next_wr_ptr1;
         wr_ptr0_inv <= next_wr_ptr0_inv;
@@ -146,7 +139,7 @@ always @(posedge clk) begin
     rd_en_d <= {rd_en_d[1:0], rd_en};
     rd_side_d <= {rd_side_d[1:0], rd_side};
     start_sig_d <= {start_sig_d[1:0], start_sig};
-    roll_over_s <= fft_size[FFT_SIZE_WIDTH - 1:1] - 1;
+    roll_over_s <= fft_size - 1;
 end
 
 always @*
@@ -198,8 +191,6 @@ begin
     next_rd_ptr0 = rd_ptr0;
     next_rd_ptr1 = rd_ptr1;
     next_rd_side = rd_side;
-    next_sec_pass0 = sec_pass0;
-    next_sec_pass1 = sec_pass1;
     next_rd0_finish = rd0_finish;
     next_rd1_finish = rd1_finish;
     next_state = state;
@@ -214,7 +205,6 @@ begin
                 next_rd_ptr0 = 0;
                 next_rd_ptr1 = 0;
                 next_state = S_READ0;
-                next_sec_pass0 = 1'b0;
                 next_start_sig = 1'b1;
             end else if (rd_side == 1'b0 && full1 == 1'b1 && rd_tready == 1'b1) begin
                 next_rd_side = 1'b1;
@@ -222,7 +212,6 @@ begin
                 next_rd_ptr1 = 0;
                 next_rd_ptr0 = 0;
                 next_state = S_READ1;
-                next_sec_pass1 = 1'b0;
                 next_start_sig = 1'b1;
             end
             if (write0 == 1'b1) begin
@@ -239,19 +228,14 @@ begin
             end
             if (rd_tready == 1'b1) begin
                 next_rd_en = 1'b1;
-                if (rd_ptr0 == (roll_over_s)) begin
-                    next_rd_ptr0 = 0;
-                end else begin
-                    next_rd_ptr0 = rd_ptr0 + 1;
-                end
+                next_rd_ptr0 = rd_ptr0 + 1;
+                // if (rd_ptr0 == (roll_over_s)) begin
+                //     next_rd_ptr0 = 0;
+                // end else begin
+                // end
                 if (rd_ptr0 == (roll_over_m1)) begin
-                    if (sec_pass0 == 1'b1) begin
-                        next_state = S_IDLE;
-                        next_sec_pass0 = 1'b0;
-                        next_rd0_finish = 1'b1;
-                    end else begin
-                        next_sec_pass0 = 1'b1;
-                    end
+                    next_state = S_IDLE;
+                    next_rd0_finish = 1'b1;
                 end
             end
         end
@@ -262,19 +246,14 @@ begin
             end
             if (rd_tready == 1'b1) begin
                 next_rd_en = 1'b1;
-                if (rd_ptr1 == (roll_over_s)) begin
-                    next_rd_ptr1 = 0;
-                end else begin
-                    next_rd_ptr1 = rd_ptr1 + 1;
-                end
+                next_rd_ptr1 = rd_ptr1 + 1;
+                // if (rd_ptr1 == (roll_over_s)) begin
+                //     next_rd_ptr1 = 0;
+                // end else begin
+                // end
                 if (rd_ptr1 == (roll_over_m1)) begin
-                    if (sec_pass1 == 1'b1) begin
-                        next_state = S_IDLE;
-                        next_sec_pass1 = 1'b0;
-                        next_rd1_finish = 1'b1;
-                    end else begin
-                        next_sec_pass1 = 1'b1;
-                    end
+                  next_state = S_IDLE;
+                  next_rd1_finish = 1'b1;
                 end
             end
         end

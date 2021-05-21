@@ -60,7 +60,7 @@ end
 
 
 // Differential Delay. Latency = 3.
-axi_fifo_80 #(
+axi_fifo_64 #(
     .DATA_WIDTH(48),
     .ADDR_WIDTH(9))
 u_diff_delay

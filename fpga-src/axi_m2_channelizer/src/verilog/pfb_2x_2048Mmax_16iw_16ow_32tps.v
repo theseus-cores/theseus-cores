@@ -2,30 +2,31 @@
 // Implements the M/2 PFB architecture referenced in the
 // "A Versatile Multichannel Filter Bank with Multiple Channel Bandwidths" paper.
 // This architecture has been mapped to the Xilinx architecture.
-// This represents a fully pipelined design that maximizes the FMax potential of the design. It is important
-// to understand that filter arms are loaded sequentially. This is referenced in the diagram by the
-// incremental changes in the phase subscript through each subsequent delay register.
-// The nth index is only updated once per revolution of the filter bank.
+// This represents a fully pipelined design that maximizes the FMax potential of the design.
+// It is important to understand that filter arms are loaded sequentially. This is referenced in
+// the diagram by the incremental changes in the phase subscript through each subsequent delay
+// register. The nth index is only updated once per revolution of the filter bank.
 //
 // It is best to refer to the attached document to understand the layout of the logic. This module
 // currently implements 32 taps per phase.
 /*****************************************************************************/
 
-module pfb_2x_16iw_16ow_32tps
+module pfb_2x_2048Mmax_16iw_16ow_32tps
 (
     input clk,
     input sync_reset,
 
-    input [11:0] fft_size,
+    input [11:0] num_phases,
     input [10:0] phase,
+
     input s_axis_tvalid,
     input [31:0] s_axis_tdata,
     input s_axis_tlast,
     output s_axis_tready,
 
+    input s_axis_reload_tvalid,
     input [31:0] s_axis_reload_tdata,
     input s_axis_reload_tlast,
-    input s_axis_reload_tvalid,
     output s_axis_reload_tready,
 
     output [10:0] phase_out,
@@ -41,78 +42,74 @@ wire [47:0] pcoutq[0:31];
 wire [15:0] pouti, poutq;
 
 wire [31:0] delay[0:31];
+
 wire [31:0] delay_sig;
+reg [10:0] phase_mux_d[0:2];
+reg [31:0] input_sig_d0, input_sig_d1, input_sig_d2;
+wire bot_half;
 
 reg [10:0] phase_d[0:38];
-reg [10:0] phase_mux_d[0:2];
 reg [7:0] tvalid_d;
 reg [42:0] tvalid_pipe, next_tvalid_pipe;
 reg [42:0] tlast_d, next_tlast_d;
 
 reg [12:0] wr_addr_d[0:95];
 
+reg [31:0] sig, next_sig;
+reg [31:0] sig_d0;
+reg [31:0] sig_d1;
+reg [31:0] sig_d2;
 reg [12:0] rd_addr, next_rd_addr;
 reg [12:0] wr_addr, next_wr_addr;
 reg [12:0] rd_addr_d[0:30];
 
 reg [12:0] next_rd_addr_d[0:30];
 
-reg [31:0] input_sig_d1, input_sig_d2, input_sig_d3;
-reg [31:0] sig, next_sig;
-reg [31:0] sig_d1, sig_d2, sig_d3;
 reg [1:0] offset_cnt, next_offset_cnt;
 reg [1:0] offset_cnt_prev, next_offset_cnt_prev;
 
-reg s_axis_reload_tvalid_d1;
-reg [15:0] taps_addr, next_taps_addr;
+wire [10:0] rom_addr;
+wire [24:0] rom_data;
+wire [31:0] rom_we;
 
-reg [24:0] taps_dina, next_taps_dina;
-reg [10:0] rom_addr, next_rom_addr;
-reg [24:0] rom_data, next_rom_data;
-reg reload_tready = 1'b0;
-
-reg new_coeffs, next_new_coeffs;
-reg [31:0] taps_we, next_taps_we;
-
-reg [11:0] fft_max;
-reg [10:0] fft_max_slice;
-reg [11:0] fft_half;
+reg [11:0] phase_max;
+reg [10:0] phase_max_slice;
+reg [10:0] phase_half;
 wire [42:0] fifo_tdata, m_axis_tdata_s;
 wire fifo_tvalid;
 wire almost_full;
-wire tap_take;
-reg tap_take_d1;
-wire bot_half;
+wire take_data;
 
+assign take_data = (s_axis_tvalid & ~almost_full);
 assign m_axis_tdata = m_axis_tdata_s[42:11];
 assign s_axis_tready = ~almost_full;
 assign fifo_tvalid = tvalid_d[7] & tvalid_pipe[42];
-assign tap_take = s_axis_reload_tvalid & reload_tready;
 assign phase_out = m_axis_tdata_s[10:0];
 assign fifo_tdata = {pouti, poutq, phase_d[38]};
-assign s_axis_reload_tready = reload_tready;
+assign bot_half = ((phase_mux_d[2] & phase_half[10:0]) != 0) ? 1'b1 : 1'b0;
 
-assign bot_half = ((phase_mux_d[2] & fft_half[10:0]) != 0) ? 1'b1 : 1'b0;
 
 // logic implements the sample write address pipelining.
 always @(posedge clk)
 begin
 
-    fft_max <= fft_size - 1;
-    fft_max_slice <= fft_max[10:0];
-    fft_half <= fft_size >> 1;
+    phase_max <= num_phases - 1;
+    phase_max_slice <= phase_max[10:0];
+    phase_half <= num_phases >> 1;
 
     phase_mux_d[0] <= phase;
-    phase_mux_d[1] <= phase_mux_d[0] & fft_max_slice;
-    phase_mux_d[2] <= phase_mux_d[1];
-    phase_d[0] <= rd_addr[10:0];
-    phase_d[1] <= phase_d[0];
-    phase_d[2] <= phase_d[1];
-    s_axis_reload_tvalid_d1 <= s_axis_reload_tvalid;
+    phase_mux_d[1] <= phase_mux_d[0];
+    phase_mux_d[2] <= phase_mux_d[1] & phase_max_slice;
 
-    input_sig_d1 <= s_axis_tdata;
+    input_sig_d0 <= s_axis_tdata;
+    input_sig_d1 <= input_sig_d0;
     input_sig_d2 <= input_sig_d1;
-    input_sig_d3 <= input_sig_d2;
+    phase_d[0] <= rd_addr[10:0];
+    phase_d[1] <= phase_d[0] & phase_max_slice;
+    phase_d[2] <= phase_d[1];
+    sig_d0 <= sig;
+    sig_d1 <= sig_d0;
+    sig_d2 <= sig_d1;
 
     wr_addr_d[0] <= wr_addr;
     wr_addr_d[3] <= {~rd_addr[12], rd_addr[11], rd_addr[10:0]};
@@ -211,10 +208,6 @@ begin
     wr_addr_d[92] <= wr_addr_d[91];
     wr_addr_d[94] <= wr_addr_d[93];
     wr_addr_d[95] <= wr_addr_d[94];
-    sig_d1 <= sig;
-    sig_d2 <= sig_d1;
-    sig_d3 <= sig_d2;
-    tap_take_d1 <= tap_take;
 end
 
 //tvalid_pipe_proc
@@ -228,7 +221,7 @@ begin
     end
 end
 
-//tlast_proc
+//tlast_proc 
 always @*
 begin
     next_tlast_d[6:0] = {tlast_d[5:0], s_axis_tlast};
@@ -243,154 +236,45 @@ end
 integer m;
 always @(posedge clk, posedge sync_reset)
 begin
-	if (sync_reset == 1'b1) begin
-          offset_cnt <= 1;  // this ensures that the first read / write is to offset 0.
-          offset_cnt_prev <= 0;
-          sig <= 0;
-          tvalid_d <= 0;
-          tvalid_pipe <= 0;
-          tlast_d <= 0;
-          for (m=0; m<31; m=m+1) begin
-              rd_addr_d[m] <= 0;
-          end
-          new_coeffs <= 1'b1;
-          taps_addr <= 0;
-          rom_addr <= 0;
-          rom_data <= 0;
-          taps_we <= 0;
-          taps_dina <= 0;
-          rd_addr <= 0;
-          wr_addr <= 0;
-          reload_tready <= 1'b0;
-	end else begin
-          offset_cnt <= next_offset_cnt;
-          offset_cnt_prev <= next_offset_cnt_prev;
-          sig <= next_sig;
-          tvalid_d <= {tvalid_d[6:0], (s_axis_tvalid & ~almost_full)};
-          tvalid_pipe <= next_tvalid_pipe;
-          tlast_d <= next_tlast_d;
-          for (m=0; m<31; m=m+1) begin
-              rd_addr_d[m] <= next_rd_addr_d[m];
-          end
-          new_coeffs <= next_new_coeffs;
-          taps_addr <= next_taps_addr;
-          rom_addr <= next_rom_addr;
-          rom_data <= next_rom_data;
-          taps_we <= next_taps_we;
-          taps_dina <= next_taps_dina;
-          rd_addr <= next_rd_addr;
-          wr_addr <= next_wr_addr;
-          reload_tready <= 1'b1;
-	end
+    if (sync_reset == 1'b1) begin
+        offset_cnt <= 1;  // this ensures that the first read / write is to offset 0.
+        offset_cnt_prev <= 0;
+        sig <= 0;
+        tvalid_d <= 0;
+        tvalid_pipe <= 0;
+        tlast_d <= 0;
+        for (m=0; m<31; m=m+1) begin
+            rd_addr_d[m] <= 0;
+        end
+        rd_addr <= 0;
+        wr_addr <= 0;
+    end else begin
+        offset_cnt <= next_offset_cnt;
+        offset_cnt_prev <= next_offset_cnt_prev;
+        sig <= next_sig;
+        tvalid_d <= {tvalid_d[6:0], (s_axis_tvalid & ~almost_full)};
+        tvalid_pipe <= next_tvalid_pipe;
+        tlast_d <= next_tlast_d;
+        for (m=0; m<31; m=m+1) begin
+            rd_addr_d[m] <= next_rd_addr_d[m];
+        end
+        rd_addr <= next_rd_addr;
+        wr_addr <= next_wr_addr;
+    end
 end
 
+integer n;
 always @(posedge clk)
 begin
-    if (tvalid_d[6] == 1'b1) begin
-        phase_d[3] <= phase_d[2];
-        phase_d[4] <= phase_d[3];
-        phase_d[5] <= phase_d[4];
-        phase_d[6] <= phase_d[5];
-        phase_d[7] <= phase_d[6];
-        phase_d[8] <= phase_d[7];
-        phase_d[9] <= phase_d[8];
-        phase_d[10] <= phase_d[9];
-        phase_d[11] <= phase_d[10];
-        phase_d[12] <= phase_d[11];
-        phase_d[13] <= phase_d[12];
-        phase_d[14] <= phase_d[13];
-        phase_d[15] <= phase_d[14];
-        phase_d[16] <= phase_d[15];
-        phase_d[17] <= phase_d[16];
-        phase_d[18] <= phase_d[17];
-        phase_d[19] <= phase_d[18];
-        phase_d[20] <= phase_d[19];
-        phase_d[21] <= phase_d[20];
-        phase_d[22] <= phase_d[21];
-        phase_d[23] <= phase_d[22];
-        phase_d[24] <= phase_d[23];
-        phase_d[25] <= phase_d[24];
-        phase_d[26] <= phase_d[25];
-        phase_d[27] <= phase_d[26];
-        phase_d[28] <= phase_d[27];
-        phase_d[29] <= phase_d[28];
-        phase_d[30] <= phase_d[29];
-        phase_d[31] <= phase_d[30];
-        phase_d[32] <= phase_d[31];
-        phase_d[33] <= phase_d[32];
-        phase_d[34] <= phase_d[33];
-        phase_d[35] <= phase_d[34];
-        phase_d[36] <= phase_d[35];
-        phase_d[37] <= phase_d[36];
-        phase_d[38] <= phase_d[37];
-    end
-end
-
-// reload process
-integer n;
-always @*
-begin
-    next_taps_addr = taps_addr;
-    next_taps_dina = taps_dina;
-    next_new_coeffs = new_coeffs;
-
-    next_rom_addr = taps_addr[10:0];
-    next_rom_data = taps_dina;
-    if (tap_take == 1'b1) begin
-        next_taps_dina = s_axis_reload_tdata[24:0];
-        if (new_coeffs == 1'b1) begin
-            next_taps_addr = 0;
-            next_new_coeffs = 1'b0;
-        end else begin
-            next_taps_addr = taps_addr + 1;
-            if (s_axis_reload_tlast == 1'b1) begin
-                next_new_coeffs = 1'b1;
-            end
+    if (tvalid_d[5] == 1'b1) begin
+        for (n=3; n<39; n=n+1) begin
+            phase_d[n] <= phase_d[n - 1];
         end
-    end
-    // implements the write address pointer for tap updates.
-    if (tap_take_d1 == 1'b1) begin
-        case (taps_addr[15:11])
-            5'd0: next_taps_we = 32'd1;
-            5'd1: next_taps_we = 32'd2;
-            5'd2: next_taps_we = 32'd4;
-            5'd3: next_taps_we = 32'd8;
-            5'd4: next_taps_we = 32'd16;
-            5'd5: next_taps_we = 32'd32;
-            5'd6: next_taps_we = 32'd64;
-            5'd7: next_taps_we = 32'd128;
-            5'd8: next_taps_we = 32'd256;
-            5'd9: next_taps_we = 32'd512;
-            5'd10: next_taps_we = 32'd1024;
-            5'd11: next_taps_we = 32'd2048;
-            5'd12: next_taps_we = 32'd4096;
-            5'd13: next_taps_we = 32'd8192;
-            5'd14: next_taps_we = 32'd16384;
-            5'd15: next_taps_we = 32'd32768;
-            5'd16: next_taps_we = 32'd65536;
-            5'd17: next_taps_we = 32'd131072;
-            5'd18: next_taps_we = 32'd262144;
-            5'd19: next_taps_we = 32'd524288;
-            5'd20: next_taps_we = 32'd1048576;
-            5'd21: next_taps_we = 32'd2097152;
-            5'd22: next_taps_we = 32'd4194304;
-            5'd23: next_taps_we = 32'd8388608;
-            5'd24: next_taps_we = 32'd16777216;
-            5'd25: next_taps_we = 32'd33554432;
-            5'd26: next_taps_we = 32'd67108864;
-            5'd27: next_taps_we = 32'd134217728;
-            5'd28: next_taps_we = 32'd268435456;
-            5'd29: next_taps_we = 32'd536870912;
-            5'd30: next_taps_we = 32'd1073741824;
-            5'd31: next_taps_we = 32'd2147483648;
-            default: next_taps_we = 32'd0;
-        endcase
-    end else begin
-        next_taps_we = 32'd0;
     end
 end
 
 // read and write address update logic.
+integer p;
 always @*
 begin
     next_offset_cnt = offset_cnt;
@@ -414,7 +298,7 @@ begin
         if (bot_half == 1'b1) begin
             next_sig = delay_sig;
         end else begin
-            next_sig = input_sig_d3;
+            next_sig = input_sig_d2;
         end
     end else begin
         next_sig = sig;
@@ -423,25 +307,40 @@ begin
     // shift through old values.
     if (tvalid_d[2] == 1'b1) begin
         next_rd_addr_d[0] = rd_addr;
-        for (n=1; n<31; n=n+1) begin
-            next_rd_addr_d[n] = rd_addr_d[n-1];
+        for (p=1; p<31; p=p+1) begin
+            next_rd_addr_d[p] = rd_addr_d[p-1];
         end
     end else begin
-        for (n=0; n<31; n=n+1) begin
-            next_rd_addr_d[n] = rd_addr_d[n];
+        for (p=0; p<31; p=p+1) begin
+            next_rd_addr_d[p] = rd_addr_d[p];
         end
     end
 end
+
+mem_ctrl_pfb_2x_2048Mmax_16iw_16ow_32tps tap_ctrl
+(
+  .clk(clk),
+  .sync_reset(sync_reset),
+
+  .s_axis_reload_tdata(s_axis_reload_tdata),
+  .s_axis_reload_tlast(s_axis_reload_tlast),
+  .s_axis_reload_tvalid(s_axis_reload_tvalid),
+  .s_axis_reload_tready(s_axis_reload_tready),
+
+  .taps_addr(rom_addr),
+  .taps_we(rom_we),
+  .taps_douta(rom_data)
+);
 
 // 3 cycle latency.
 dp_block_read_first_ram #(
   .DATA_WIDTH(32),
   .ADDR_WIDTH(11))
 sample_delay (
-  .clk(clk),
+  .clk(clk), 
   .wea(tvalid_d[0]),
   .addra(phase_mux_d[0][10:0]),
-  .dia(input_sig_d1),
+  .dia(input_sig_d0),
   .addrb(phase[10:0]),
   .dob(delay_sig)
 );
@@ -451,10 +350,10 @@ dp_block_read_first_ram #(
   .DATA_WIDTH(32),
   .ADDR_WIDTH(13))
 sample_ram_0 (
-  .clk(clk),
-  .wea(tvalid_d[6]),
+  .clk(clk), 
+  .wea(tvalid_d[6]), 
   .addra(wr_addr_d[2][12:0]),
-  .dia(sig_d3),
+  .dia(sig_d2), 
   .addrb(rd_addr[12:0]),
   .dob(delay[0])
 );
@@ -477,14 +376,14 @@ generate
 endgenerate
 
 // Coefficent memories
-// latency = 3.
+// latency = 3
 dp_block_write_first_ram #(
     .DATA_WIDTH(25),
     .ADDR_WIDTH(11))
 pfb_taps_0 (
     .clk(clk),
-    .wea(taps_we[0]),
-    .addra(rom_addr[10:0]),
+    .wea(rom_we[0]),
+    .addra(rom_addr),
     .dia(rom_data),
     .addrb(rd_addr[10:0]),
     .dob(taps[0])
@@ -499,8 +398,8 @@ generate
         pfb_taps_nn
         (
             .clk(clk),
-            .wea(taps_we[nn]),
-            .addra(rom_addr[10:0]),
+            .wea(rom_we[nn]),
+            .addra(rom_addr),
             .dia(rom_data),
             .addrb(rd_addr_d[nn-1][10:0]),
             .dob(taps[nn])
@@ -556,18 +455,20 @@ generate
     end
 endgenerate
 
-dsp48_pfb_rnd pfb_rnd_i (
-  .clk(clk),
-  .ce(tvalid_d[6]),
-  .pcin(pcouti[31]),
-  .p(pouti)
+dsp48_pfb_rnd pfb_rnd_i
+(
+    .clk(clk),
+    .ce(tvalid_d[6]),
+    .pcin(pcouti[31]),
+    .p(pouti)
 );
 
-dsp48_pfb_rnd pfb_rnd_q (
-  .clk(clk),
-  .ce(tvalid_d[6]),
-  .pcin(pcoutq[31]),
-  .p(poutq)
+dsp48_pfb_rnd pfb_rnd_q
+(
+    .clk(clk),
+    .ce(tvalid_d[6]),
+    .pcin(pcoutq[31]),
+    .p(poutq)
 );
 
 axi_fifo_3 #(

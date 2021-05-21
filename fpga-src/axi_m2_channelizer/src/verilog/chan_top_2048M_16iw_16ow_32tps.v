@@ -7,15 +7,15 @@
 //***************************************************************************--
 
 // no timescale needed
-`include "chan_rfnoc_sim.vh"
+`include "chan_sim.vh"
 
-module channelizer_top#(
-    parameter DATA_WIDTH = 32)
+module chan_top_2048M_16iw_16ow_32tps
 (
     input clk,
     input sync_reset,
 
     input s_axis_tvalid,
+    // Note that the convention is Real is mapped to [2N-1:N] Imag is mapped [N-1:0], where N is sample size
     input [31:0] s_axis_tdata,
     output s_axis_tready,
 
@@ -36,6 +36,7 @@ module channelizer_top#(
     output eob_tag,
 
     output m_axis_tvalid,
+    // Note that the convention is Real is mapped to [2N-1:N] Imag is mapped [N-1:0], where N is sample size
     output [31:0] m_axis_tdata,
     output [23:0] m_axis_tuser,
     output m_axis_tlast,
@@ -54,13 +55,18 @@ localparam FFT_256 = 256;
 localparam FFT_512 = 512;
 localparam FFT_1024 = 1024;
 localparam FFT_2048 = 2048;
+localparam UPPER_IDX = 31;
+localparam HALF_IDX = 16;
+localparam LOWER_IDX = 15;
 
 reg [4:0] nfft, next_nfft;
 reg [11:0] fft_size_s;
 wire event_frame_started;
 wire event_tlast_unexpected;
 wire event_tlast_missing;
+wire event_status_channel_halt;
 wire event_data_in_channel_halt;
+wire event_data_out_channel_halt;
 
 reg async_reset, async_reset_d1;
 reg reset_int,  next_reset_int;
@@ -73,30 +79,24 @@ localparam [4:0] RESET_HIGH_CNT = 5'b01000;  // buffer signals
 reg [15:0] payload_length_s, payload_length_m1;
 
 wire buffer_tvalid;
-wire [DATA_WIDTH - 1:0] buffer_tdata;
+wire [31:0] buffer_tdata;
 wire buffer_tlast;
 wire [10:0] buffer_phase;
 wire buffer_tready;
 
 // pfb signals
 wire pfb_tvalid;
-wire [DATA_WIDTH - 1:0] pfb_tdata;
+wire [31:0] pfb_tdata, pfb_tdata_s;
 wire pfb_tlast;
 wire [10:0] pfb_phase;
 wire [10:0] circ_phase;
 wire pfb_tready;
 
-// circular buffer signals
-wire circ_tvalid;
-wire [DATA_WIDTH - 1:0] circ_tdata;
-wire [DATA_WIDTH - 1:0] circ_tdata_s;
-wire circ_tlast;  // signal circ_phase : std_logic_vector(10 downto 0);
-wire circ_tready;
 
 // fft data signals
 wire fft_tvalid;
-wire [DATA_WIDTH - 1:0] fft_tdata;
-wire [DATA_WIDTH - 1:0] fft_tdata_s;
+wire [31:0] fft_tdata;
+wire [31:0] fft_tdata_s;
 wire [23:0] fft_tuser;
 wire fft_tlast;
 wire fft_tready;
@@ -108,7 +108,7 @@ wire [15:0] fft_config_tdata;  // fft status signals
 
 // exp shift signals
 wire shift_tvalid;
-wire [DATA_WIDTH - 1:0] shift_tdata;
+wire [31:0] shift_tdata;
 wire [23:0] shift_tuser;
 wire shift_tlast;
 wire shift_tready;
@@ -116,7 +116,7 @@ wire shift_eob_tag;
 
 // down select signals
 wire down_sel_tvalid;
-wire [DATA_WIDTH-1:0] down_sel_tdata;
+wire [31:0] down_sel_tdata;
 wire [23:0] down_sel_tuser;
 wire down_sel_tlast;
 wire down_sel_tready;
@@ -140,9 +140,9 @@ assign m_axis_tready_s = m_axis_tready;
 assign m_axis_tdata = m_axis_tdata_s;
 assign m_axis_tuser = m_axis_tuser_s;
 assign m_axis_tlast = m_axis_tlast_s;
-assign fft_config_tdata = {11'b00000000000,nfft};
-assign fft_tdata = {fft_tdata_s[15:0],fft_tdata_s[31:16]};
-assign circ_tdata = {circ_tdata_s[15:0],circ_tdata_s[31:16]};
+assign fft_config_tdata = {11'd0,nfft};
+assign pfb_tdata = {pfb_tdata_s[LOWER_IDX:0],pfb_tdata_s[UPPER_IDX:HALF_IDX]};
+assign fft_tdata = {fft_tdata_s[LOWER_IDX:0],fft_tdata_s[UPPER_IDX:HALF_IDX]};
 
 
 always @*
@@ -173,8 +173,10 @@ begin
                 next_nfft = 5'b01001;
             end else if (fft_size == FFT_1024) begin
                 next_nfft = 5'b01010;
-            end else begin
+            end else if (fft_size == FFT_2048) begin
                 next_nfft = 5'b01011;
+            end else begin
+                next_nfft = 5'b00011;
             end
         end
         S_IDLE :
@@ -196,9 +198,9 @@ begin
     if (sync_reset == 1'b1) begin
         config_state <= S_IDLE;
         fft_config_tvalid <= 1'b0;
-        nfft <= 5'b00111;
-        fft_size_s <= 12'd128;
-        // default to 128
+        nfft <= 5'b00011;
+        fft_size_s <= 12'd8;
+        // default to 8
         reset_cnt <= 5'd31;
         reset_int <= 1'b1;
     end else begin
@@ -237,8 +239,8 @@ begin
     end
 end
 
-input_buffer #(
-    .DATA_WIDTH(DATA_WIDTH),
+input_buffer_1x #(
+    .DATA_WIDTH(32),
     .FFT_SIZE_WIDTH(12))
 u_input_buffer(
     .clk(clk),
@@ -257,16 +259,16 @@ u_input_buffer(
     .m_axis_tready(buffer_tready)
 );
 
-pfb_2x_16iw_16ow_32tps u_pfb(
+pfb_2048Mmax_16iw_16ow_32tps u_pfb(
     .clk(clk),
     .sync_reset(reset_int),
 
     .s_axis_tvalid(buffer_tvalid),
     .s_axis_tdata(buffer_tdata),
-    .s_axis_tlast(1'b0),
+    .s_axis_tlast(buffer_tlast),
     .s_axis_tready(buffer_tready),
 
-    .fft_size(fft_size_s),
+    .num_phases(fft_size_s),
     .phase(buffer_phase),
     .phase_out(pfb_phase),
 
@@ -276,43 +278,22 @@ pfb_2x_16iw_16ow_32tps u_pfb(
     .s_axis_reload_tready(s_axis_reload_tready),
 
     .m_axis_tvalid(pfb_tvalid),
-    .m_axis_tdata(pfb_tdata),
+    .m_axis_tdata(pfb_tdata_s),
     .m_axis_tlast(pfb_tlast),
     .m_axis_tready(pfb_tready)
 );
 
-circ_buffer #(
-    .DATA_WIDTH(DATA_WIDTH),
-    .FFT_SIZE_WIDTH(12))
-u_circ_buffer(
-    .clk(clk),
-    .sync_reset(reset_int),
 
-    .s_axis_tvalid(pfb_tvalid),
-    .s_axis_tdata(pfb_tdata),
-    .s_axis_tlast(pfb_tlast),
-    .s_axis_tready(pfb_tready),
-
-    .fft_size(fft_size_s),
-    .phase(pfb_phase),
-    .phase_out(circ_phase),
-
-    .m_axis_tvalid(circ_tvalid),
-    .m_axis_tdata(circ_tdata_s),
-    .m_axis_tlast(circ_tlast),
-    .m_axis_tready(circ_tready)
-);
-
-xfft u_fft(
+xfft_2048 u_fft(
     .aclk(clk),
     .aresetn(async_reset),
     .s_axis_config_tvalid(fft_config_tvalid),
     .s_axis_config_tdata(fft_config_tdata),
     .s_axis_config_tready(fft_config_tready),
-    .s_axis_data_tvalid(circ_tvalid),
-    .s_axis_data_tdata(circ_tdata),
-    .s_axis_data_tlast(circ_tlast),
-    .s_axis_data_tready(circ_tready),
+    .s_axis_data_tvalid(pfb_tvalid),
+    .s_axis_data_tdata(pfb_tdata),
+    .s_axis_data_tlast(pfb_tlast),
+    .s_axis_data_tready(pfb_tready),
     .m_axis_data_tvalid(fft_tvalid),
     .m_axis_data_tdata(fft_tdata_s),
     .m_axis_data_tuser(fft_tuser),
@@ -324,10 +305,14 @@ xfft u_fft(
     .event_frame_started(event_frame_started),
     .event_tlast_unexpected(event_tlast_unexpected),
     .event_tlast_missing(event_tlast_missing),
-    .event_data_in_channel_halt(event_data_in_channel_halt)
+    .event_status_channel_halt(event_status_channel_halt),
+    .event_data_in_channel_halt(event_data_in_channel_halt),
+    .event_data_out_channel_halt(event_data_out_channel_halt)
 );
 
-exp_shifter u_shifter(
+exp_shifter_2048Mmax_16iw_256avg_len #(
+ .HEAD_ROOM(7'd2))
+u_shifter(
     .clk(clk),
     .sync_reset(reset_int),
 
@@ -349,8 +334,8 @@ exp_shifter u_shifter(
     .m_axis_tready(shift_tready)
 );
 
-downselect #(
-    .DATA_WIDTH(DATA_WIDTH))
+downselect_2048 #(
+    .DATA_WIDTH(32))
 u_downselect(
     .clk(clk),
     .sync_reset(reset_int),
@@ -379,7 +364,7 @@ u_downselect(
 );
 
 count_cycle_cw16_65 #(
-    .DATA_WIDTH(DATA_WIDTH),
+    .DATA_WIDTH(32),
     .TUSER_WIDTH(24))
 u_final_cnt
 (

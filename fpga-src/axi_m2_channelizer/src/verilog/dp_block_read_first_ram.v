@@ -64,4 +64,5 @@ begin
     ram_pipe <= ram[addrb_d];
     dob_d <= ram_pipe;
 end
+
 endmodule

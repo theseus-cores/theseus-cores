@@ -1,14 +1,14 @@
 /*****************************************************************************/
 //
 // Author      : PJV
-// File        : axi_fifo_80
+// File        : axi_fifo_64
 // Description : Generates FIFO with AXI interface. 
 //
 //                Latency = 3.
 //
 /*****************************************************************************/
 
-module axi_fifo_80
+module axi_fifo_64
 #( parameter DATA_WIDTH=32,
    parameter ADDR_WIDTH=8)
 (
@@ -36,7 +36,7 @@ reg [ADDR_WIDTH:0] wr_ptr = 0, next_wr_ptr;
 reg [ADDR_WIDTH:0] wr_addr = 0, next_wr_addr;
 reg [ADDR_WIDTH:0] rd_ptr = 0, next_rd_ptr;
 
-(* ram_style = "distributed" *) reg [FIFO_MSB:0] buffer [DEPTH-1:0];
+(* ram_style = "block" *) reg [FIFO_MSB:0] buffer [DEPTH-1:0];
 wire [FIFO_MSB:0] wr_data;
 
 reg [8:0] delay_d1, next_delay_d1;
@@ -50,7 +50,7 @@ wire empty;
 // control signals
 reg wr;
 reg rd;
-reg [1:0] occ_reg, next_occ_reg;
+reg [1:0] occ_reg = 2'b00, next_occ_reg;
 reg [FIFO_MSB:0] data_d0, data_d1, next_data_d0, next_data_d1;
 
 // control signals
