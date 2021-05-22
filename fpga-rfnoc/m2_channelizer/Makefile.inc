@@ -48,6 +48,6 @@ pfb_2x_2048Mmax_16iw_16ow_32tps_dp_rom.v \
 pfb_2x_2048Mmax_16iw_16ow_32tps.v \
 chan_rfnoc_sim.vh \
 pipe_mux_2048_1.v \
-downselect.v \
+downselect_2048.v \
 chan_top_2X_2048M_16iw_16ow_32tps.v \
 )
