@@ -143,7 +143,11 @@ module noc_block_channelizer #(
   localparam SR_MASK_RELOAD_LAST = 134;
   localparam SR_PKT_SIZE = 135;
   localparam RB_PKT_SIZE = 135;
+  localparam RB_MAX_FFT_SIZE = 136;
+  localparam RB_TAPS_PER_PHASE = 137;
   localparam NUM_TAPS = 65536;
+  localparam MAX_FFT_SIZE = 2048;
+  localparam TAPS_PER_PHASE = 32;
 
   // Control Source Unused
   assign cmdout_tdata  = 64'd0;
@@ -209,6 +213,8 @@ module noc_block_channelizer #(
       RB_FFT_SIZE : rb_data <= {20'd0, fft_size};
       RB_AVG_LEN : rb_data <= {23'd0, avg_len};
       RB_PKT_SIZE : rb_data <= {16'd0, payload_length};
+      RB_MAX_FFT_SIZE : rb_data <= {MAX_FFT_SIZE};
+      RB_TAPS_PER_PHASE : rb_data <= {TAPS_PER_PHASE};
       default : rb_data <= 64'h0BADC0DE0BADC0DE;
     endcase
   end

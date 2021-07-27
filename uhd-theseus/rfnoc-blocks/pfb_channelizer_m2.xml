@@ -51,6 +51,14 @@
       <name>RB_PKT_SIZE</name>
       <address>135</address>
     </readback>
+    <readback>
+      <name>RB_MAX_FFT_SIZE</name>
+      <address>136</address>
+    </readback>
+    <readback>
+      <name>RB_TAPS_PER_PHASE</name>
+      <address>137</address>
+    </readback>
   </registers>
   <!-- Registers -->
 
