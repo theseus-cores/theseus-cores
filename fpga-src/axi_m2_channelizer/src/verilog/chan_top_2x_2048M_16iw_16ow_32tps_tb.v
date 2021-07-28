@@ -1,3 +1,21 @@
+
+//     Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+// 
+//   http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.  
+
 // Top level testbench
 
 `timescale 1ns/1ps
@@ -58,6 +76,12 @@ wire s_axis_select_tvalid;
 wire [31:0] s_axis_select_tdata;
 wire s_axis_select_tlast;
 wire s_axis_select_tready;
+
+wire [31:0] FFT_MAX; 
+wire [31:0] NUM_TAPS; 
+wire [31:0] PFB_MSB;
+wire [31:0] FIL_K; // QVEC == unsigned(32, 24)
+wire [31:0] FIL_OFFSET; // QVEC == unsigned(32, 24)
 
 reg flow_ctrl = 1'b0;
 
@@ -151,6 +175,12 @@ chan_top_2x_2048M_16iw_16ow_32tps u_dut
    .avg_len(9'd128),
    .payload_length(16'd1000),
    .eob_tag(eob_tag),
+    // Core Constants
+    .FFT_MAX(FFT_MAX),
+    .NUM_TAPS(NUM_TAPS),
+    .PFB_MSB(PFB_MSB),
+    .FIL_K(FIL_K),
+    .FIL_OFFSET(FIL_OFFSET),
 
    .m_axis_tvalid(m_axis_tvalid),
    .m_axis_tdata(m_axis_tdata),
