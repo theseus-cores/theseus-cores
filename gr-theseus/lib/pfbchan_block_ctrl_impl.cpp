@@ -47,6 +47,7 @@ static const int default_taps_per_phase = 32;
 static const int qvec_coef[2] = {25, 24};
 static const int default_max_fft_size = 2048;
 static const int qvec[2] = {16, 15};
+static const int default_msb = 40;
 
 class pfbchan_block_ctrl_impl : public pfbchan_block_ctrl
 {
@@ -76,6 +77,10 @@ public:
         auto filter_offset = user_reg_read64("RB_FIL_OFFSET");
         _offset = filter_offset == 0x0BADC0DE0BADC0DE ? default_offset : ((double) filter_offset) / 16777216.0; // Scale by 2^-24
         UHD_LOG_DEBUG(unique_id(), "Found PFB M/2 Channelizer Offset value: " << _offset);
+
+        auto filter_msb = user_reg_read64("RB_PFB_MSB");
+        _msb = filter_msb == 0x0BADC0DE0BADC0DE ? default_msb : filter_msb;
+        UHD_LOG_DEBUG(unique_id(), "Found PFB M/2 Channelizer Desired MSB: " << _msb);
 
         // Save the addresses so we dont need to re-query
         SR_RELOAD = uint32_t(_tree->access<size_t>(_root_path / "registers" / "sr" / "SR_RELOAD").get());
@@ -144,6 +149,7 @@ private:
     size_t _fft_size;
     size_t _max_fft_size;
     size_t _taps_per_phase;
+    size_t _msb;
     float _K;
     float _offset;
     uint32_t SR_RELOAD;
@@ -167,9 +173,8 @@ private:
         UHD_LOG_INFO(unique_id(), "Writing PFB Channelizer taps for " << fft_size << " channels (may take some time)...");
         gr_vector_float taps;
         tap_equation(fft_size, taps);
-        int desired_msb = 40;  //TODO: replace internal constant
         gr_vector_int taps_fi;
-        gen_fixed_filter(taps, fft_size, desired_msb, taps_fi);
+        gen_fixed_filter(taps, fft_size, _msb, taps_fi);
 
         if (taps_fi.size() > _n_taps) {
             throw uhd::value_error(str(
