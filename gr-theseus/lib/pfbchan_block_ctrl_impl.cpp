@@ -42,9 +42,9 @@ static const float a5 = 1.061405429;
 static const float p = 0.3275911;
 static const float K = 22.086093;
 
-static const int taps_per_phase = 32;
+static const int default_taps_per_phase = 32;
 static const int qvec_coef[2] = {25, 24};
-static const int max_fft_size = 2048;
+static const int default_max_fft_size = 2048;
 static const int qvec[2] = {16, 15};
 
 class pfbchan_block_ctrl_impl : public pfbchan_block_ctrl
@@ -55,7 +55,13 @@ public:
     {
         _n_taps = uint32_t(user_reg_read64("RB_NUM_TAPS"));
         UHD_ASSERT_THROW(_n_taps);
-        UHD_LOG_DEBUG(unique_id(), "Found PFB M/2 Channelizer max " << _n_taps << " taps.");
+        UHD_LOG_DEBUG(unique_id(), "Found PFB M/2 Channelizer max " << _n_taps << " taps");
+
+        auto max_fft_size = user_reg_read64("RB_FFT_MAX");
+        _max_fft_size = _max_fft_size == 0x0BADC0DE0BADC0DE ? default_max_fft_size : max_fft_size;
+        UHD_LOG_DEBUG(unique_id(), "Found PFB M/2 Channelizer fft size: " << _max_fft_size << "");
+        _taps_per_phase = _max_fft_size / _n_taps;
+        UHD_LOG_DEBUG(unique_id(), "Calculated taps_per_phase: " << _max_fft_size << "");
 
         // Save the addresses so we dont need to re-query
         SR_RELOAD = uint32_t(_tree->access<size_t>(_root_path / "registers" / "sr" / "SR_RELOAD").get());
@@ -64,7 +70,7 @@ public:
         SR_CHANNELMASK_LAST = uint32_t(_tree->access<size_t>(_root_path / "registers" / "sr" / "SR_CHANNELMASK_LAST").get());
 
         // Initialize the channel mask
-        _n_mask = ceil(((float) max_fft_size)/32.0);
+        _n_mask = ceil(((float) _max_fft_size)/32.0);
         _channel_mask.clear();
         for (int ii = 0; ii < _n_mask; ii++) {
             _channel_mask.push_back(0xFFFFFFFF);
@@ -122,6 +128,8 @@ public:
 private:
     size_t _n_taps;
     size_t _fft_size;
+    size_t _max_fft_size;
+    size_t _taps_per_phase;
     uint32_t SR_RELOAD;
     uint32_t SR_RELOAD_LAST;
     uint32_t SR_CHANNELMASK;
@@ -261,7 +269,7 @@ private:
     void
     tap_equation(const int fft_size, gr_vector_float& ret_val)
     {
-        int vec_len = taps_per_phase * fft_size;
+        int vec_len = _taps_per_phase * fft_size;
         gr_vector_float x_vec;
         float F_val;
         float temp;
@@ -381,7 +389,7 @@ private:
             int tap_offset = 0;
             gr_vector_int temp_row;
             int temp_gain = 0;
-            for (int j=0; j < taps_per_phase; j++)
+            for (int j=0; j < _taps_per_phase; j++)
             {
                 int index = i + tap_offset;
                 temp_gain += taps_fi[index];
@@ -414,7 +422,7 @@ private:
             // scale polyphase filter.
             for (int i=0; i < fft_size; i++)
             {
-                for (int j=0; j < taps_per_phase; j++)
+                for (int j=0; j < _taps_per_phase; j++)
                 {
                     poly_fi[i][j] = (int) ((float) poly_fi[i][j] * delta_gain);
                 }
@@ -426,7 +434,7 @@ private:
             int diff = msb - desired_msb;
             for (int i=0; i < fft_size; i++)
             {
-                for (int j=0; j < taps_per_phase; j++)
+                for (int j=0; j < _taps_per_phase; j++)
                 {
                     poly_fi[i][j] = poly_fi[i][j] >> diff;
                 }
@@ -434,12 +442,12 @@ private:
         }
 
         // reshape poly_fi into single vector with padding.
-        int pad = max_fft_size - fft_size;
+        int pad = _max_fft_size - fft_size;
         // // print("msb = {}".format(msb))
         // // taps_fi = np.reshape(poly_fil, (1, -1), order='F')
         // poly_fil = poly_fil.astype(np.int32)
         //
-        for (int j=0; j < taps_per_phase; j++)
+        for (int j=0; j < _taps_per_phase; j++)
         {
             for (int i=0; i < fft_size; i++)
             {
