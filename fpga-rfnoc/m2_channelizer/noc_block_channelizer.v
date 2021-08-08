@@ -145,7 +145,6 @@ module noc_block_channelizer #(
   localparam RB_PKT_SIZE = 135;
 
   // Core constants
-  localparam RB_NUM_TAPS = 136;
   localparam RB_FFT_MAX = 137;
   localparam RB_PFB_MSB = 138;
   localparam RB_FIL_K = 139;
