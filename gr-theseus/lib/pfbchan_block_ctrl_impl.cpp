@@ -40,7 +40,8 @@ static const float a3 = 1.421413741;
 static const float a4 = -1.453152027;
 static const float a5 = 1.061405429;
 static const float p = 0.3275911;
-static const float K = 22.086093;
+static const float default_K = 22.086093;
+static const float default_offset = 0.5;
 
 static const int default_taps_per_phase = 32;
 static const int qvec_coef[2] = {25, 24};
@@ -61,7 +62,15 @@ public:
         _max_fft_size = _max_fft_size == 0x0BADC0DE0BADC0DE ? default_max_fft_size : max_fft_size;
         UHD_LOG_DEBUG(unique_id(), "Found PFB M/2 Channelizer fft size: " << _max_fft_size << "");
         _taps_per_phase = _max_fft_size / _n_taps;
-        UHD_LOG_DEBUG(unique_id(), "Calculated taps_per_phase: " << _max_fft_size << "");
+        UHD_LOG_DEBUG(unique_id(), "Calculated taps_per_phase: " << _taps_per_phase);
+
+        auto filter_k = user_reg_read64("RB_FIL_K");
+        _K = filter_k == 0x0BADC0DE0BADC0DE ? default_K : ((double) filter_k) / 16777216.0; // Scale by 2^-24
+        UHD_LOG_DEBUG(unique_id(), "Found PFB M/2 Channelizer K value: " << _K);
+
+        auto filter_offset = user_reg_read64("RB_FIL_OFFSET");
+        _offset = filter_offset == 0x0BADC0DE0BADC0DE ? default_offset : ((double) filter_offset) / 16777216.0; // Scale by 2^-24
+        UHD_LOG_DEBUG(unique_id(), "Found PFB M/2 Channelizer Offset value: " << _offset);
 
         // Save the addresses so we dont need to re-query
         SR_RELOAD = uint32_t(_tree->access<size_t>(_root_path / "registers" / "sr" / "SR_RELOAD").get());
@@ -130,6 +139,8 @@ private:
     size_t _fft_size;
     size_t _max_fft_size;
     size_t _taps_per_phase;
+    float _K;
+    float _offset;
     uint32_t SR_RELOAD;
     uint32_t SR_RELOAD_LAST;
     uint32_t SR_CHANNELMASK;
@@ -189,14 +200,16 @@ private:
         uint32_t num_taps_read;
         num_taps_read = user_reg_read32("RB_NUM_TAPS");
 
-        UHD_LOG_TRACE(unique_id(), boost::format("num_taps = %d") % (int) num_taps_read);
+        UHD_LOG_TRACE(unique_id(), boost::format("num_taps = %d") % num_taps_read);
         for (size_t i = 0; i < taps_fi.size() - 1; i++) {
             sr_write(SR_RELOAD, boost::uint32_t(taps_fi[i]));
-            // UHD_LOG_TRACE(unique_id(), "tap[%d] = %d\n", (int) i, (int) boost::uint32_t(taps_fi[i]));
+            UHD_LOG_TRACE(unique_id(),
+                boost::format("tap[%d] = %d\n") % i % boost::uint32_t(taps_fi[i]));
         }
         sr_write(SR_RELOAD_LAST, boost::uint32_t(taps_fi.back()));
-        // UHD_LOG_TRACE(unique_id(), "final tap = %d\n", (int) boost::uint32_t(taps_fi.back()));
-        // UHD_LOG_TRACE(unique_id(), "set_taps() done\n");
+        UHD_LOG_TRACE(unique_id(),
+            boost::format("tap[%d] = %d\n") % (taps_fi.size() - 1) % boost::uint32_t(taps_fi.back()));
+        UHD_LOG_TRACE(unique_id(), "set_taps() done");
 
         // // Write the channel mask
         // write_channel_mask();
@@ -276,7 +289,7 @@ private:
         for (int i=0; i < vec_len; i++)
         {
             F_val = (float) i / (float) vec_len;
-            temp = K * ((float) fft_size * F_val - .5);
+            temp = _K * ((float) fft_size * F_val - _offset);
             x_vec.push_back(temp);
         }
 
