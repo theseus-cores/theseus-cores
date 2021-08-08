@@ -59,7 +59,12 @@ public:
         UHD_LOG_DEBUG(unique_id(), "Found PFB M/2 Channelizer max " << _n_taps << " taps");
 
         auto max_fft_size = user_reg_read64("RB_FFT_MAX");
-        _max_fft_size = _max_fft_size == 0x0BADC0DE0BADC0DE ? default_max_fft_size : max_fft_size;
+        if (max_fft_size == 0x0BADC0DE0BADC0DE){
+            UHD_LOG_INFO(unique_id(), "Could not read max_fft_size, assuming default value");
+            _max_fft_size = default_max_fft_size;
+        } else{
+            _max_fft_size = max_fft_size;
+        }
         UHD_LOG_DEBUG(unique_id(), "Found PFB M/2 Channelizer fft size: " << _max_fft_size << "");
         _taps_per_phase = _max_fft_size / _n_taps;
         UHD_LOG_DEBUG(unique_id(), "Calculated taps_per_phase: " << _taps_per_phase);
