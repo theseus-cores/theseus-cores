@@ -327,11 +327,11 @@ chan_top_2x_2048M_16iw_16ow_32tps channelizer_top
     .s_axis_reload_tready(m_axis_reload_tready),
 
     // CORE_CONSTANTS
-    .FFT_MAX(FFT_MAX),\n')
-    .NUM_TAPS(NUM_TAPS),\n')
-    .PFB_MSB(PFB_MSB),\n')
-    .FIL_K(FIL_K), // QVEC == unsigned(32, 24)\n')
-    .FIL_OFFSET(FIL_OFFSET), // QVEC == unsigned(32, 24)\n')
+    .FFT_MAX(FFT_MAX),
+    .NUM_TAPS(NUM_TAPS),
+    .PFB_MSB(PFB_MSB),
+    .FIL_K(FIL_K), // QVEC == unsigned(32, 24)
+    .FIL_OFFSET(FIL_OFFSET), // QVEC == unsigned(32, 24)
 
     // down selection FIFO interface
     .s_axis_select_tvalid(m_axis_select_tvalid),
