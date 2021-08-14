@@ -67,7 +67,7 @@ public:
             _max_fft_size = max_fft_size;
         }
         UHD_LOG_DEBUG(unique_id(), "Found PFB M/2 Channelizer fft size: " << _max_fft_size << "");
-        _taps_per_phase = _max_fft_size / _n_taps;
+        _taps_per_phase = _n_taps / _max_fft_size;
         UHD_LOG_DEBUG(unique_id(), "Calculated taps_per_phase: " << _taps_per_phase);
 
         auto filter_k = user_reg_read64("RB_FIL_K");
