@@ -51,6 +51,22 @@
       <name>RB_PKT_SIZE</name>
       <address>135</address>
     </readback>
+    <readback>
+      <name>RB_FFT_MAX</name>
+      <address>137</address>
+    </readback>
+    <readback>
+      <name>RB_PFB_MSB</name>
+      <address>138</address>
+    </readback>
+    <readback>
+      <name>RB_FIL_K</name>
+      <address>139</address>
+    </readback>
+    <readback>
+      <name>RB_FIL_OFFSET</name>
+      <address>140</address>
+    </readback>
   </registers>
   <!-- Registers -->
 

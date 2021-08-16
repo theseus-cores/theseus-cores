@@ -143,7 +143,12 @@ module noc_block_channelizer #(
   localparam SR_MASK_RELOAD_LAST = 134;
   localparam SR_PKT_SIZE = 135;
   localparam RB_PKT_SIZE = 135;
-  localparam NUM_TAPS = 65536;
+
+  // Core constants
+  localparam RB_FFT_MAX = 137;
+  localparam RB_PFB_MSB = 138;
+  localparam RB_FIL_K = 139;
+  localparam RB_FIL_OFFSET = 140;
 
   // Control Source Unused
   assign cmdout_tdata  = 64'd0;
@@ -162,6 +167,12 @@ module noc_block_channelizer #(
   wire  m_axis_select_tready;
     //(* keep = "true", dont_touch = "true", mark_debug = "true" *)
   wire m_axis_select_tlast;
+  
+  wire [31:0] FFT_MAX;
+  wire [31:0] NUM_TAPS;
+  wire [31:0] PFB_MSB;
+  wire [31:0] FIL_K;  // QVEC == unsigned(32, 24)
+  wire [31:0] FIL_OFFSET; // QVEC == unsigned(32, 24)
 
   wire [15:0] payload_length;
   cvita_hdr_encoder cvita_hdr_encoder (
@@ -206,6 +217,10 @@ module noc_block_channelizer #(
   always @(posedge ce_clk) begin
     case(rb_addr)
       RB_NUM_TAPS : rb_data <= {NUM_TAPS};
+      RB_FFT_MAX : rb_data <= {FFT_MAX};
+      RB_PFB_MSB : rb_data <= {PFB_MSB};
+      RB_FIL_K : rb_data <= {FIL_K};
+      RB_FIL_OFFSET : rb_data <= {FIL_OFFSET};
       RB_FFT_SIZE : rb_data <= {20'd0, fft_size};
       RB_AVG_LEN : rb_data <= {23'd0, avg_len};
       RB_PKT_SIZE : rb_data <= {16'd0, payload_length};
@@ -309,6 +324,13 @@ chan_top_2x_2048M_16iw_16ow_32tps channelizer_top
     .s_axis_reload_tlast(m_axis_reload_tlast),
     .s_axis_reload_tvalid(m_axis_reload_tvalid),
     .s_axis_reload_tready(m_axis_reload_tready),
+
+    // CORE_CONSTANTS
+    .FFT_MAX(FFT_MAX),
+    .NUM_TAPS(NUM_TAPS),
+    .PFB_MSB(PFB_MSB),
+    .FIL_K(FIL_K), // QVEC == unsigned(32, 24)
+    .FIL_OFFSET(FIL_OFFSET), // QVEC == unsigned(32, 24)
 
     // down selection FIFO interface
     .s_axis_select_tvalid(m_axis_select_tvalid),
